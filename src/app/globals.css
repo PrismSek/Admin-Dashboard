@@ -1,0 +1,217 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   PrismSek design tokens — THE single source of truth for all design values.
+
+   Change a colour, radius, font size or control height HERE and it updates
+   everywhere. No component may hardcode a hex value, px font size or radius.
+
+   Structure:
+     1. Palette      — raw brand colours. Never used directly by components.
+     2. Semantics    — role-based tokens (surface, ink, brand...). Use these.
+     3. Dark mode    — override semantics only. Palette stays fixed.
+     4. @theme inline— exposes semantics to Tailwind as utilities.
+
+   Values below are taken from the PrismSek Figma file (node 132:2), with
+   sizing normalised to web scale. See docs/FIGMA-DEVIATIONS.md.
+   ========================================================================== */
+
+/* Enables `dark:` utilities driven by a `.dark` class on <html>, so a theme
+   toggle can switch modes without a reload. Falls back to nothing until the
+   class is applied — see section 3. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* -------------------------------------------------------------------------
+   1. PALETTE — raw values. Add new brand colours here, not in components.
+   ------------------------------------------------------------------------- */
+:root {
+  --ps-orange-600: #ff4300; /* primary actions, links, error text */
+  --ps-orange-500: #f2601a; /* logo mark, status icons */
+  --ps-orange-050: #fdece1; /* status icon halo */
+
+  --ps-grey-950: #000000;
+  --ps-grey-900: #1a2233;
+  --ps-grey-800: #222c3a;
+  --ps-grey-700: #3a4256;
+  --ps-grey-600: #6a727e;
+  --ps-grey-500: #6b7280;
+  --ps-grey-400: #8b93a3;
+  --ps-grey-300: #9aa2b1;
+  --ps-grey-200: #d7dbe3;
+  --ps-grey-150: #dee0e2;
+  --ps-grey-100: #eff0f1;
+  --ps-grey-050: #fbfbfb;
+  --ps-grey-025: #f7f7f7;
+  --ps-white: #ffffff;
+
+  --ps-green-500: #22c55e;
+  --ps-blue-500: #4285f4; /* Google brand blue — third-party marks only */
+
+  /* Decorative gradient artwork on the split layout */
+  --ps-art-coral: #ff5f6d;
+  --ps-art-peach: #fdb99b;
+  --ps-art-amber: #ffc371;
+  --ps-art-violet: #a870ef;
+  --ps-art-lilac: #cf8bf3;
+
+  /* -----------------------------------------------------------------------
+     2. SEMANTICS — what components actually consume.
+     ----------------------------------------------------------------------- */
+  --color-page: var(--ps-grey-025);
+  --color-surface: var(--ps-grey-050); /* input backgrounds */
+  --color-card: var(--ps-white); /* secondary buttons, cards */
+
+  --color-ink: var(--ps-grey-800); /* default body text */
+  --color-ink-strong: var(--ps-grey-900);
+  /* Named `title`, not `heading`: `--text-heading` already claims the
+     `text-heading` utility for font size. */
+  --color-title: var(--ps-grey-950);
+  --color-label: var(--ps-grey-700);
+  --color-muted: var(--ps-grey-600); /* secondary/help text */
+  --color-subtle: var(--ps-grey-300); /* placeholders, meta labels */
+  --color-subtle-alt: var(--ps-grey-400);
+  --color-prose: var(--ps-grey-500); /* centred-layout body copy */
+
+  --color-line: var(--ps-grey-150); /* default borders, dividers */
+  --color-line-strong: var(--ps-grey-200);
+  --color-line-faint: var(--ps-grey-100);
+
+  --color-brand: var(--ps-orange-600);
+  --color-brand-hover: #e63c00;
+  --color-brand-active: #cc3600;
+  --color-brand-fg: var(--ps-white); /* text on brand fill */
+  --color-brand-accent: var(--ps-orange-500);
+  --color-brand-halo: var(--ps-orange-050);
+
+  /* Danger currently equals brand — the Figma error text uses #FF4300.
+     Kept as its own token so error styling can diverge without touching
+     any component. */
+  --color-danger: var(--ps-orange-600);
+  --color-success: var(--ps-green-500);
+  --color-third-party: var(--ps-blue-500);
+
+  --color-focus: var(--ps-orange-600); /* focus ring */
+
+  /* Radii */
+  --radius-control: 10px; /* inputs, buttons */
+  --radius-card: 8px;
+  --radius-panel: 14px;
+
+  /* Control sizing — normalised from Figma's 36px to meet the WCAG 2.2
+     minimum target size. */
+  --size-control: 2.75rem; /* 44px */
+  --width-auth-column: 25rem; /* 400px (Figma 284px, normalised) */
+}
+
+/* -------------------------------------------------------------------------
+   3. DARK MODE — not yet designed. When it is, override ONLY the semantic
+   tokens below; components need no changes. Uncomment and fill in.
+
+.dark {
+  --color-page: #0f1115;
+  --color-surface: #171a21;
+  --color-card: #1c2029;
+  --color-ink: #e6e8ec;
+  --color-title: #ffffff;
+  --color-label: #b9bfcc;
+  --color-muted: #8b93a3;
+  --color-subtle: #6a727e;
+  --color-line: #2a2f3a;
+  ...
+}
+   ------------------------------------------------------------------------- */
+
+/* -------------------------------------------------------------------------
+   4. Expose semantics to Tailwind. `inline` keeps the var() reference in the
+   generated utility, so overriding a token under .dark re-themes instantly.
+   ------------------------------------------------------------------------- */
+@theme inline {
+  --color-page: var(--color-page);
+  --color-surface: var(--color-surface);
+  --color-card: var(--color-card);
+
+  --color-ink: var(--color-ink);
+  --color-ink-strong: var(--color-ink-strong);
+  --color-title: var(--color-title);
+  --color-label: var(--color-label);
+  --color-muted: var(--color-muted);
+  --color-subtle: var(--color-subtle);
+  --color-subtle-alt: var(--color-subtle-alt);
+  --color-prose: var(--color-prose);
+
+  --color-line: var(--color-line);
+  --color-line-strong: var(--color-line-strong);
+  --color-line-faint: var(--color-line-faint);
+
+  --color-brand: var(--color-brand);
+  --color-brand-hover: var(--color-brand-hover);
+  --color-brand-active: var(--color-brand-active);
+  --color-brand-fg: var(--color-brand-fg);
+  --color-brand-accent: var(--color-brand-accent);
+  --color-brand-halo: var(--color-brand-halo);
+
+  --color-danger: var(--color-danger);
+  --color-success: var(--color-success);
+  --color-third-party: var(--color-third-party);
+
+  --color-art-coral: var(--ps-art-coral);
+  --color-art-peach: var(--ps-art-peach);
+  --color-art-amber: var(--ps-art-amber);
+  --color-art-violet: var(--ps-art-violet);
+  --color-art-lilac: var(--ps-art-lilac);
+
+  --radius-control: var(--radius-control);
+  --radius-card: var(--radius-card);
+  --radius-panel: var(--radius-panel);
+
+  --spacing-control: var(--size-control);
+  --spacing-auth-column: var(--width-auth-column);
+
+  /* Type ramp. Figma sizes normalised to web scale — one place to retune. */
+  --text-heading: 1.5rem; /* 24px — screen titles */
+  --text-heading--line-height: 1.3;
+  --text-heading--letter-spacing: -0.01em;
+
+  --text-body: 0.875rem; /* 14px — body, labels, inputs */
+  --text-body--line-height: 1.5;
+
+  --text-action: 1rem; /* 16px — button labels */
+  --text-action--line-height: 1.25;
+
+  --text-help: 0.8125rem; /* 13px — helper text under fields */
+  --text-help--line-height: 1.45;
+
+  --text-fine: 0.75rem; /* 12px — footer, legal, meta */
+  --text-fine--line-height: 1.4;
+
+  --font-sans: var(--font-ibm-plex-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* -------------------------------------------------------------------------
+   Base
+   ------------------------------------------------------------------------- */
+@layer base {
+  body {
+    background-color: var(--color-page);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* One consistent, visible focus ring everywhere. Never remove it without
+     providing a replacement. */
+  :focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
