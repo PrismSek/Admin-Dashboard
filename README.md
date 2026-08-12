@@ -51,4 +51,4 @@ src/
 ```
 
 See [docs/CODING_STANDARDS.md](docs/CODING_STANDARDS.md) for conventions, and
-[AGENTS.md](AGENTS.md) for notes on this Next.js version.
+[AGENTS.md](AGENTS.md) for notes on this Next.js version. 
