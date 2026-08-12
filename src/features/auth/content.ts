@@ -19,7 +19,7 @@ export const authRoutes = {
   invitationExpired: "/invitation/expired",
   suspended: "/suspended",
   /** Post-authentication landing page. */
-  dashboard: "/policies",
+  dashboard: "/dashboard",
 } as const;
 
 /** Legal/support links shown in the footer of every auth screen. */
@@ -113,6 +113,7 @@ export const signedInContent = {
   title: "You're signed in",
   body: ["Your identity has been verified.", "Redirecting you to your PrismSek workspace."],
   status: "Redirecting…",
+  continueManually: "Continue to your workspace",
 } as const;
 
 export const ssoContent = {
