@@ -6,12 +6,14 @@ import { cn } from "@/lib/utils";
 /**
  * All button styling lives in this one variant map. To restyle every button
  * in the app, edit here — never override colours at the call site.
+ *
+ * `size: "default"` is the auth-screen control (44px, 10px radius, full width);
+ * `size: "app"` is the denser signed-in control (36px, 6px radius, auto width).
  */
 const buttonVariants = cva(
   cn(
-    "inline-flex w-full items-center justify-center gap-2 rounded-control",
-    "text-action font-semibold whitespace-nowrap",
-    "transition-colors duration-150",
+    "inline-flex items-center justify-center gap-2 whitespace-nowrap",
+    "font-semibold transition-colors duration-150",
     "disabled:pointer-events-none disabled:opacity-50",
     "[&_svg]:size-4 [&_svg]:shrink-0",
   ),
@@ -20,26 +22,43 @@ const buttonVariants = cva(
       variant: {
         /** Primary call to action — solid brand fill. */
         primary: "bg-brand text-brand-fg hover:bg-brand-hover active:bg-brand-active",
+        /** Signed-in primary. The app screens use the second brand orange. */
+        appPrimary: "bg-brand-accent text-brand-fg hover:brightness-95 active:brightness-90",
         /** Secondary action — white surface with a hairline border. */
         secondary:
           "border border-line bg-card text-ink-strong hover:bg-page active:bg-line-faint",
-        /** Third-party identity providers — same shell, normal weight label. */
+        /** Signed-in secondary. */
+        appSecondary:
+          "border border-hair-strong bg-chrome text-strong hover:bg-hover active:bg-active",
+        /** Destructive action — outlined, never a filled red button. */
+        destructive:
+          "border border-destructive bg-transparent text-destructive hover:bg-destructive/5",
+        /** Third-party identity providers — normal-weight label. */
         provider:
           "border border-line bg-card text-ink font-normal hover:bg-page active:bg-line-faint",
+        /** Text-only action. */
+        ghost: "text-copy hover:bg-hover",
       },
       size: {
-        /** Default control height, meets the WCAG 2.2 minimum target size. */
-        default: "h-control px-4",
+        default: "h-control rounded-control px-4 text-action",
+        app: "h-9 rounded-app px-3.5 text-meta",
+        appSm: "h-8 rounded-app px-3 text-micro",
+      },
+      width: {
+        full: "w-full",
+        auto: "w-auto",
       },
     },
-    defaultVariants: { variant: "primary", size: "default" },
+    defaultVariants: { variant: "primary", size: "default", width: "full" },
   },
 );
 
 export type ButtonProps = ComponentProps<"button"> & VariantProps<typeof buttonVariants>;
 
-export function Button({ className, variant, size, ...props }: ButtonProps) {
-  return <button className={cn(buttonVariants({ variant, size }), className)} {...props} />;
+export function Button({ className, variant, size, width, ...props }: ButtonProps) {
+  return (
+    <button className={cn(buttonVariants({ variant, size, width }), className)} {...props} />
+  );
 }
 
 export { buttonVariants };

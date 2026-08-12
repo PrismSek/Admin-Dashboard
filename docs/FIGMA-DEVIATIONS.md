@@ -1,4 +1,4 @@
-# Figma deviations — sign-in screens
+# Figma deviations
 
 Every place the built sign-in flow differs from the PrismSek Figma file
 ([`84ZFM7Vv9ILAxxs1aWxcgz`](https://www.figma.com/design/84ZFM7Vv9ILAxxs1aWxcgz/PrismSek?node-id=132-2),
@@ -164,11 +164,105 @@ Raised because they are cheaper to design now than to retrofit into a live auth 
 
 ---
 
+---
+
+# Signed-in application
+
+The 44 remaining frames on the same Figma page — Settings, Endpoints and Manage.
+
+## 10. Two brand oranges and two grey ramps — both kept
+
+The auth screens and the signed-in screens do not share a palette:
+
+| | Auth screens | App screens |
+|---|---|---|
+| Primary orange | `#FF4300` | `#F2601A` |
+| Body text | `#222C3A` | `#111827` |
+| Muted text | `#6A727E` | `#667085` |
+| Page background | `#F7F7F7` | `#FAF9F5` (warm) |
+
+Both sets are kept as separate tokens (`--color-brand` / `--color-brand-accent`, and the
+`--ps-ink-*` ramp alongside `--ps-grey-*`) and each is used in its own context, rather than
+silently merging them and changing one half of the product.
+
+**This is worth a decision.** Two primary oranges in one product is almost certainly
+unintended — a user goes from an orange "Sign in" button to a differently-orange "Invite
+user" button within seconds. Pick one and it changes in a single line of `globals.css`.
+
+## 11. App frames are drawn at 1:1 — not rescaled
+
+Unlike the auth frames (§1), the signed-in frames use realistic sizes: 14px nav and table
+text, 13px descriptions, 16px card titles. These were implemented as drawn. The auth
+normalisation happens to land on the same 14px body size, so the two halves now agree.
+
+## 12. Dashboard, Incidents and Policies have no frames
+
+All three are in the sidebar but nothing in the file designs them. The routes exist so the
+shell is navigable, and each renders an explicit "this screen has not been designed yet"
+placeholder rather than invented filler — a fabricated security dashboard would be worse
+than an honest gap, and this keeps the remaining design work visible.
+
+Notably, **Policies has no frames at all** — which is one of the two pillars you described
+for this product.
+
+## 13. Twelve department frames became one parameterised route
+
+The file has a frame per department per tab (Finance/Legal/Engineering/Sales/IT
+Operations/Executive Pilot × users/endpoints). They are the same layout with different
+data, so they are one route — `/manage/[department]?tab=users|endpoints` — pre-rendered for
+all six departments via `generateStaticParams`.
+
+Only the two Finance frames were read in detail; the other ten were treated as data
+variants. If any of them differs structurally, it will need revisiting.
+
+## 14. "Add endpoints" is a drawer, not a page
+
+Frame `Add endpoints` (330:2294) shows a right-hand drawer over the department screen, so
+it is implemented as `?panel=add-endpoints` on that route rather than a separate URL. Same
+for `?panel=add-users`.
+
+## 15. "Add endpoints" removed from the Endpoints header
+
+An earlier pass added an "Add endpoints" button to the Endpoints page header. The design
+has no such button — that page is explicitly labelled a read-only fleet workspace, and
+endpoints join a group from Manage. Removed.
+
+## 16. Table header casing follows the design's inconsistency
+
+The Users and Access table sets its headers in caps (`NAME / EMAIL`); every other table
+uses sentence case. Reproduced as drawn via `<THead case="caps">`, but it is more likely an
+oversight than intent — worth unifying.
+
+## 17. Dialogs and wizard steps live in the URL
+
+Invite/suspend/delete user, change password, the add-members drawer and the four SAML setup
+steps are all driven by search params (`?dialog=`, `?panel=`, `?step=`). This keeps them
+server-rendered and shareable, and makes the wizard's "your progress is saved" promise real
+rather than cosmetic.
+
+## 18. Not built
+
+- **`Endpoints more filters` (297:7296)** — the "More filters" button renders but does not
+  open the panel.
+- **`Endpoints-deployment drop down` (302:2286)** — deployment stage rows show the chevron
+  but do not expand.
+- **Four duplicate `Endpoints` frames** (294:5813, 294:6162, 294:6511, 294:6860) — appear
+  to be filter/pagination variants of the same list, already covered by the live filters.
+- **`Background` (281:4126)** — could not tell what screen this is meant to be.
+
+---
+
 ## Status of the build
 
-Frontend only, as scoped. No auth API exists yet, so every submit validates with its zod
-schema and then advances the flow; nothing authenticates. Each stub is commented at the
-call site with what it should do instead.
+Frontend only, as scoped. No API exists, so forms validate with their zod schema and then
+advance; nothing persists. Every stub is commented at the call site with what it should do
+instead, including the ones that matter: SSO activation must refuse unless the connection
+test passed, org/user deletion must require typed confirmation, and password reset must not
+reveal whether an account exists.
 
-`pnpm verify` (lint, typecheck, test, build) passes. All 12 routes render with no console
-errors, checked at 1440×900.
+Data is fetched in Server Components from `server-only` modules, so swapping fixtures for
+real API calls does not change any component. Filters, tabs, pagination, dialogs and wizard
+steps are all URL state.
+
+`pnpm verify` (lint, typecheck, test, build) passes. All 30 routes render with no console
+errors, checked at 1440×900 and 1500×950.

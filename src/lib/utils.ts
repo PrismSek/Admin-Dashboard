@@ -12,10 +12,29 @@ import { extendTailwindMerge } from "tailwind-merge";
 const twMerge = extendTailwindMerge({
   extend: {
     classGroups: {
-      "font-size": [{ text: ["heading", "body", "action", "help", "fine"] }],
+      "font-size": [
+        {
+          text: [
+            // auth ramp
+            "heading",
+            "body",
+            "action",
+            "help",
+            "fine",
+            // app ramp
+            "page-title",
+            "section",
+            "stat",
+            "app",
+            "meta",
+            "micro",
+          ],
+        },
+      ],
       "text-color": [
         {
           text: [
+            // auth
             "title",
             "ink",
             "ink-strong",
@@ -30,6 +49,19 @@ const twMerge = extendTailwindMerge({
             "danger",
             "success",
             "third-party",
+            // app shell
+            "strong",
+            "dim",
+            "copy",
+            "link",
+            "destructive",
+            "state-ok",
+            "state-warn",
+            "state-unknown",
+            "pill-ok-fg",
+            "pill-neutral-fg",
+            "pill-warn-fg",
+            "pill-info-fg",
           ],
         },
       ],
