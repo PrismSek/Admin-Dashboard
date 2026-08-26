@@ -1,10 +1,9 @@
+import { serverEnv } from "@/env";
 import { CALLBACK_PATH, GATEWAY_START_PATH, NONCE_QUERY_PARAM } from "./constants";
 
 /** The admin-plane gateway origin (e.g. https://staging-gw.prismsek.com). Server-only env. */
 export function gatewayOrigin(): string {
-  const origin = process.env.GATEWAY_ORIGIN;
-  if (!origin) throw new Error("GATEWAY_ORIGIN is not set");
-  return origin.replace(/\/+$/, "");
+  return serverEnv().GATEWAY_ORIGIN.replace(/\/+$/, "");
 }
 
 /**
