@@ -10,6 +10,8 @@ export const authRoutes = {
   signIn: "/sign-in",
   password: "/sign-in/password",
   sso: "/sign-in/sso",
+  /** Our own endpoint that mints the nonce and redirects to the gateway. */
+  googleStart: "/api/auth/google/start",
   signedIn: "/sign-in/success",
   signUp: "/sign-up",
   forgotPassword: "/forgot-password",
@@ -43,6 +45,8 @@ export const signInContent = {
   dividerLabel: "or",
   google: "Continue with Google",
   github: "Continue with GitHub",
+  googleError: "Google sign-in didn't work. Please try again.",
+  googleSigningIn: "Signing you in…",
   noAccount: "Don't have an account?",
   createAccount: "Create account",
 } as const;
