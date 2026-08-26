@@ -25,7 +25,7 @@
    1. PALETTE — raw values. Add new brand colours here, not in components.
    ------------------------------------------------------------------------- */
 :root {
-  --ps-orange-600: #ff4300; /* primary actions, links, error text */
+  --ps-orange-600: #e04f27; /* primary actions, links, error text */
   --ps-orange-500: #f2601a; /* logo mark, status icons */
   --ps-orange-050: #fdece1; /* status icon halo */
 
@@ -49,7 +49,7 @@
 
   /* --- App-shell palette -------------------------------------------------
      The signed-in screens in Figma use a different, cooler grey ramp than the
-     auth screens, plus a second brand orange (#F2601A vs #FF4300). Both are
+     auth screens, plus a second brand orange (#F2601A vs #E04F27). Both are
      kept rather than silently merged — see docs/FIGMA-DEVIATIONS.md §10. */
   --ps-app-canvas: #faf9f5; /* warm page background */
   --ps-ink-900: #111827;
@@ -98,13 +98,13 @@
   --color-line-faint: var(--ps-grey-100);
 
   --color-brand: var(--ps-orange-600);
-  --color-brand-hover: #e63c00;
-  --color-brand-active: #cc3600;
+  --color-brand-hover: #c54622;
+  --color-brand-active: #aa3c1e;
   --color-brand-fg: var(--ps-white); /* text on brand fill */
   --color-brand-accent: var(--ps-orange-500);
   --color-brand-halo: var(--ps-orange-050);
 
-  /* Danger currently equals brand — the Figma error text uses #FF4300.
+  /* Danger currently equals brand — the Figma error text uses #E04F27.
      Kept as its own token so error styling can diverge without touching
      any component. */
   --color-danger: var(--ps-orange-600);

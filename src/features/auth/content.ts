@@ -41,7 +41,6 @@ export const signInContent = {
   emailPlaceholder: "Enter your work email",
   submit: "Continue",
   dividerLabel: "or",
-  sso: "Continue with SSO",
   google: "Continue with Google",
   github: "Continue with GitHub",
   noAccount: "Don't have an account?",

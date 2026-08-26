@@ -68,7 +68,7 @@ misleading when picking up the work.
 ## 4. Link colour unified to brand orange
 
 **Figma:** "Forgot password?" is `#4285F4` and "Contact Administrator" is the same blue,
-while every other link is brand orange `#FF4300`.
+while every other link is brand orange `#E04F27`.
 
 **Built:** all links use `--color-brand`.
 
@@ -144,10 +144,16 @@ and swap the component's body for an `<Image>` — the layout around it does not
   title, but a page with no heading is a real accessibility defect.
 - **Form column is centred** in the left half. Figma places it slightly right of centre
   (starting at x=280 of a 720px half).
-- **Error text** uses `--color-danger`, which currently resolves to the same `#FF4300` as
+- **Error text** uses `--color-danger`, which currently resolves to the same `#E04F27` as
   the primary button, exactly as in Figma. It is a separate token so error styling can
   diverge later without touching a component — worth doing, since an error message and a
   call-to-action currently share a colour.
+- **"Continue with SSO" button removed from the sign-in home screen.** The Figma home
+  frame (`388:3733`) lists SSO / Google / GitHub below the "or" divider; the SSO button was
+  dropped at the product owner's request, leaving Google and GitHub. Only the shortcut
+  button is gone — the `/sign-in/sso` handoff screen and the `authRoutes.sso` route are
+  unchanged, still reached from the identifier-first flow once the auth API routes an
+  SSO-required org there.
 
 ---
 
@@ -176,7 +182,7 @@ The auth screens and the signed-in screens do not share a palette:
 
 | | Auth screens | App screens |
 |---|---|---|
-| Primary orange | `#FF4300` | `#F2601A` |
+| Primary orange | `#E04F27` | `#F2601A` |
 | Body text | `#222C3A` | `#111827` |
 | Muted text | `#6A727E` | `#667085` |
 | Page background | `#F7F7F7` | `#FAF9F5` (warm) |

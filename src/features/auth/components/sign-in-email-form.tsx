@@ -69,7 +69,7 @@ export function SignInEmailForm() {
         <span className="h-px flex-1 bg-line" />
       </div>
 
-      <ProviderButtons ssoHref={authRoutes.sso} />
+      <ProviderButtons />
 
       <p className="border-t border-line pt-6 text-center text-body text-ink">
         {signInContent.noAccount}{" "}

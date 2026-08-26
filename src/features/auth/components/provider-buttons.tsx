@@ -1,7 +1,4 @@
-import { Landmark } from "lucide-react";
-import Link from "next/link";
-
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { signInContent } from "@/features/auth/content";
 
 /**
@@ -41,18 +38,15 @@ function GitHubMark() {
 }
 
 /**
- * The three alternative sign-in methods below the divider on the sign-in
- * screen. Wire each handler to the corresponding OAuth/SAML entry point once
- * the PrismSek auth API is available.
+ * The alternative sign-in methods below the divider on the sign-in screen:
+ * Google and GitHub. A "Continue with SSO" button was removed at the product
+ * owner's request (see docs/FIGMA-DEVIATIONS.md) — the SSO handoff screen
+ * itself is unchanged. Wire each handler to the corresponding OAuth entry
+ * point once the PrismSek auth API is available.
  */
-export function ProviderButtons({ ssoHref }: { ssoHref: string }) {
+export function ProviderButtons() {
   return (
     <div className="flex flex-col gap-3">
-      <Link href={ssoHref} className={buttonVariants({ variant: "provider" })}>
-        <Landmark aria-hidden />
-        {signInContent.sso}
-      </Link>
-
       <Button variant="provider" type="button">
         <GoogleMark />
         {signInContent.google}
