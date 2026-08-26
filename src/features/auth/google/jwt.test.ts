@@ -22,4 +22,8 @@ describe("accessTokenMaxAgeSeconds", () => {
     const badExp = `${b64url("{}")}.${b64url(JSON.stringify({ exp: "soon" }))}.sig`;
     expect(accessTokenMaxAgeSeconds(badExp, 400, 3600)).toBe(3600);
   });
+  it("falls back when exp is a non-finite number", () => {
+    const infExp = `${b64url("{}")}.${b64url('{"exp":1e999}')}.sig`; // 1e999 -> Infinity via JSON.parse
+    expect(accessTokenMaxAgeSeconds(infExp, 400, 3600)).toBe(3600);
+  });
 });

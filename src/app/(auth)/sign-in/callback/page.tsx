@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 import { StatusLine } from "@/features/auth/components/spinner";
@@ -16,8 +16,12 @@ import { parseSessionFragment } from "@/features/auth/google/fragment";
  */
 export default function GoogleCallbackPage() {
   const router = useRouter();
+  const started = useRef(false);
 
   useEffect(() => {
+    if (started.current) return;
+    started.current = true;
+
     const fail = () => router.replace(`${authRoutes.signIn}?error=google`);
 
     const tokens = parseSessionFragment(window.location.hash);

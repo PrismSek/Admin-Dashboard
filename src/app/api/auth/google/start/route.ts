@@ -19,8 +19,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       maxAge: NONCE_MAX_AGE_SECONDS,
     });
     return res;
-  } catch {
-    // GATEWAY_ORIGIN missing/misconfigured — fail to the generic error.
+  } catch (error) {
+    // GATEWAY_ORIGIN missing/misconfigured is the expected cause; log any other so a real fault isn't silently masked.
+    console.error("google sign-in start failed", error);
     return NextResponse.redirect(new URL(`${authRoutes.signIn}?error=google`, request.url));
   }
 }
