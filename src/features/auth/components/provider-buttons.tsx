@@ -1,5 +1,5 @@
-import { Button } from "@/components/ui/button";
-import { signInContent } from "@/features/auth/content";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { authRoutes, signInContent } from "@/features/auth/content";
 
 /**
  * Third-party marks are inlined rather than pulled from an icon set: Google
@@ -47,10 +47,10 @@ function GitHubMark() {
 export function ProviderButtons() {
   return (
     <div className="flex flex-col gap-3">
-      <Button variant="provider" type="button">
+      <a href={authRoutes.googleStart} className={buttonVariants({ variant: "provider" })}>
         <GoogleMark />
         {signInContent.google}
-      </Button>
+      </a>
 
       <Button variant="provider" type="button">
         <GitHubMark />
