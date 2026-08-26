@@ -20,7 +20,7 @@ describe("GET /api/auth/google/start", () => {
 
     const setCookie = res.headers.get("set-cookie")!;
     expect(setCookie).toContain("HttpOnly");
-    expect(setCookie).toContain("SameSite=Lax");
+    expect(setCookie.toLowerCase()).toContain("samesite=lax");
     expect(setCookie).toContain("Max-Age=600");
   });
 

@@ -14,7 +14,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     res.cookies.set(NONCE_COOKIE, nonce, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "Lax" as any,
+      sameSite: "lax",
       path: "/",
       maxAge: NONCE_MAX_AGE_SECONDS,
     });
