@@ -18,4 +18,8 @@ describe("accessTokenMaxAgeSeconds", () => {
   it("falls back for a malformed token", () => {
     expect(accessTokenMaxAgeSeconds("not-a-jwt", 400, 3600)).toBe(3600);
   });
+  it("falls back when exp is present but not a finite number", () => {
+    const badExp = `${b64url("{}")}.${b64url(JSON.stringify({ exp: "soon" }))}.sig`;
+    expect(accessTokenMaxAgeSeconds(badExp, 400, 3600)).toBe(3600);
+  });
 });

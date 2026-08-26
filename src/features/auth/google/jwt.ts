@@ -1,3 +1,7 @@
+import { z } from "zod";
+
+const expSchema = z.object({ exp: z.number().finite() });
+
 /**
  * Seconds until the access JWT's `exp`, used only to size the session cookie —
  * the gateway verifies the signature when the token is actually used. Returns
@@ -17,12 +21,12 @@ export function accessTokenMaxAgeSeconds(
 function readJwtExp(token: string): number | null {
   const parts = token.split(".");
   if (parts.length !== 3) return null;
+  let payload: unknown;
   try {
-    const payload = JSON.parse(Buffer.from(parts[1], "base64url").toString("utf8")) as {
-      exp?: unknown;
-    };
-    return typeof payload.exp === "number" ? payload.exp : null;
+    payload = JSON.parse(Buffer.from(parts[1], "base64url").toString("utf8"));
   } catch {
     return null;
   }
+  const result = expSchema.safeParse(payload);
+  return result.success ? result.data.exp : null;
 }
