@@ -36,7 +36,7 @@ export default async function ProfileSettingsPage({
   return (
     <PageBody className="max-w-5xl">
       <div className="flex items-start justify-between gap-6">
-        <h1 className="text-page-title text-strong">Personal information</h1>
+        <h1 className="text-page-title font-normal text-strong">Personal information</h1>
         <Button variant="appPrimary" size="app" width="auto" type="button">
           Save changes
         </Button>
@@ -46,7 +46,7 @@ export default async function ProfileSettingsPage({
         <div className="flex items-start gap-6">
           <span
             aria-hidden
-            className="flex size-16 shrink-0 items-center justify-center rounded-full bg-brand-halo text-section font-semibold text-brand-accent"
+            className="flex size-16 shrink-0 items-center justify-center rounded-full bg-brand-halo text-stat font-semibold text-brand-accent"
           >
             {user.initials}
           </span>
@@ -61,7 +61,7 @@ export default async function ProfileSettingsPage({
           </AppField>
         </div>
 
-        <div className="mt-6 grid divide-y divide-hair rounded-app border border-hair sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+        <div className="mt-6 grid divide-y divide-hair rounded-app border border-hair bg-hover sm:grid-cols-3 sm:divide-x sm:divide-y-0">
           <ManagedField label="Email" value={user.email} />
           <ManagedField label="Organization" value={organization.name} />
           <ManagedField label="Role" value={user.role} />
@@ -72,7 +72,7 @@ export default async function ProfileSettingsPage({
         </p>
       </Card>
 
-      <h2 className="mt-10 text-page-title text-strong">Account and access</h2>
+      <h2 className="mt-10 text-page-title font-normal text-strong">Account and access</h2>
 
       <Card className="mt-6 p-6">
         <div className="flex items-start justify-between gap-6">

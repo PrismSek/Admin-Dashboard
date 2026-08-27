@@ -25,7 +25,9 @@ describe("POST /api/auth/session", () => {
     expect(res.cookies.get(REFRESH_COOKIE)?.value).toBe("r1");
     const setCookie = res.headers.get("set-cookie")!;
     expect(setCookie).toContain("HttpOnly");
-    expect(setCookie.toLowerCase()).toContain("samesite=strict");
+    // Lax so the session survives a top-level navigation into the app (a new
+    // tab / bookmark); Strict would force a re-login there. See session.ts.
+    expect(setCookie.toLowerCase()).toContain("samesite=lax");
   });
 
   it("returns 403 on a mismatched nonce", async () => {

@@ -15,7 +15,7 @@ export function Card({
   return (
     <section
       className={cn(
-        "rounded-app border bg-chrome",
+        "rounded-card border bg-chrome",
         tone === "destructive" ? "border-destructive/40" : "border-hair-strong",
         className,
       )}

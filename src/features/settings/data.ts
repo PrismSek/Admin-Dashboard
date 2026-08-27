@@ -15,14 +15,14 @@ export type OrgUser = {
   status: UserStatus;
 };
 
+export type InvitationStatus = "pending" | "accepted" | "revoked" | "expired";
+
 export type Invitation = {
   id: string;
   email: string;
   role: string;
-  invitedBy: string;
+  status: InvitationStatus;
   sentOn: string;
-  expiresOn: string;
-  expiringSoon: boolean;
 };
 
 export type AttentionItem = {
@@ -92,12 +92,12 @@ const users: OrgUser[] = [
 ];
 
 const invitations: Invitation[] = [
-  { id: "i1", email: "noor.haddad@northwind.example", role: "Analyst", invitedBy: "Amara Osei", sentOn: "10 Aug 2026", expiresOn: "14 Aug 2026", expiringSoon: true },
-  { id: "i2", email: "elias.berg@northwind.example", role: "Viewer", invitedBy: "Amara Osei", sentOn: "10 Aug 2026", expiresOn: "14 Aug 2026", expiringSoon: true },
-  { id: "i3", email: "mira.kovac@northwind.example", role: "Analyst", invitedBy: "Devan Rao", sentOn: "08 Aug 2026", expiresOn: "22 Aug 2026", expiringSoon: false },
-  { id: "i4", email: "otto.lindqvist@northwind.example", role: "Auditor", invitedBy: "Devan Rao", sentOn: "07 Aug 2026", expiresOn: "21 Aug 2026", expiringSoon: false },
-  { id: "i5", email: "sana.iqbal@northwind.example", role: "Viewer", invitedBy: "Hannah Beck", sentOn: "05 Aug 2026", expiresOn: "19 Aug 2026", expiringSoon: false },
-  { id: "i6", email: "theo.mensah@northwind.example", role: "Analyst", invitedBy: "Hannah Beck", sentOn: "04 Aug 2026", expiresOn: "18 Aug 2026", expiringSoon: false },
+  { id: "i1", email: "omar.sadiq@northwind.example", role: "Analyst", status: "pending", sentOn: "2 Aug 2026" },
+  { id: "i2", email: "k.oyelaran@northwind.example", role: "Auditor", status: "pending", sentOn: "31 Jul 2026" },
+  { id: "i3", email: "tomas.vela@northwind.example", role: "Analyst", status: "accepted", sentOn: "18 Jan 2026" },
+  { id: "i4", email: "contractor@vendor.example", role: "Auditor", status: "revoked", sentOn: "4 Jul 2026" },
+  { id: "i5", email: "j.mbeki@northwind.example", role: "Policy Admin", status: "expired", sentOn: "11 Jun 2026" },
+  { id: "i6", email: "priya.nair@northwind.example", role: "Analyst", status: "accepted", sentOn: "4 Jul 2025" },
 ];
 
 /** Roles offered in the invite dialog and the role filter. */

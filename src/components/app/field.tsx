@@ -57,7 +57,7 @@ export function AppField({
 }) {
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
-      <label htmlFor={id} className="text-meta font-semibold text-strong">
+      <label htmlFor={id} className="text-meta font-semibold text-label">
         {label}
       </label>
       {children}

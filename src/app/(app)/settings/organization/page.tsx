@@ -62,7 +62,7 @@ export default async function OrganizationSettingsPage() {
                 <AppInput id="legal-name" defaultValue={organization.legalName} />
               </AppField>
 
-              <Button variant="appPrimary" size="app" width="auto" type="button">
+              <Button variant="appPrimary" size="app" width="auto" type="button" className="self-start">
                 Save Changes
               </Button>
             </div>

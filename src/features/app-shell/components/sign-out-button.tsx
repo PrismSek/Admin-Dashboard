@@ -2,17 +2,29 @@
 
 import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 import { authApiRoutes, authRoutes } from "@/features/auth/content";
+
+const defaultClasses =
+  "flex size-9 items-center justify-center rounded-app text-copy transition-colors hover:bg-hover disabled:opacity-50 [&_svg]:size-[18px]";
 
 /**
  * Ends the session and returns to sign-in. POSTs to our logout route (which
  * revokes the refresh token and clears the cookies) then navigates — always
  * landing on sign-in even if the network call fails, so signing out never
  * appears to hang.
+ *
+ * `className` / `children` let the same action render as a bare icon or as a
+ * labelled row (the sidebar's "Log out"), so the sign-out logic lives once.
  */
-export function SignOutButton() {
+export function SignOutButton({
+  className,
+  children,
+}: {
+  className?: string;
+  children?: ReactNode;
+}) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
 
@@ -33,9 +45,9 @@ export function SignOutButton() {
       aria-label="Sign out"
       disabled={busy}
       onClick={signOut}
-      className="flex size-9 items-center justify-center rounded-app text-copy transition-colors hover:bg-hover disabled:opacity-50 [&_svg]:size-[18px]"
+      className={className ?? defaultClasses}
     >
-      <LogOut aria-hidden />
+      {children ?? <LogOut aria-hidden />}
     </button>
   );
 }

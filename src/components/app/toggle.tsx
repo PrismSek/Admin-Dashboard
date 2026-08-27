@@ -17,8 +17,8 @@ export function Toggle({ className, ...props }: ToggleProps) {
         type="checkbox"
         className={cn(
           "peer h-6 w-11 cursor-pointer appearance-none rounded-full",
-          "bg-hair-strong transition-colors",
-          "checked:bg-state-ok",
+          "bg-line-strong transition-colors",
+          "checked:bg-success",
           className,
         )}
         {...props}

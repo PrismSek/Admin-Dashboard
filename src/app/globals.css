@@ -51,7 +51,7 @@
      The signed-in screens in Figma use a different, cooler grey ramp than the
      auth screens, plus a second brand orange (#F2601A vs #E04F27). Both are
      kept rather than silently merged — see docs/FIGMA-DEVIATIONS.md §10. */
-  --ps-app-canvas: #faf9f5; /* warm page background */
+  --ps-app-canvas: #f5f6f8; /* cool page background (Figma 2026-08-25, was #faf9f5) */
   --ps-ink-900: #111827;
   --ps-ink-700: #4b5563;
   --ps-ink-600: #667085;
@@ -64,9 +64,21 @@
   --ps-green-900: #0e6027;
   --ps-green-800: #166534;
   --ps-green-200: #a7f0ba;
+  --ps-green-050: #e8f5ea; /* light "Connected/Active" pill fill */
   --ps-blue-600: #3b6bc9;
   --ps-orange-200: #f2c4a3;
   --ps-red-600: #dc2626;
+
+  /* --- App sidebar palette ----------------------------------------------
+     The signed-in chrome was redrawn as dark navy with a teal active accent
+     (Figma file, modified 2026-08-25). These are the raw nav colours. */
+  --ps-nav-950: #0e1420; /* sidebar background */
+  --ps-nav-900: #182130; /* active sub-item background */
+  --ps-nav-800: #1b2330; /* sidebar divider */
+  --ps-nav-500: #5c6879; /* section labels (OVERVIEW / ACCOUNT) */
+  --ps-nav-400: #8792a3; /* idle nav items */
+  --ps-nav-050: #edf1f5; /* active sub-item text */
+  --ps-teal-400: #59e9df; /* sidebar active accent */
 
   /* Decorative gradient artwork on the split layout */
   --ps-art-coral: #ff5f6d;
@@ -101,7 +113,11 @@
   --color-brand-hover: #c54622;
   --color-brand-active: #aa3c1e;
   --color-brand-fg: var(--ps-white); /* text on brand fill */
-  --color-brand-accent: var(--ps-orange-500);
+  /* Unified to the sign-in orange (#E04F27) per product decision — the app used
+     a second orange (#F2601A) that Figma has since dropped for buttons and
+     links. Change the primary orange for the WHOLE product on this one line.
+     #F2601A survives as --ps-orange-500 only for the logo mark and warn state. */
+  --color-brand-accent: var(--ps-orange-600);
   --color-brand-halo: var(--ps-orange-050);
 
   /* Danger currently equals brand — the Figma error text uses #E04F27.
@@ -125,15 +141,26 @@
   --color-active: var(--ps-hair-100); /* selected nav item */
   --color-link: var(--ps-blue-600); /* secondary text links */
 
+  /* Sidebar (dark navy chrome) */
+  --color-nav-bg: var(--ps-nav-950);
+  --color-nav-surface: var(--ps-nav-900); /* active sub-item fill */
+  --color-nav-divider: var(--ps-nav-800);
+  --color-nav-label: var(--ps-nav-500); /* section headers */
+  --color-nav-idle: var(--ps-nav-400); /* idle item ink */
+  --color-nav-active-ink: var(--ps-nav-050); /* active sub-item ink */
+  --color-nav-accent: var(--ps-teal-400); /* active top-level item */
+
   /* Status pills */
-  --color-pill-ok-bg: var(--ps-green-200);
-  --color-pill-ok-fg: var(--ps-green-900);
+  --color-pill-ok-bg: var(--ps-green-050);
+  --color-pill-ok-fg: var(--ps-green-800);
   --color-pill-neutral-bg: var(--ps-hair-200);
   --color-pill-neutral-fg: var(--ps-ink-700);
   --color-pill-warn-bg: #fdece1;
   --color-pill-warn-fg: #9a3412;
-  --color-pill-info-bg: #e6edfb;
+  --color-pill-info-bg: #eaf1fb;
   --color-pill-info-fg: var(--ps-blue-600);
+  --color-pill-pending-bg: #fdece9; /* invitation "Pending" — light red */
+  --color-pill-pending-fg: #b42318;
 
   /* Status dots / inline state */
   --color-state-ok: var(--ps-green-800);
@@ -216,6 +243,14 @@
   --color-active: var(--color-active);
   --color-link: var(--color-link);
 
+  --color-nav-bg: var(--color-nav-bg);
+  --color-nav-surface: var(--color-nav-surface);
+  --color-nav-divider: var(--color-nav-divider);
+  --color-nav-label: var(--color-nav-label);
+  --color-nav-idle: var(--color-nav-idle);
+  --color-nav-active-ink: var(--color-nav-active-ink);
+  --color-nav-accent: var(--color-nav-accent);
+
   --color-pill-ok-bg: var(--color-pill-ok-bg);
   --color-pill-ok-fg: var(--color-pill-ok-fg);
   --color-pill-neutral-bg: var(--color-pill-neutral-bg);
@@ -224,6 +259,8 @@
   --color-pill-warn-fg: var(--color-pill-warn-fg);
   --color-pill-info-bg: var(--color-pill-info-bg);
   --color-pill-info-fg: var(--color-pill-info-fg);
+  --color-pill-pending-bg: var(--color-pill-pending-bg);
+  --color-pill-pending-fg: var(--color-pill-pending-fg);
 
   --color-state-ok: var(--color-state-ok);
   --color-state-warn: var(--color-state-warn);
@@ -235,8 +272,10 @@
 
   /* App type ramp — the signed-in frames are drawn at ~1:1, so these are
      taken from Figma directly rather than normalised like the auth ramp. */
-  --text-page-title: 1.75rem; /* 28px — page <h1> */
-  --text-page-title--line-height: 1.2;
+  --text-page-title: 1.5rem; /* 24px — page <h1> (Figma 2026-08-25, was 28px) */
+  --text-page-title--line-height: 1.4;
+  --text-app-heading: 1.25rem; /* 20px — page-level section headings (regular weight) */
+  --text-app-heading--line-height: 1.4;
   --text-section: 1rem; /* 16px — card section titles */
   --text-section--line-height: 1.3;
   --text-stat: 1.25rem; /* 20px — stat tile figures */
@@ -247,6 +286,14 @@
   --text-meta--line-height: 1.45;
   --text-micro: 0.75rem; /* 12px — column headers, pills */
   --text-micro--line-height: 1.35;
+
+  /* Sidebar type — Figma sizes for the dark nav (2026-08-25). */
+  --text-nav: 0.875rem; /* 14px — top-level items */
+  --text-nav--line-height: 1.3;
+  --text-nav-sub: 0.84375rem; /* 13.5px — Settings sub-items */
+  --text-nav-sub--line-height: 1.26;
+  --text-nav-section: 0.6875rem; /* 11px — OVERVIEW / ACCOUNT headers */
+  --text-nav-section--line-height: 1.3;
 
   --color-art-coral: var(--ps-art-coral);
   --color-art-peach: var(--ps-art-peach);

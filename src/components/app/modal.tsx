@@ -49,7 +49,7 @@ export function Modal({
         window.location.href = closeHref;
       }}
       className={cn(
-        "m-auto w-[calc(100vw-2rem)] rounded-app border border-hair-strong bg-chrome p-0",
+        "m-auto w-[calc(100vw-2rem)] rounded-card border border-hair-strong bg-chrome p-0",
         "text-strong backdrop:bg-black/40",
         size === "wide" ? "max-w-2xl" : "max-w-lg",
       )}

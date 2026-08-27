@@ -30,14 +30,14 @@ export function setSessionCookies(
   res.cookies.set(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: secure(),
-    sameSite: "strict",
+    sameSite: "lax",
     path: "/",
     maxAge: accessTokenMaxAgeSeconds(token, nowSeconds, ACCESS_FALLBACK_MAX_AGE_SECONDS),
   });
   res.cookies.set(REFRESH_COOKIE, refreshToken, {
     httpOnly: true,
     secure: secure(),
-    sameSite: "strict",
+    sameSite: "lax",
     path: "/",
     maxAge: REFRESH_MAX_AGE_SECONDS,
   });
@@ -49,7 +49,7 @@ export function clearSessionCookies(res: NextResponse): void {
     res.cookies.set(name, "", {
       httpOnly: true,
       secure: secure(),
-      sameSite: "strict",
+      sameSite: "lax",
       path: "/",
       maxAge: 0,
     });

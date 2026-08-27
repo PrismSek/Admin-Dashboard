@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { Card } from "@/components/app/card";
-import { PageBody, PageHeader } from "@/components/app/page-header";
+import { PageBody, PageHeader, SectionHeading } from "@/components/app/page-header";
 import { Pill } from "@/components/app/pill";
 import { getOrganization } from "@/features/app-shell/data";
 import {
@@ -39,7 +39,7 @@ export default async function SettingsOverviewPage() {
 
       <section className="mt-10">
         <div className="flex items-center justify-between">
-          <h2 className="text-section font-medium text-strong">Needs attention</h2>
+          <SectionHeading>Needs attention</SectionHeading>
           <Link href="/settings/notifications" className="text-meta text-link hover:underline">
             View all ({attention.length + 3})
           </Link>
@@ -53,7 +53,7 @@ export default async function SettingsOverviewPage() {
       </section>
 
       <section className="mt-10">
-        <h2 className="text-section font-medium text-strong">Settings categories</h2>
+        <SectionHeading>Settings categories</SectionHeading>
         <div className="mt-4 grid gap-4 lg:grid-cols-2">
           {categories.map((category) => (
             <CategoryCard key={category.href} category={category} />

@@ -2,6 +2,10 @@
  * The app's navigation tree — the single source of truth for sidebar
  * structure, labels, icons and URLs. Add a section here and the sidebar,
  * active-state highlighting and breadcrumbs all follow.
+ *
+ * The signed-in sidebar (Figma, 2026-08-25) groups items under labelled
+ * sections — OVERVIEW and ACCOUNT — so the tree is a list of sections rather
+ * than a flat list.
  */
 import {
   AlertTriangle,
@@ -21,6 +25,12 @@ export type NavItem = {
   icon: LucideIcon;
   /** When present the item is a collapsible group. */
   children?: NavChild[];
+};
+
+export type NavSection = {
+  /** Shown as an uppercase section header above the items. */
+  label: string;
+  items: NavItem[];
 };
 
 /** Departments under Manage. Slugs are used in `/manage/[department]`. */
@@ -44,16 +54,24 @@ export const settingsNav: NavChild[] = [
   { label: "Profile", href: "/settings/profile" },
 ];
 
-export const primaryNav: NavItem[] = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutGrid },
-  { label: "Incidents", href: "/incidents", icon: AlertTriangle },
-  { label: "Policies", href: "/policies", icon: Shield },
+export const navSections: NavSection[] = [
   {
-    label: "Manage",
-    href: "/manage",
-    icon: FolderCog,
-    children: departments.map((d) => ({ label: d.label, href: `/manage/${d.slug}` })),
+    label: "Overview",
+    items: [
+      { label: "Dashboard", href: "/dashboard", icon: LayoutGrid },
+      { label: "Incidents", href: "/incidents", icon: AlertTriangle },
+      { label: "Policies", href: "/policies", icon: Shield },
+      {
+        label: "Manage",
+        href: "/manage",
+        icon: FolderCog,
+        children: departments.map((d) => ({ label: d.label, href: `/manage/${d.slug}` })),
+      },
+      { label: "Endpoints", href: "/endpoints", icon: Laptop },
+    ],
   },
-  { label: "Endpoints", href: "/endpoints", icon: Laptop },
-  { label: "Settings", href: "/settings", icon: Sun, children: settingsNav },
+  {
+    label: "Account",
+    items: [{ label: "Settings", href: "/settings", icon: Sun, children: settingsNav }],
+  },
 ];
