@@ -6,10 +6,15 @@ import { signInContent } from "@/features/auth/content";
 
 export const metadata: Metadata = { title: signInContent.title };
 
-export default function SignInPage() {
+export default async function SignInPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error } = await searchParams;
   return (
     <AuthSplitLayout>
-      <SignInEmailForm />
+      <SignInEmailForm error={error === "google" ? signInContent.googleError : undefined} />
     </AuthSplitLayout>
   );
 }

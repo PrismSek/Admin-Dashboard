@@ -10,8 +10,9 @@ export const authRoutes = {
   signIn: "/sign-in",
   password: "/sign-in/password",
   sso: "/sign-in/sso",
+  /** Our own endpoint that mints the nonce and redirects to the gateway. */
+  googleStart: "/api/auth/google/start",
   signedIn: "/sign-in/success",
-  signUp: "/sign-up",
   forgotPassword: "/forgot-password",
   forgotPasswordSent: "/forgot-password/sent",
   resetPassword: "/reset-password",
@@ -20,6 +21,18 @@ export const authRoutes = {
   suspended: "/suspended",
   /** Post-authentication landing page. */
   dashboard: "/dashboard",
+} as const;
+
+/**
+ * Our own auth API route handlers. The browser posts here, never to the
+ * gateway directly, so tokens land in httpOnly cookies (see src/app/api/auth).
+ */
+export const authApiRoutes = {
+  login: "/api/auth/login",
+  logout: "/api/auth/logout",
+  refresh: "/api/auth/refresh",
+  forgotPassword: "/api/auth/password/forgot",
+  resetPassword: "/api/auth/password/reset",
 } as const;
 
 /** Legal/support links shown in the footer of every auth screen. */
@@ -41,11 +54,10 @@ export const signInContent = {
   emailPlaceholder: "Enter your work email",
   submit: "Continue",
   dividerLabel: "or",
-  sso: "Continue with SSO",
   google: "Continue with Google",
-  github: "Continue with GitHub",
-  noAccount: "Don't have an account?",
-  createAccount: "Create account",
+  microsoft: "Continue with Microsoft",
+  googleError: "Google sign-in didn't work. Please try again.",
+  googleSigningIn: "Signing you in…",
 } as const;
 
 export const passwordContent = {
@@ -56,27 +68,6 @@ export const passwordContent = {
   submit: "Sign in",
   useDifferentEmail: "Use a different email",
   invalidCredentials: "Invalid email or password. Please try again.",
-} as const;
-
-export const signUpContent = {
-  title: "Create your account",
-  subtitle: "Get started with PrismSek in minutes",
-  firstNameLabel: "First name",
-  firstNamePlaceholder: "Jae",
-  lastNameLabel: "Last name",
-  lastNamePlaceholder: "Mathew",
-  emailLabel: "Email address",
-  emailPlaceholder: "you@company.com",
-  passwordLabel: "Password",
-  passwordPlaceholder: "Create a password",
-  passwordHint: "Use 8+ characters with a mix of letters, numbers & symbols",
-  termsPrefix: "I agree to the",
-  termsLabel: "Terms of Service",
-  termsJoin: "and",
-  privacyLabel: "Privacy Policy",
-  submit: "Create Account",
-  haveAccount: "Already have an account?",
-  signIn: "Sign in",
 } as const;
 
 export const forgotPasswordContent = {
@@ -107,6 +98,9 @@ export const resetPasswordContent = {
   confirmPlaceholder: "Re-enter password",
   submit: "Set Password",
   backToSignIn: "Back to sign in",
+  linkInvalid: "This link is invalid or has expired. Request a new reset link and try again.",
+  weakPassword: "That password doesn't meet the security policy. Choose a stronger one.",
+  failed: "Something went wrong setting your password. Please try again.",
 } as const;
 
 export const signedInContent = {

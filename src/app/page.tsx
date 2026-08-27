@@ -1,12 +1,18 @@
 import { redirect } from "next/navigation";
 
-import { authRoutes } from "@/features/auth/content";
+import { resolveRootDestination } from "@/features/auth/root-redirect";
 
 /**
- * The dashboard itself is not built yet, so the root sends visitors to sign in.
- * Once authenticated routes exist this should instead check the session and
- * redirect to either the dashboard or sign-in.
+ * The dashboard is not built yet, so the root forwards to sign-in. A failed
+ * Google sign-in returns here as `?signin=failed`; surface it as a generic
+ * sign-in error. Once authenticated routes exist this should also check the
+ * session and choose dashboard vs sign-in.
  */
-export default function HomePage() {
-  redirect(authRoutes.signIn);
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ signin?: string }>;
+}) {
+  const { signin } = await searchParams;
+  redirect(resolveRootDestination(signin));
 }

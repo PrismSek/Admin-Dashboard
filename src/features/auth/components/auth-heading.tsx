@@ -17,7 +17,8 @@ export function AuthHeading({
 }) {
   return (
     <div className={cn("flex flex-col gap-2", className)}>
-      <h1 className="text-heading text-title">{title}</h1>
+      {/* Figma sign-in / password titles are Light (300); see FIGMA-DEVIATIONS §7. */}
+      <h1 className="text-heading font-light text-title">{title}</h1>
       {subtitle ? <p className="text-body text-muted">{subtitle}</p> : null}
     </div>
   );

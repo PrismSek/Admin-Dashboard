@@ -25,7 +25,7 @@
    1. PALETTE — raw values. Add new brand colours here, not in components.
    ------------------------------------------------------------------------- */
 :root {
-  --ps-orange-600: #ff4300; /* primary actions, links, error text */
+  --ps-orange-600: #e04f27; /* primary actions, links, error text */
   --ps-orange-500: #f2601a; /* logo mark, status icons */
   --ps-orange-050: #fdece1; /* status icon halo */
 
@@ -49,7 +49,7 @@
 
   /* --- App-shell palette -------------------------------------------------
      The signed-in screens in Figma use a different, cooler grey ramp than the
-     auth screens, plus a second brand orange (#F2601A vs #FF4300). Both are
+     auth screens, plus a second brand orange (#F2601A vs #E04F27). Both are
      kept rather than silently merged — see docs/FIGMA-DEVIATIONS.md §10. */
   --ps-app-canvas: #faf9f5; /* warm page background */
   --ps-ink-900: #111827;
@@ -98,13 +98,13 @@
   --color-line-faint: var(--ps-grey-100);
 
   --color-brand: var(--ps-orange-600);
-  --color-brand-hover: #e63c00;
-  --color-brand-active: #cc3600;
+  --color-brand-hover: #c54622;
+  --color-brand-active: #aa3c1e;
   --color-brand-fg: var(--ps-white); /* text on brand fill */
   --color-brand-accent: var(--ps-orange-500);
   --color-brand-halo: var(--ps-orange-050);
 
-  /* Danger currently equals brand — the Figma error text uses #FF4300.
+  /* Danger currently equals brand — the Figma error text uses #E04F27.
      Kept as its own token so error styling can diverge without touching
      any component. */
   --color-danger: var(--ps-orange-600);
@@ -279,6 +279,55 @@
   --text-fine--line-height: 1.4;
 
   --font-sans: var(--font-ibm-plex-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* -------------------------------------------------------------------------
+   Auth screens — literal Figma type scale
+   -------------------------------------------------------------------------
+   The sign-in frames are drawn at ~0.7× web scale (see FIGMA-DEVIATIONS §1).
+   These screens opt into Figma's exact sizes for their subtree only, without
+   touching the signed-in app that shares the same UI controls at 1:1.
+
+   Control height and column width resolve through a `var()` chain, so a scoped
+   variable override retargets them. The type ramp, however, is compiled by
+   `@theme inline` (literal sizes baked into the utilities), so it is re-pointed
+   by overriding the utility classes here — unlayered, so they win over the
+   Tailwind utility layer.
+   ------------------------------------------------------------------------- */
+.auth-scale {
+  --size-control: 2.25rem; /* 36px — Figma input / button height */
+  --width-auth-column: 17.75rem; /* 284px — Figma form column */
+}
+
+.auth-scale .text-heading {
+  font-size: 1.125rem; /* 18px — Figma screen titles */
+  line-height: 1.25; /* 22.5 / 18 */
+  letter-spacing: 0;
+}
+.auth-scale .text-body {
+  font-size: 0.75rem; /* 12px — labels, inputs, provider buttons, body */
+  line-height: 1.33;
+}
+.auth-scale .text-action {
+  font-size: 0.9375rem; /* 15px — primary button label */
+  line-height: 1.0667; /* 16 / 15 */
+}
+.auth-scale .text-help {
+  font-size: 0.75rem; /* 12px — hints / field errors */
+  line-height: 1.35;
+}
+.auth-scale .text-fine {
+  font-size: 0.75rem; /* 12px — footer, legal */
+  line-height: 1.375; /* 16.5 / 12 */
+}
+
+/* Figma draws field labels at Regular and placeholders at Light; the shared
+   FormField/Input default to Medium/Regular for the denser app screens. */
+.auth-scale label {
+  font-weight: 400;
+}
+.auth-scale input::placeholder {
+  font-weight: 300;
 }
 
 /* -------------------------------------------------------------------------

@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { AuthHeading } from "@/features/auth/components/auth-heading";
-import { authRoutes, forgotPasswordContent } from "@/features/auth/content";
+import { authApiRoutes, authRoutes, forgotPasswordContent } from "@/features/auth/content";
 import { forgotPasswordSchema, type ForgotPasswordValues } from "@/features/auth/schemas";
 
 /**
@@ -33,7 +33,19 @@ export function ForgotPasswordForm({ defaultEmail = "" }: { defaultEmail?: strin
     defaultValues: { email: defaultEmail },
   });
 
-  const onSubmit = handleSubmit((values) => {
+  const onSubmit = handleSubmit(async (values) => {
+    // Fire-and-forget: advance to the confirmation whatever happens. Branching
+    // on the result — including a network failure — would turn this into an
+    // account-existence oracle. The endpoint always answers 202.
+    try {
+      await fetch(authApiRoutes.forgotPassword, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email: values.email }),
+      });
+    } catch {
+      // swallowed on purpose — see above
+    }
     router.push(`${authRoutes.forgotPasswordSent}?email=${encodeURIComponent(values.email)}`);
   });
 

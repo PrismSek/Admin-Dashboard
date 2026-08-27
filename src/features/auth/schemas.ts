@@ -28,20 +28,21 @@ export const passwordSchema = z.object({
 });
 export type PasswordValues = z.infer<typeof passwordSchema>;
 
+/**
+ * Server-side body contract for `POST /api/auth/login`. The identifier-first UI
+ * collects email then password on separate screens, but the login request
+ * carries both — re-validated here because client validation is never a
+ * security control (CODING_STANDARDS §8).
+ */
+export const loginRequestSchema = z.object({
+  email: emailSchema,
+  password: z.string().min(1),
+});
+export type LoginRequest = z.infer<typeof loginRequestSchema>;
+
 const newPasswordSchema = z
   .string()
   .min(PASSWORD_MIN_LENGTH, `Use at least ${PASSWORD_MIN_LENGTH} characters`);
-
-export const signUpSchema = z.object({
-  firstName: z.string().trim().min(1, "Enter your first name"),
-  lastName: z.string().trim().min(1, "Enter your last name"),
-  email: emailSchema,
-  password: newPasswordSchema,
-  acceptedTerms: z.literal(true, {
-    message: "Accept the Terms of Service and Privacy Policy to continue",
-  }),
-});
-export type SignUpValues = z.infer<typeof signUpSchema>;
 
 export const forgotPasswordSchema = z.object({
   email: emailSchema,
@@ -58,3 +59,14 @@ export const resetPasswordSchema = z
     path: ["confirmPassword"],
   });
 export type ResetPasswordValues = z.infer<typeof resetPasswordSchema>;
+
+/**
+ * Server-side body contract for `POST /api/auth/password/reset`. The `token`
+ * comes from the emailed link (never shown in the form); `confirmPassword` is a
+ * client-only affordance and is not sent.
+ */
+export const resetRequestSchema = z.object({
+  token: z.string().min(1),
+  password: newPasswordSchema,
+});
+export type ResetRequest = z.infer<typeof resetRequestSchema>;

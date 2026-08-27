@@ -1,15 +1,18 @@
 import { cn } from "@/lib/utils";
 
 /**
- * Decorative gradient composition on the right half of the split auth layout.
+ * Decorative composition on the right half of the split auth layout.
  *
- * Rebuilt in CSS from the Figma artwork (overlapping soft orbs plus a rotated
- * bar, over a fine noise wash) rather than shipped as a ~3 MB bitmap: it stays
- * crisp at any viewport, costs no network request, and re-themes with tokens.
- * Colours come from the --color-art-* tokens in globals.css.
+ * Reconstructed as inline SVG from the Figma artwork (`.Background Shape`,
+ * node 388:3734) using the source geometry directly — the overlapping soft
+ * orbs, the two warm spheres and the rotated "ring" bar — so it matches the
+ * design rather than approximating it, while staying a few hundred bytes of
+ * vector (no bitmap request) that re-themes through the --color-art-* tokens.
  *
- * Layers are ordered back to front, positioned as percentages derived from the
- * Figma frame geometry so the composition holds its proportions when resized.
+ * Every sphere is a base fill with a blurred highlight offset toward the light,
+ * exactly as drawn in Figma. Coordinates live in the source frame's own space;
+ * the viewBox crops to the right-hand half the frame shows and `slice` lets the
+ * composition cover the column at any height.
  *
  * Purely decorative — aria-hidden, and dropped entirely below `lg` where the
  * form takes the full width.
@@ -17,75 +20,125 @@ import { cn } from "@/lib/utils";
 export function AuthArtwork({ className }: { className?: string }) {
   return (
     <div aria-hidden className={cn("pointer-events-none relative overflow-hidden", className)}>
-      {/* Pale lavender field filling the lower right, fading out at the edges */}
-      <div
-        className="absolute rounded-full blur-[40px]"
-        style={{
-          left: "18%",
-          top: "34%",
-          width: "125%",
-          aspectRatio: "1",
-          background:
-            "radial-gradient(circle at 42% 34%, var(--color-art-lilac) 0%, color-mix(in srgb, var(--color-art-lilac) 55%, white) 46%, color-mix(in srgb, var(--color-art-lilac) 12%, white) 74%, transparent 88%)",
-        }}
-      />
+      <svg
+        className="absolute inset-0 size-full"
+        viewBox="339 300 720 800"
+        preserveAspectRatio="xMidYMid slice"
+        fill="none"
+      >
+        <defs>
+          <clipPath id="aw-big">
+            <circle cx="779.31" cy="675.145" r="231.995" />
+          </clipPath>
+          <clipPath id="aw-mid">
+            <circle cx="782.641" cy="680.874" r="100.752" />
+          </clipPath>
+          <clipPath id="aw-small">
+            <circle cx="527.763" cy="517.112" r="64.9586" />
+          </clipPath>
+          <clipPath id="aw-ring">
+            <rect
+              width="510.692"
+              height="42.0283"
+              rx="21.0141"
+              transform="matrix(0.982894 -0.184881 0.183779 0.9831 461.623 596.057)"
+            />
+          </clipPath>
 
-      {/* Primary orb — warm across the top, violet through the lower body */}
-      <div
-        className="absolute rounded-full blur-[2px]"
-        style={{
-          left: "16%",
-          top: "6%",
-          width: "89%",
-          aspectRatio: "1",
-          background:
-            "linear-gradient(158deg, var(--color-art-amber) 0%, var(--color-art-peach) 14%, var(--color-art-coral) 30%, var(--color-art-violet) 62%, var(--color-art-violet) 100%)",
-        }}
-      />
+          <filter id="aw-blur-lilac" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation="80.86" />
+          </filter>
+          <filter id="aw-blur-peach" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation="99.18" />
+          </filter>
+          <filter id="aw-blur-mid" x="-80%" y="-80%" width="260%" height="260%">
+            <feGaussianBlur stdDeviation="55.49" />
+          </filter>
+          <filter id="aw-blur-small" x="-80%" y="-80%" width="260%" height="260%">
+            <feGaussianBlur stdDeviation="35.77" />
+          </filter>
+          <filter id="aw-blur-ring" x="-80%" y="-80%" width="260%" height="260%">
+            <feGaussianBlur stdDeviation="71.63" />
+          </filter>
 
-      {/* Light bar crossing the upper third */}
-      <div
-        className="absolute rounded-full blur-[7px]"
-        style={{
-          left: "14%",
-          top: "27%",
-          width: "80%",
-          height: "9%",
-          transform: "rotate(-13deg)",
-          background:
-            "linear-gradient(90deg, color-mix(in srgb, var(--color-art-lilac) 70%, white) 0%, color-mix(in srgb, var(--color-art-peach) 45%, white) 40%, color-mix(in srgb, var(--color-art-peach) 55%, white) 72%, color-mix(in srgb, var(--color-art-lilac) 60%, white) 100%)",
-        }}
-      />
+          {/* Soft field filling the lower right, in place of the source's
+              background-blur ellipse — a plain gradient renders identically
+              over the flat page and avoids a backdrop-filter foreignObject. */}
+          <radialGradient id="aw-glow" cx="0.5" cy="0.5" r="0.5">
+            <stop offset="0%" stopColor="var(--color-art-lilac)" stopOpacity="0.55" />
+            <stop offset="55%" stopColor="var(--color-art-lilac)" stopOpacity="0.18" />
+            <stop offset="100%" stopColor="var(--color-art-lilac)" stopOpacity="0" />
+          </radialGradient>
+        </defs>
 
-      {/* Small orb, upper left */}
-      <div
-        className="absolute rounded-full blur-[2px]"
-        style={{
-          left: "13%",
-          top: "15%",
-          width: "25%",
-          aspectRatio: "1",
-          background:
-            "radial-gradient(circle at 36% 30%, var(--color-art-peach) 0%, var(--color-art-coral) 68%, var(--color-art-coral) 100%)",
-        }}
-      />
+        <circle cx="913.812" cy="903.636" r="318" fill="url(#aw-glow)" />
 
-      {/* Focal orb, centre right */}
-      <div
-        className="absolute rounded-full blur-[2px]"
-        style={{
-          left: "42%",
-          top: "30%",
-          width: "39%",
-          aspectRatio: "1",
-          background:
-            "radial-gradient(circle at 38% 28%, var(--color-art-amber) 0%, #ff8a4c 42%, var(--color-art-coral) 78%, #f4483f 100%)",
-        }}
-      />
+        {/* Primary orb — violet body, warmed by lilac and peach toward the top */}
+        <g clipPath="url(#aw-big)">
+          <circle cx="779.31" cy="675.145" r="231.995" fill="var(--color-art-violet)" />
+          <circle
+            cx="680.064"
+            cy="506.663"
+            r="346.667"
+            fill="var(--color-art-lilac)"
+            filter="url(#aw-blur-lilac)"
+          />
+          <circle
+            cx="661.569"
+            cy="475.248"
+            r="231.995"
+            fill="var(--color-art-peach)"
+            filter="url(#aw-blur-peach)"
+          />
+        </g>
+
+        {/* Focal warm sphere, centre right */}
+        <g clipPath="url(#aw-mid)">
+          <circle cx="782.641" cy="680.874" r="100.752" fill="var(--color-art-coral)" />
+          <circle
+            cx="723.306"
+            cy="580.102"
+            r="126.84"
+            fill="var(--color-art-amber)"
+            filter="url(#aw-blur-mid)"
+          />
+        </g>
+
+        {/* Small warm sphere, upper left */}
+        <g clipPath="url(#aw-small)">
+          <circle cx="527.763" cy="517.112" r="64.9586" fill="var(--color-art-coral)" />
+          <circle
+            cx="489.514"
+            cy="452.14"
+            r="81.7783"
+            fill="var(--color-art-amber)"
+            filter="url(#aw-blur-small)"
+          />
+        </g>
+
+        {/* Rotated ring bar crossing the upper third */}
+        <g clipPath="url(#aw-ring)">
+          <rect
+            width="510.692"
+            height="42.0283"
+            rx="21.0141"
+            transform="matrix(0.982894 -0.184881 0.183779 0.9831 461.623 596.057)"
+            fill="var(--color-art-peach)"
+          />
+          <ellipse
+            cx="505.877"
+            cy="451.69"
+            rx="215.078"
+            ry="214.913"
+            fill="var(--color-art-lilac)"
+            filter="url(#aw-blur-ring)"
+          />
+        </g>
+      </svg>
 
       {/* Fine grain, matching the noise layer in the source file */}
       <div
-        className="absolute inset-0 opacity-[0.16] mix-blend-overlay"
+        className="absolute inset-0 opacity-[0.14] mix-blend-overlay"
         style={{
           backgroundImage:
             "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E\")",

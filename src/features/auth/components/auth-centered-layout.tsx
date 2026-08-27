@@ -19,7 +19,7 @@ export function AuthCenteredLayout({
   width?: "narrow" | "wide";
 }) {
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-between gap-12 px-6 py-12 sm:py-16">
+    <div className="auth-scale flex min-h-dvh flex-col items-center justify-between gap-12 px-6 py-12 sm:py-16">
       <div
         className={cn(
           "flex w-full flex-1 flex-col items-center justify-center",

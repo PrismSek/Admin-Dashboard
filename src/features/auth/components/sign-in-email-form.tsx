@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRight, Mail } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 
@@ -23,7 +22,7 @@ import { signInEmailSchema, type SignInEmailValues } from "@/features/auth/schem
  * redirects to the password screen, the SSO handoff, or the suspended screen
  * as appropriate — and that action must re-validate with `signInEmailSchema`.
  */
-export function SignInEmailForm() {
+export function SignInEmailForm({ error }: { error?: string }) {
   const router = useRouter();
   const {
     register,
@@ -41,6 +40,11 @@ export function SignInEmailForm() {
   return (
     <div className="flex flex-col gap-8">
       <AuthHeading title={signInContent.title} />
+      {error ? (
+        <p role="alert" className="text-help text-danger">
+          {error}
+        </p>
+      ) : null}
 
       <form onSubmit={onSubmit} noValidate className="flex flex-col gap-5">
         <FormField id="email" label={signInContent.emailLabel} error={errors.email?.message}>
@@ -69,14 +73,7 @@ export function SignInEmailForm() {
         <span className="h-px flex-1 bg-line" />
       </div>
 
-      <ProviderButtons ssoHref={authRoutes.sso} />
-
-      <p className="border-t border-line pt-6 text-center text-body text-ink">
-        {signInContent.noAccount}{" "}
-        <Link href={authRoutes.signUp} className="rounded-sm font-medium text-brand hover:underline">
-          {signInContent.createAccount}
-        </Link>
-      </p>
+      <ProviderButtons />
     </div>
   );
 }
