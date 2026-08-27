@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRight, Mail } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 
@@ -75,13 +74,6 @@ export function SignInEmailForm({ error }: { error?: string }) {
       </div>
 
       <ProviderButtons />
-
-      <p className="border-t border-line pt-6 text-center text-body text-ink">
-        {signInContent.noAccount}{" "}
-        <Link href={authRoutes.signUp} className="rounded-sm font-medium text-brand hover:underline">
-          {signInContent.createAccount}
-        </Link>
-      </p>
     </div>
   );
 }

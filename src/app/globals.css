@@ -282,6 +282,55 @@
 }
 
 /* -------------------------------------------------------------------------
+   Auth screens — literal Figma type scale
+   -------------------------------------------------------------------------
+   The sign-in frames are drawn at ~0.7× web scale (see FIGMA-DEVIATIONS §1).
+   These screens opt into Figma's exact sizes for their subtree only, without
+   touching the signed-in app that shares the same UI controls at 1:1.
+
+   Control height and column width resolve through a `var()` chain, so a scoped
+   variable override retargets them. The type ramp, however, is compiled by
+   `@theme inline` (literal sizes baked into the utilities), so it is re-pointed
+   by overriding the utility classes here — unlayered, so they win over the
+   Tailwind utility layer.
+   ------------------------------------------------------------------------- */
+.auth-scale {
+  --size-control: 2.25rem; /* 36px — Figma input / button height */
+  --width-auth-column: 17.75rem; /* 284px — Figma form column */
+}
+
+.auth-scale .text-heading {
+  font-size: 1.125rem; /* 18px — Figma screen titles */
+  line-height: 1.25; /* 22.5 / 18 */
+  letter-spacing: 0;
+}
+.auth-scale .text-body {
+  font-size: 0.75rem; /* 12px — labels, inputs, provider buttons, body */
+  line-height: 1.33;
+}
+.auth-scale .text-action {
+  font-size: 0.9375rem; /* 15px — primary button label */
+  line-height: 1.0667; /* 16 / 15 */
+}
+.auth-scale .text-help {
+  font-size: 0.75rem; /* 12px — hints / field errors */
+  line-height: 1.35;
+}
+.auth-scale .text-fine {
+  font-size: 0.75rem; /* 12px — footer, legal */
+  line-height: 1.375; /* 16.5 / 12 */
+}
+
+/* Figma draws field labels at Regular and placeholders at Light; the shared
+   FormField/Input default to Medium/Regular for the denser app screens. */
+.auth-scale label {
+  font-weight: 400;
+}
+.auth-scale input::placeholder {
+  font-weight: 300;
+}
+
+/* -------------------------------------------------------------------------
    Base
    ------------------------------------------------------------------------- */
 @layer base {

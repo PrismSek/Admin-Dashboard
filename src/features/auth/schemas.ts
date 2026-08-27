@@ -44,17 +44,6 @@ const newPasswordSchema = z
   .string()
   .min(PASSWORD_MIN_LENGTH, `Use at least ${PASSWORD_MIN_LENGTH} characters`);
 
-export const signUpSchema = z.object({
-  firstName: z.string().trim().min(1, "Enter your first name"),
-  lastName: z.string().trim().min(1, "Enter your last name"),
-  email: emailSchema,
-  password: newPasswordSchema,
-  acceptedTerms: z.literal(true, {
-    message: "Accept the Terms of Service and Privacy Policy to continue",
-  }),
-});
-export type SignUpValues = z.infer<typeof signUpSchema>;
-
 export const forgotPasswordSchema = z.object({
   email: emailSchema,
 });

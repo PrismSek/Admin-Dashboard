@@ -1,9 +1,10 @@
 import { Button, buttonVariants } from "@/components/ui/button";
 import { authRoutes, signInContent } from "@/features/auth/content";
+import { cn } from "@/lib/utils";
 
 /**
  * Third-party marks are inlined rather than pulled from an icon set: Google
- * and GitHub both require their own logo colours, so these must not inherit
+ * and Microsoft both require their own logo colours, so these must not inherit
  * `currentColor` the way our own icons do.
  */
 function GoogleMark() {
@@ -29,32 +30,41 @@ function GoogleMark() {
   );
 }
 
-function GitHubMark() {
+function MicrosoftMark() {
+  // Official four-square mark: each tile keeps its own brand colour.
   return (
-    <svg viewBox="0 0 16 16" aria-hidden focusable="false" fill="#181717">
-      <path d="M8 0C3.58 0 0 3.67 0 8.2c0 3.62 2.29 6.69 5.47 7.77.4.08.55-.18.55-.4l-.01-1.37c-2.23.5-2.7-1.1-2.7-1.1-.36-.96-.89-1.21-.89-1.21-.73-.51.05-.5.05-.5.8.06 1.23.85 1.23.85.72 1.26 1.88.9 2.34.68.07-.53.28-.9.51-1.1-1.78-.21-3.65-.91-3.65-4.06 0-.9.31-1.63.82-2.2-.08-.21-.36-1.05.08-2.18 0 0 .67-.22 2.2.84a7.4 7.4 0 0 1 4 0c1.53-1.06 2.2-.84 2.2-.84.44 1.13.16 1.97.08 2.18.51.57.82 1.3.82 2.2 0 3.16-1.87 3.85-3.66 4.05.29.25.54.75.54 1.51l-.01 2.24c0 .22.14.48.55.4A8.21 8.21 0 0 0 16 8.2C16 3.67 12.42 0 8 0Z" />
+    <svg viewBox="0 0 21 21" aria-hidden focusable="false">
+      <path fill="#F25022" d="M1 1h9v9H1z" />
+      <path fill="#7FBA00" d="M11 1h9v9h-9z" />
+      <path fill="#00A4EF" d="M1 11h9v9H1z" />
+      <path fill="#FFB900" d="M11 11h9v9h-9z" />
     </svg>
   );
 }
 
 /**
  * The alternative sign-in methods below the divider on the sign-in screen:
- * Google and GitHub. A "Continue with SSO" button was removed at the product
+ * Google and Microsoft. A "Continue with SSO" button was removed at the product
  * owner's request (see docs/FIGMA-DEVIATIONS.md) — the SSO handoff screen
  * itself is unchanged. Wire each handler to the corresponding OAuth entry
  * point once the PrismSek auth API is available.
  */
 export function ProviderButtons() {
+  // Figma sets the provider labels at body size (12px), lighter than the 15px
+  // primary button — so override the default control text size on these two.
   return (
     <div className="flex flex-col gap-3">
-      <a href={authRoutes.googleStart} className={buttonVariants({ variant: "provider" })}>
+      <a
+        href={authRoutes.googleStart}
+        className={cn(buttonVariants({ variant: "provider" }), "text-body")}
+      >
         <GoogleMark />
         {signInContent.google}
       </a>
 
-      <Button variant="provider" type="button">
-        <GitHubMark />
-        {signInContent.github}
+      <Button variant="provider" type="button" className="text-body">
+        <MicrosoftMark />
+        {signInContent.microsoft}
       </Button>
     </div>
   );

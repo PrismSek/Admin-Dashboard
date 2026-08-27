@@ -13,13 +13,15 @@ import { PrismSekLogo } from "@/features/auth/components/prismsek-logo";
  */
 export function AuthSplitLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="grid min-h-dvh lg:grid-cols-2">
+    <div className="auth-scale grid min-h-dvh lg:grid-cols-2">
       <div className="flex flex-col justify-center px-6 py-12 sm:px-10 lg:px-16">
         <div className="mx-auto flex w-full max-w-auth-column flex-col">
           <PrismSekLogo className="mb-10" />
           {children}
-          <AuthFooter className="mt-14" />
         </div>
+        {/* Footer sits outside the form-column clamp so the legal links stay on
+            one line rather than wrapping in the narrow (284px) column. */}
+        <AuthFooter className="mt-14" />
       </div>
 
       <AuthArtwork className="hidden lg:block" />

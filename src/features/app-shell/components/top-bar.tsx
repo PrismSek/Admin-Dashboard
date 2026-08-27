@@ -14,11 +14,12 @@ export function TopBar({ initials }: { initials: string }) {
     <header className="flex h-16 shrink-0 items-center justify-between border-b border-hair-strong bg-chrome px-6">
       <Link href="/dashboard" className="rounded-app">
         <Image
-          src="/prismsek-logo.png"
+          src="/prismsek-logo.svg"
           alt={authCommon.logoAlt}
-          width={240}
+          width={242}
           height={61}
           priority
+          unoptimized
           className="h-8 w-auto"
         />
       </Link>

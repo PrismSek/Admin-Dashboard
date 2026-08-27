@@ -13,7 +13,6 @@ export const authRoutes = {
   /** Our own endpoint that mints the nonce and redirects to the gateway. */
   googleStart: "/api/auth/google/start",
   signedIn: "/sign-in/success",
-  signUp: "/sign-up",
   forgotPassword: "/forgot-password",
   forgotPasswordSent: "/forgot-password/sent",
   resetPassword: "/reset-password",
@@ -56,11 +55,9 @@ export const signInContent = {
   submit: "Continue",
   dividerLabel: "or",
   google: "Continue with Google",
-  github: "Continue with GitHub",
+  microsoft: "Continue with Microsoft",
   googleError: "Google sign-in didn't work. Please try again.",
   googleSigningIn: "Signing you in…",
-  noAccount: "Don't have an account?",
-  createAccount: "Create account",
 } as const;
 
 export const passwordContent = {
@@ -71,27 +68,6 @@ export const passwordContent = {
   submit: "Sign in",
   useDifferentEmail: "Use a different email",
   invalidCredentials: "Invalid email or password. Please try again.",
-} as const;
-
-export const signUpContent = {
-  title: "Create your account",
-  subtitle: "Get started with PrismSek in minutes",
-  firstNameLabel: "First name",
-  firstNamePlaceholder: "Jae",
-  lastNameLabel: "Last name",
-  lastNamePlaceholder: "Mathew",
-  emailLabel: "Email address",
-  emailPlaceholder: "you@company.com",
-  passwordLabel: "Password",
-  passwordPlaceholder: "Create a password",
-  passwordHint: "Use 8+ characters with a mix of letters, numbers & symbols",
-  termsPrefix: "I agree to the",
-  termsLabel: "Terms of Service",
-  termsJoin: "and",
-  privacyLabel: "Privacy Policy",
-  submit: "Create Account",
-  haveAccount: "Already have an account?",
-  signIn: "Sign in",
 } as const;
 
 export const forgotPasswordContent = {

@@ -9,31 +9,38 @@ it gets changed back.
 
 ---
 
-## 1. Sizing normalised to web scale
+## 1. Sizing — matched to Figma's literal scale (reversed a prior normalisation)
 
 **What Figma says.** The frames are 1440×800, but the content is drawn at roughly 0.7×
 of normal web scale: the form column is 284px wide, inputs and buttons are 36px tall,
-body text and field labels are 12px, and headings are 18px.
+body text and field labels are 12px, headings are 18px, the primary button label is 15px.
 
-**What was built.** Same layout, same proportions, same colours — sizes mapped onto a
-standard scale:
+**What was built.** These sizes were first normalised up to a standard web scale (400px
+column, 44px controls, 14px body, 24px heading) for readability and WCAG target-size
+reasons. That was **later reversed at the product owner's request** — the auth screens
+now use Figma's literal scale, matching the file exactly:
 
 | | Figma | Built |
 |---|---|---|
-| Form column | 284px | 400px |
-| Control height | 36px | 44px |
-| Body / labels | 12px | 14px |
-| Heading | 18px | 24px |
-| Button label | 15px | 16px |
+| Form column | 284px | 284px |
+| Control height | 36px | 36px |
+| Body / labels | 12px | 12px |
+| Heading | 18px | 18px |
+| Button label | 15px | 15px |
 | Footer / legal | 10–12px | 12px |
 
-**Why.** 12px is below the practical minimum for readable body text, and 36px controls
-fall short of the 44px minimum target size in WCAG 2.2 — which the project targets at AA
-level (`CODING_STANDARDS.md` §14). Implemented literally the screens look cramped at
-1440px.
+**How it is scoped.** The signed-in app shares the same `ui/button`, `ui/input` and
+`ui/form-field` controls but stays at its 1:1 sizes (§11). So the Figma scale is applied
+only under the `.auth-scale` class on the two auth layout roots. Control height and
+column width resolve through a `var()` chain, so `.auth-scale` overrides
+`--size-control` / `--width-auth-column` directly. The type ramp is compiled by
+`@theme inline` (literal sizes baked into the utilities), so `.auth-scale .text-heading`,
+`.text-body`, `.text-action`, etc. re-point the utilities within that subtree instead —
+all in `src/app/globals.css`.
 
-**To change it.** All of these are tokens in `src/app/globals.css` — `--text-*`,
-`--size-control`, `--width-auth-column`. Retune there; no component changes.
+**Trade-off noted.** 12px body text and 36px controls sit below the WCAG 2.2 target-size
+comfort the project otherwise aims for (`CODING_STANDARDS.md` §14); matching the design
+was chosen over that here.
 
 ---
 
@@ -80,12 +87,14 @@ The Google "G" mark keeps its own four brand colours, as Google's brand terms re
 
 ---
 
-## 5. "Continue with GitHub" font corrected
+## 5. Second provider is Microsoft, not GitHub — and the font is corrected
 
-**Figma:** renders in IBM Plex Sans **Condensed**; the SSO and Google buttons above it
-use regular IBM Plex Sans.
+**Figma:** the second provider button is **"Continue with GitHub"**, rendered in IBM Plex
+Sans **Condensed**; the SSO and Google buttons above it use regular IBM Plex Sans.
 
-**Built:** all three use regular. No condensed weight is loaded anywhere.
+**Built:** the second provider is **"Continue with Microsoft"** (four-square Microsoft
+mark), swapped in at the product owner's request. All provider labels use regular IBM
+Plex Sans — no condensed weight is loaded anywhere.
 
 ---
 
@@ -104,15 +113,15 @@ failure path confirms a valid account to anyone who guessed it.
 
 ---
 
-## 7. Heading weight unified to 400
+## 7. Heading weight — Light (300) on sign-in / password, matching Figma
 
 **Figma:** sign-in and password use weight 300 (Light); create-account, suspended,
 signed-in, check-email and invitation-expired use 400.
 
-**Built:** 400 everywhere — the majority case, and it holds contrast better at 24px.
-
-**To change it.** One value: the `--text-heading` block in `globals.css`, plus the weight
-in `AuthHeading`.
+**Built:** matches Figma. `AuthHeading` (sign-in, password) renders the title Light
+(`font-light`, 300); `AuthOutcomeHeading` (the outcome screens) stays 400. Weight 300 is
+loaded in `src/lib/fonts.ts`. This reverses the earlier decision to unify on 400 — done
+together with the §1 sizing match at the product owner's request.
 
 ---
 
@@ -150,7 +159,7 @@ and swap the component's body for an `<Image>` — the layout around it does not
   call-to-action currently share a colour.
 - **"Continue with SSO" button removed from the sign-in home screen.** The Figma home
   frame (`388:3733`) lists SSO / Google / GitHub below the "or" divider; the SSO button was
-  dropped at the product owner's request, leaving Google and GitHub. Only the shortcut
+  dropped at the product owner's request, leaving Google and Microsoft (see §5). Only the shortcut
   button is gone — the `/sign-in/sso` handoff screen and the `authRoutes.sso` route are
   unchanged, still reached from the identifier-first flow once the auth API routes an
   SSO-required org there.
