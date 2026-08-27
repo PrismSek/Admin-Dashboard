@@ -12,7 +12,7 @@ import { getUser } from "@/features/settings/data";
 
 export const metadata: Metadata = { title: "User details" };
 
-const statusTone = { active: "ok", suspended: "neutral", pending: "warn" } as const;
+const statusTone = { active: "ok", suspended: "neutral", pending: "pending" } as const;
 const statusLabel = { active: "Active", suspended: "Suspended", pending: "Pending" } as const;
 
 export default async function UserDetailPage({ params }: { params: Promise<{ id: string }> }) {

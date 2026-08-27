@@ -1,11 +1,12 @@
 "use client";
 
-import { ChevronRight, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronRight, LogOut } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 
-import { primaryNav, type NavItem } from "@/features/app-shell/nav";
+import { SignOutButton } from "@/features/app-shell/components/sign-out-button";
+import { navSections, type NavItem } from "@/features/app-shell/nav";
 import { cn } from "@/lib/utils";
 
 /** True when `pathname` is the item's route or somewhere beneath it. */
@@ -13,22 +14,30 @@ function isWithin(href: string, pathname: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
+const rowBase =
+  "flex w-full items-center gap-2.5 px-[18px] py-3 text-left text-nav transition-colors";
+const rowIdle = "text-nav-idle hover:bg-nav-surface";
+const rowActive = "text-nav-accent"; // teal, no fill — matches Figma
+
+const subRowBase = "flex items-center py-2 pl-[34px] pr-[18px] text-nav-sub transition-colors";
+
 /**
- * Primary sidebar.
+ * Primary sidebar — dark navy chrome grouped into labelled sections
+ * (Figma, 2026-08-25).
  *
  * Client-side because active state comes from the current pathname, which a
  * server layout cannot see.
  *
  * Expanding a group and navigating are separate actions: the group header is a
  * button that only opens or closes its list, and the child links do the
- * navigating. Clicking "Manage" reveals the departments without leaving the
- * page you are on.
+ * navigating. Clicking "Settings" reveals its pages without leaving the page
+ * you are on.
  */
 export function SideNav() {
   const pathname = usePathname();
 
-  // The group containing the current route, if any.
-  const activeGroup = primaryNav.find(
+  const allItems = navSections.flatMap((section) => section.items);
+  const activeGroup = allItems.find(
     (item) => item.children && isWithin(item.href, pathname),
   )?.href;
 
@@ -36,7 +45,7 @@ export function SideNav() {
     activeGroup ? [activeGroup] : [],
   );
 
-  // Opening the group you have just navigated into, without re-opening one you
+  // Open the group you have just navigated into, without re-opening one you
   // deliberately collapsed while staying inside it.
   const previousActiveGroup = useRef(activeGroup);
   useEffect(() => {
@@ -54,18 +63,37 @@ export function SideNav() {
     );
 
   return (
-    <nav aria-label="Main" className="w-[280px] shrink-0 border-r border-hair-strong bg-chrome py-4">
-      <ul className="flex flex-col gap-0.5 px-3">
-        {primaryNav.map((item) => (
-          <NavEntry
-            key={item.href}
-            item={item}
-            pathname={pathname}
-            isOpen={openGroups.includes(item.href)}
-            onToggle={() => toggleGroup(item.href)}
-          />
-        ))}
-      </ul>
+    <nav
+      aria-label="Main"
+      className="flex w-58 shrink-0 flex-col overflow-y-auto bg-nav-bg pb-4"
+    >
+      {navSections.map((section, index) => (
+        <div key={section.label} className={cn(index > 0 && "mt-[18px] border-t border-nav-divider")}>
+          <p className="px-[18px] pt-5 pb-2 text-nav-section font-semibold tracking-wider text-nav-label uppercase">
+            {section.label}
+          </p>
+          <ul>
+            {section.items.map((item) => (
+              <NavEntry
+                key={item.href}
+                item={item}
+                pathname={pathname}
+                isOpen={openGroups.includes(item.href)}
+                onToggle={() => toggleGroup(item.href)}
+              />
+            ))}
+            {index === navSections.length - 1 ? (
+              <li>
+                <SignOutButton className={cn(rowBase, rowIdle)}>
+                  <span aria-hidden className="w-[9px] shrink-0" />
+                  <LogOut aria-hidden className="size-[18px] shrink-0" />
+                  Log out
+                </SignOutButton>
+              </li>
+            ) : null}
+          </ul>
+        </div>
+      ))}
     </nav>
   );
 }
@@ -85,15 +113,27 @@ function NavEntry({
   const Icon = item.icon;
   const containsRoute = isWithin(item.href, pathname);
 
+  const caret = (
+    <span aria-hidden className="flex w-[9px] shrink-0 items-center justify-center">
+      {item.children ? (
+        isOpen ? (
+          <ChevronDown className="size-3" />
+        ) : (
+          <ChevronRight className="size-3" />
+        )
+      ) : null}
+    </span>
+  );
+
   if (!item.children) {
     return (
       <li>
         <Link
           href={item.href}
           aria-current={containsRoute ? "page" : undefined}
-          className={cn(rowClasses, containsRoute ? activeRowClasses : idleRowClasses)}
+          className={cn(rowBase, containsRoute ? rowActive : rowIdle)}
         >
-          {containsRoute ? <ActiveMarker /> : null}
+          {caret}
           <Icon aria-hidden className="size-[18px] shrink-0" />
           {item.label}
         </Link>
@@ -108,26 +148,15 @@ function NavEntry({
         onClick={onToggle}
         aria-expanded={isOpen}
         aria-controls={submenuId}
-        className={cn(
-          rowClasses,
-          "w-full cursor-pointer text-left",
-          idleRowClasses,
-          containsRoute && "font-semibold text-strong",
-        )}
+        className={cn(rowBase, "cursor-pointer", containsRoute ? rowActive : rowIdle)}
       >
+        {caret}
         <Icon aria-hidden className="size-[18px] shrink-0" />
         {item.label}
-        <span className="ml-auto text-dim">
-          {isOpen ? (
-            <ChevronUp aria-hidden className="size-4" />
-          ) : (
-            <ChevronRight aria-hidden className="size-4" />
-          )}
-        </span>
       </button>
 
       {isOpen ? (
-        <ul id={submenuId} className="mt-0.5 flex flex-col gap-0.5">
+        <ul id={submenuId}>
           {item.children.map((child) => {
             const isActive = isWithin(child.href, pathname);
             return (
@@ -136,11 +165,12 @@ function NavEntry({
                   href={child.href}
                   aria-current={isActive ? "page" : undefined}
                   className={cn(
-                    "relative flex items-center rounded-app py-2.5 pl-11 pr-3 text-app transition-colors",
-                    isActive ? "bg-active font-semibold text-strong" : "text-copy hover:bg-hover",
+                    subRowBase,
+                    isActive
+                      ? "bg-nav-surface text-nav-active-ink"
+                      : "text-nav-idle hover:bg-nav-surface",
                   )}
                 >
-                  {isActive ? <ActiveMarker /> : null}
                   {child.label}
                 </Link>
               </li>
@@ -151,18 +181,3 @@ function NavEntry({
     </li>
   );
 }
-
-/** The orange rail marking the selected item. */
-function ActiveMarker() {
-  return (
-    <span
-      aria-hidden
-      className="absolute left-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-r bg-brand-accent"
-    />
-  );
-}
-
-const rowClasses =
-  "relative flex items-center gap-3 rounded-app px-3 py-2.5 text-app transition-colors";
-const activeRowClasses = "bg-active font-semibold text-strong";
-const idleRowClasses = "text-copy hover:bg-hover";

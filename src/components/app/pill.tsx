@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
  * never gets a one-off colour at a call site.
  */
 const pillVariants = cva(
-  "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-micro font-medium",
+  "inline-flex items-center gap-1.5 rounded-app px-2.5 py-1 text-micro font-semibold",
   {
     variants: {
       tone: {
@@ -16,6 +16,7 @@ const pillVariants = cva(
         neutral: "bg-pill-neutral-bg text-pill-neutral-fg",
         warn: "bg-pill-warn-bg text-pill-warn-fg",
         info: "bg-pill-info-bg text-pill-info-fg",
+        pending: "bg-pill-pending-bg text-pill-pending-fg",
       },
     },
     defaultVariants: { tone: "neutral" },

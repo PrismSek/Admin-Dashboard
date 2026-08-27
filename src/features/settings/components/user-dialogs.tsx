@@ -16,18 +16,20 @@ export function UserDialogs({
   dialog,
   userId,
   users,
+  orgName,
   closeHref,
 }: {
   dialog?: string;
   userId?: string;
   users: OrgUser[];
+  orgName: string;
   closeHref: string;
 }) {
   if (dialog === "invite") {
     return (
       <Modal
-        title="Invite user"
-        description="They receive an email invitation that expires in 14 days."
+        title="Invite a user"
+        description={`They'll receive an email to join ${orgName} on PrismSek.`}
         closeHref={closeHref}
         footer={
           <>
@@ -44,12 +46,8 @@ export function UserDialogs({
         }
       >
         <div className="flex flex-col gap-5">
-          <AppField
-            id="invite-email"
-            label="Email address"
-            hint="Must be an address inside your organization's verified domains."
-          >
-            <AppInput id="invite-email" type="email" placeholder="name@northwind.example" />
+          <AppField id="invite-email" label="Email address">
+            <AppInput id="invite-email" type="email" placeholder="name@company.com" />
           </AppField>
 
           <AppField id="invite-role" label="Role">

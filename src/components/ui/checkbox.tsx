@@ -17,7 +17,7 @@ export function Checkbox({ className, ...props }: CheckboxProps) {
         className={cn(
           "peer size-4 cursor-pointer appearance-none rounded-[4px]",
           "border border-line-strong bg-card",
-          "checked:border-brand checked:bg-brand",
+          "checked:border-link checked:bg-link",
           "aria-[invalid=true]:border-danger",
           className,
         )}

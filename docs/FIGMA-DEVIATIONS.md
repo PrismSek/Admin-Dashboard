@@ -185,9 +185,9 @@ Raised because they are cheaper to design now than to retrofit into a live auth 
 
 The 44 remaining frames on the same Figma page — Settings, Endpoints and Manage.
 
-## 10. Two brand oranges and two grey ramps — both kept
+## 10. Two brand oranges — unified to the sign-in orange (resolved 2026-08-28)
 
-The auth screens and the signed-in screens do not share a palette:
+The auth screens and the signed-in screens did not share a palette:
 
 | | Auth screens | App screens |
 |---|---|---|
@@ -200,9 +200,12 @@ Both sets are kept as separate tokens (`--color-brand` / `--color-brand-accent`,
 `--ps-ink-*` ramp alongside `--ps-grey-*`) and each is used in its own context, rather than
 silently merging them and changing one half of the product.
 
-**This is worth a decision.** Two primary oranges in one product is almost certainly
-unintended — a user goes from an orange "Sign in" button to a differently-orange "Invite
-user" button within seconds. Pick one and it changes in a single line of `globals.css`.
+**Resolved (2026-08-28).** The product owner chose the sign-in orange (`#E04F27`) for the
+whole product. `--color-brand-accent` now resolves to `--ps-orange-600`, so every app
+button and orange link matches the auth screens; `#F2601A` survives as `--ps-orange-500`
+only for the logo mark. The signed-in Figma frames (modified 2026-08-25) already draw
+their buttons in `#E04F27`, so this also re-synced the build to the current design. It is
+still a one-line change in `globals.css`.
 
 ## 11. App frames are drawn at 1:1 — not rescaled
 
@@ -264,6 +267,41 @@ rather than cosmetic.
 - **Four duplicate `Endpoints` frames** (294:5813, 294:6162, 294:6511, 294:6860) — appear
   to be filter/pagination variants of the same list, already covered by the live filters.
 - **`Background` (281:4126)** — could not tell what screen this is meant to be.
+
+---
+
+## 19. Settings re-synced to the 2026-08-25 Figma
+
+The Settings frames were redrawn (file modified 2026-08-25). The screens and shared app
+components were brought back to the new design; all values remain tokens in `globals.css`.
+
+- **Sidebar is now dark navy** (`#0E1420`, 232px) with a teal active accent (`#59E9DF`),
+  `OVERVIEW` / `ACCOUNT` section groups and Log out moved into it. This is shared chrome,
+  so it changes every signed-in screen (not just Settings) — done at the product owner's
+  request. New `--color-nav-*` / `--color-nav-accent` tokens. `Incidents` and `Endpoints`
+  are kept in `OVERVIEW`: the Settings frames show a condensed nav, but those routes are
+  built and dropping their nav entries would strand them.
+- **Page background** cooled from `#FAF9F5` to `#F5F6F8` (`--ps-app-canvas`).
+- **Card radius** 6px → 8px (`rounded-card`); **page title** 28px → 24px, regular weight;
+  **primary buttons** `#F2601A` → `#E04F27` (see §10).
+- **Table status** (`Active` / `Suspended`) is an outlined chip with a coloured dot
+  (`StatusPill`), not a filled pill; the filled `Pill` is now a rounded rectangle
+  (`rounded-app`, semibold) matching the card badges and info tags.
+- **Toggles** switch to `#22C55E` when on; the **OK/Connected pill** uses the lighter
+  `#E8F5EA` / `#166534`.
+
+Normalised (Figma's own inconsistencies resolved to one tokenised ramp):
+
+- Page-level section headings are one token (`--text-app-heading`, 20px/regular). Figma
+  draws these at 18–20px depending on the frame.
+- Content padding is 48px horizontal (Figma) but keeps the build's comfortable vertical
+  rhythm rather than Figma's tight 16px.
+- Copy keeps the **PrismSek** spelling; several 2026-08-25 frames read "PrismSec".
+
+Not re-fetched: the four **SAML setup wizard** step frames and the SSO activation frames —
+the Figma image/nodes API was rate-limiting the token during this pass. The wizard renders
+through the same updated `Card` / button / field components and tokens, so it inherits the
+new styling, but its step-indicator layout was not re-checked against the current frames.
 
 ---
 

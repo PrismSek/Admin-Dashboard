@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { Banner } from "@/components/app/banner";
 import { Card } from "@/components/app/card";
-import { PageBody, PageHeader } from "@/components/app/page-header";
+import { PageBody, PageHeader, SectionHeading } from "@/components/app/page-header";
 import { Pill } from "@/components/app/pill";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -42,7 +42,7 @@ export default async function NotificationsSettingsPage() {
       ) : null}
 
       <section className="mt-10">
-        <h2 className="text-section font-medium text-strong">Recipients</h2>
+        <SectionHeading>Recipients</SectionHeading>
         <p className="mt-1.5 text-meta text-dim">
           Active Org Owners and Policy Admins only. At least one recipient is required.
         </p>
@@ -68,7 +68,7 @@ export default async function NotificationsSettingsPage() {
       </section>
 
       <section className="mt-10">
-        <h2 className="text-section font-medium text-strong">Alert categories</h2>
+        <SectionHeading>Alert categories</SectionHeading>
         <p className="mt-1.5 text-meta text-dim">
           Critical alerts are always sent. You choose whether to receive the non-critical
           updates in each group.

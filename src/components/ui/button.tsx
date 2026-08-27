@@ -22,8 +22,8 @@ const buttonVariants = cva(
       variant: {
         /** Primary call to action — solid brand fill. */
         primary: "bg-brand text-brand-fg hover:bg-brand-hover active:bg-brand-active",
-        /** Signed-in primary. The app screens use the second brand orange. */
-        appPrimary: "bg-brand-accent text-brand-fg hover:brightness-95 active:brightness-90",
+        /** Signed-in primary — solid brand orange (#E04F27, via --color-brand-accent). */
+        appPrimary: "bg-brand-accent text-brand-fg hover:bg-brand-hover active:bg-brand-active",
         /** Secondary action — white surface with a hairline border. */
         secondary:
           "border border-line bg-card text-ink-strong hover:bg-page active:bg-line-faint",
