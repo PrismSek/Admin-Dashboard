@@ -3,5 +3,12 @@ import { resolve } from "path";
 
 export default defineConfig({
   test: { environment: "node" },
-  resolve: { alias: { "@": resolve(process.cwd(), "src") } },
+  resolve: {
+    alias: {
+      "@": resolve(process.cwd(), "src"),
+      // `server-only`'s real entrypoint throws outside an RSC bundle; stub it so
+      // server-only modules stay unit testable. The guard still holds in `next build`.
+      "server-only": resolve(process.cwd(), "src/test/server-only.stub.ts"),
+    },
+  },
 });

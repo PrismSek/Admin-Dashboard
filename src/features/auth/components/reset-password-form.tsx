@@ -4,17 +4,24 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, ArrowRight, Lock } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
-import { FormField } from "@/components/ui/form-field";
+import { FieldError, FormField } from "@/components/ui/form-field";
 import { PasswordInput } from "@/components/ui/password-input";
-import { authRoutes, resetPasswordContent } from "@/features/auth/content";
+import { authApiRoutes, authRoutes, resetPasswordContent } from "@/features/auth/content";
 import { resetPasswordSchema, type ResetPasswordValues } from "@/features/auth/schemas";
 
-/** Used both for invited users setting a first password and for resets. */
-export function ResetPasswordForm() {
+/**
+ * Sets a password from a reset link. The `token` comes from the email (via the
+ * page's `?token=` query) and is the credential — a valid password with no or a
+ * spent token is refused server-side. On success the account has no session
+ * (the reset ends every prior one), so we hand off to sign-in.
+ */
+export function ResetPasswordForm({ token }: { token?: string }) {
   const router = useRouter();
+  const [formError, setFormError] = useState<string | undefined>();
   const {
     register,
     handleSubmit,
@@ -24,8 +31,30 @@ export function ResetPasswordForm() {
     defaultValues: { password: "", confirmPassword: "" },
   });
 
-  const onSubmit = handleSubmit(() => {
-    router.push(authRoutes.signedIn);
+  const onSubmit = handleSubmit(async ({ password }) => {
+    setFormError(undefined);
+    if (!token) {
+      setFormError(resetPasswordContent.linkInvalid);
+      return;
+    }
+    let res: Response;
+    try {
+      res = await fetch(authApiRoutes.resetPassword, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ token, password }),
+      });
+    } catch {
+      setFormError(resetPasswordContent.failed);
+      return;
+    }
+    if (res.ok) {
+      router.push(authRoutes.signIn);
+      return;
+    }
+    if (res.status === 401) setFormError(resetPasswordContent.linkInvalid);
+    else if (res.status === 422) setFormError(resetPasswordContent.weakPassword);
+    else setFormError(resetPasswordContent.failed);
   });
 
   return (
@@ -63,6 +92,8 @@ export function ResetPasswordForm() {
           />
         )}
       </FormField>
+
+      {formError ? <FieldError id="reset-error">{formError}</FieldError> : null}
 
       <Button type="submit" disabled={isSubmitting}>
         {resetPasswordContent.submit}

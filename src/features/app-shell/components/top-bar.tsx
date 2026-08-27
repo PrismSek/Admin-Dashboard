@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { authCommon } from "@/features/auth/content";
+import { SignOutButton } from "@/features/app-shell/components/sign-out-button";
 
 /**
  * Global header: brand lockup on the left, utilities and the signed-in user's
@@ -39,6 +40,7 @@ export function TopBar({ initials }: { initials: string }) {
         >
           {initials}
         </span>
+        <SignOutButton />
       </div>
     </header>
   );

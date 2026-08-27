@@ -1,15 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import {
-  ACCESS_FALLBACK_MAX_AGE_SECONDS,
-  NONCE_COOKIE,
-  REFRESH_COOKIE,
-  REFRESH_MAX_AGE_SECONDS,
-  SESSION_COOKIE,
-} from "@/features/auth/google/constants";
+import { NONCE_COOKIE } from "@/features/auth/google/constants";
 import { constantTimeEqual } from "@/features/auth/google/crypto";
-import { accessTokenMaxAgeSeconds } from "@/features/auth/google/jwt";
 import { sessionPayloadSchema } from "@/features/auth/google/schema";
+import { setSessionCookies } from "@/features/auth/session";
 
 export const dynamic = "force-dynamic";
 
@@ -23,28 +17,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return new NextResponse(null, { status: 403 });
   }
 
-  const secure = process.env.NODE_ENV === "production";
-  const nowSeconds = Math.floor(Date.now() / 1000);
   const res = new NextResponse(null, { status: 204 });
-
-  res.cookies.set(SESSION_COOKIE, token, {
-    httpOnly: true,
-    secure,
-    sameSite: "strict",
-    path: "/",
-    maxAge: accessTokenMaxAgeSeconds(token, nowSeconds, ACCESS_FALLBACK_MAX_AGE_SECONDS),
-  });
-  res.cookies.set(REFRESH_COOKIE, refresh, {
-    httpOnly: true,
-    secure,
-    sameSite: "strict",
-    path: "/",
-    maxAge: REFRESH_MAX_AGE_SECONDS,
-  });
+  setSessionCookies(res, { token, refreshToken: refresh });
   // Burn the single-use nonce.
   res.cookies.set(NONCE_COOKIE, "", {
     httpOnly: true,
-    secure,
+    secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
     maxAge: 0,

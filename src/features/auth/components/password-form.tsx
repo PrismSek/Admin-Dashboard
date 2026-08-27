@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { FieldError } from "@/components/ui/form-field";
 import { PasswordInput } from "@/components/ui/password-input";
 import { AuthHeading } from "@/features/auth/components/auth-heading";
-import { authRoutes, passwordContent } from "@/features/auth/content";
+import { authApiRoutes, authRoutes, passwordContent } from "@/features/auth/content";
 import { passwordSchema, type PasswordValues } from "@/features/auth/schemas";
 import { maskEmail } from "@/features/auth/utils";
 
@@ -44,9 +44,26 @@ export function PasswordForm({
     defaultValues: { password: "" },
   });
 
-  const onSubmit = handleSubmit(() => {
+  const onSubmit = handleSubmit(async ({ password }) => {
     setFormError(undefined);
-    router.push(authRoutes.signedIn);
+    let res: Response;
+    try {
+      res = await fetch(authApiRoutes.login, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+    } catch {
+      setFormError(passwordContent.invalidCredentials);
+      return;
+    }
+    if (res.ok) {
+      router.push(authRoutes.signedIn);
+      return;
+    }
+    // 401 is the uniform invalid-credentials response; the copy stays vague on
+    // purpose so the screen never reveals whether an account exists.
+    setFormError(passwordContent.invalidCredentials);
   });
 
   const message = formError ?? errors.password?.message;
