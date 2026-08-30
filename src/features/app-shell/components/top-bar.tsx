@@ -2,7 +2,7 @@ import { Bell, CircleQuestionMark, Search } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
-import { authCommon } from "@/features/auth/content";
+import { authCommon, authRoutes } from "@/features/auth/content";
 
 /**
  * Global header: brand lockup on the left, utility icons and the signed-in
@@ -12,7 +12,7 @@ import { authCommon } from "@/features/auth/content";
 export function TopBar({ initials }: { initials: string }) {
   return (
     <header className="flex h-12 shrink-0 items-center justify-between bg-chrome px-4">
-      <Link href="/dashboard" className="rounded-app">
+      <Link href={authRoutes.home} className="rounded-app">
         <Image
           src="/prismsek-logo.svg"
           alt={authCommon.logoAlt}

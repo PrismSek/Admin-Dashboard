@@ -7,15 +7,7 @@
  * sections — OVERVIEW and ACCOUNT — so the tree is a list of sections rather
  * than a flat list.
  */
-import {
-  AlertTriangle,
-  FolderCog,
-  LayoutGrid,
-  Laptop,
-  Shield,
-  Sun,
-  type LucideIcon,
-} from "lucide-react";
+import { FolderCog, Shield, Sun, type LucideIcon } from "lucide-react";
 
 export type NavChild = { label: string; href: string };
 
@@ -58,16 +50,18 @@ export const navSections: NavSection[] = [
   {
     label: "Overview",
     items: [
-      { label: "Dashboard", href: "/dashboard", icon: LayoutGrid },
-      { label: "Incidents", href: "/incidents", icon: AlertTriangle },
       { label: "Policies", href: "/policies", icon: Shield },
       {
         label: "Manage",
         href: "/manage",
         icon: FolderCog,
-        children: departments.map((d) => ({ label: d.label, href: `/manage/${d.slug}` })),
+        children: [
+          { label: "Users & Groups", href: "/manage/users" },
+          { label: "Endpoints", href: "/endpoints" },
+          { label: "Domains", href: "/manage/domains" },
+          { label: "Applications", href: "/manage/applications" },
+        ],
       },
-      { label: "Endpoints", href: "/endpoints", icon: Laptop },
     ],
   },
   {

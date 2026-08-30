@@ -19,8 +19,8 @@ export const authRoutes = {
   invitation: "/invitation",
   invitationExpired: "/invitation/expired",
   suspended: "/suspended",
-  /** Post-authentication landing page. */
-  dashboard: "/dashboard",
+  /** Post-authentication landing page — the app's first sidebar item. */
+  home: "/policies",
 } as const;
 
 /**

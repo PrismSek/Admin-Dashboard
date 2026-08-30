@@ -39,7 +39,7 @@ export default function GoogleCallbackPage() {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ token: tokens.token, refresh: tokens.refresh, n: nonce }),
     })
-      .then((res) => (res.ok ? router.replace(authRoutes.dashboard) : fail()))
+      .then((res) => (res.ok ? router.replace(authRoutes.home) : fail()))
       .catch(fail);
   }, [router]);
 

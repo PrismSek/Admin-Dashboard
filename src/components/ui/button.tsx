@@ -33,6 +33,10 @@ const buttonVariants = cva(
         /** Destructive action — outlined, never a filled red button. */
         destructive:
           "border border-destructive bg-transparent text-destructive hover:bg-destructive/5",
+        /** High-consequence signed-in action (e.g. isolate endpoint) — outlined
+            in brand-danger orange, distinct from the red `destructive` delete. */
+        appDanger:
+          "border border-danger bg-chrome text-danger hover:bg-danger/5 active:bg-danger/10",
         /** Third-party identity providers — normal-weight label. */
         provider:
           "border border-line bg-card text-ink font-normal hover:bg-page active:bg-line-faint",

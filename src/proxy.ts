@@ -35,14 +35,14 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   const refreshToken = request.cookies.get(REFRESH_COOKIE)?.value;
 
   // Reverse gate: a signed-in visitor must never land on the sign-in form. Send
-  // them into the app; /dashboard's own gate (below) validates or refreshes the
+  // them into the app; the app's own gate (below) validates or refreshes the
   // session, or — if it is actually dead — bounces back here after clearing the
   // cookies, so this settles in one round-trip instead of looping. Scoped to the
   // exact /sign-in form: the sub-routes (success, callback, password, sso) are
   // shown to an authenticated user mid-flow and must stay reachable.
   if (request.nextUrl.pathname === authRoutes.signIn) {
     if (hasLiveAccess || refreshToken !== undefined) {
-      return NextResponse.redirect(new URL(authRoutes.dashboard, request.url));
+      return NextResponse.redirect(new URL(authRoutes.home, request.url));
     }
     return NextResponse.next();
   }
@@ -75,11 +75,9 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
 export const config = {
   matcher: [
-    "/dashboard/:path*",
     "/endpoints/:path*",
     "/policies/:path*",
     "/manage/:path*",
-    "/incidents/:path*",
     "/settings/:path*",
     // Exact /sign-in only — reverse-gate the form. Sub-routes (success, callback,
     // password, sso) are intentionally excluded; a mid-flow user must see them.

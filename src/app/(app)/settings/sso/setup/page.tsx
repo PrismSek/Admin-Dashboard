@@ -7,6 +7,8 @@ import { AppField, AppInput, ReadOnlyField } from "@/components/app/field";
 import { PageBody } from "@/components/app/page-header";
 import { Toggle } from "@/components/app/toggle";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { getOrganization } from "@/features/app-shell/data";
+import { SsoActivateDialog } from "@/features/settings/components/sso-activate-dialog";
 import { getSsoConfig } from "@/features/settings/data";
 import { cn } from "@/lib/utils";
 
@@ -32,9 +34,13 @@ const BASE = "/settings/sso/setup";
 export default async function SsoSetupPage({
   searchParams,
 }: {
-  searchParams: Promise<{ step?: string }>;
+  searchParams: Promise<{ step?: string; dialog?: string }>;
 }) {
-  const [{ step: rawStep }, sso] = await Promise.all([searchParams, getSsoConfig()]);
+  const [{ step: rawStep, dialog }, sso, org] = await Promise.all([
+    searchParams,
+    getSsoConfig(),
+    getOrganization(),
+  ]);
   const step = Math.min(4, Math.max(1, Number(rawStep) || 1));
 
   return (
@@ -116,13 +122,25 @@ export default async function SsoSetupPage({
           </Link>
         ) : (
           /* Activating SSO can lock every administrator out if the IdP is
-             misconfigured. The API behind this must refuse to activate unless
-             the step-3 connection test has actually passed. */
-          <Button variant="appPrimary" size="app" width="auto" type="submit">
+             misconfigured, so it goes through an explicit acknowledgement gate.
+             The API behind this must also refuse to activate unless the step-3
+             connection test has actually passed. */
+          <Link
+            href={`${BASE}?step=4&dialog=activate`}
+            className={buttonVariants({ variant: "appPrimary", size: "app", width: "auto" })}
+          >
             Activate SSO
-          </Button>
+          </Link>
         )}
       </div>
+
+      {step === 4 && dialog === "activate" ? (
+        <SsoActivateDialog
+          orgName={org.name}
+          provider={sso.provider}
+          closeHref={`${BASE}?step=4`}
+        />
+      ) : null}
     </PageBody>
   );
 }

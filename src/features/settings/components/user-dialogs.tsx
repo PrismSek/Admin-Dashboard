@@ -3,6 +3,7 @@ import Link from "next/link";
 import { AppField, AppInput, AppSelect } from "@/components/app/field";
 import { Modal } from "@/components/app/modal";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { DeleteUserDialog } from "@/features/settings/components/delete-user-dialog";
 import { roles, type OrgUser } from "@/features/settings/data";
 
 /**
@@ -94,40 +95,10 @@ export function UserDialogs({
   }
 
   if (dialog === "delete") {
+    // Irreversible. The confirm button is gated on the typed email (see the
+    // client dialog); the API behind it must re-check the match and audit-log.
     return (
-      <Modal
-        title={`Delete ${target.name}?`}
-        closeHref={closeHref}
-        footer={
-          <>
-            <Link
-              href={closeHref}
-              className={buttonVariants({ variant: "appSecondary", size: "app", width: "auto" })}
-            >
-              Cancel
-            </Link>
-            {/* Irreversible. The API call behind this must require the typed
-                confirmation below to match, and must be audit-logged. */}
-            <Button variant="destructive" size="app" width="auto" type="submit">
-              Delete permanently
-            </Button>
-          </>
-        }
-      >
-        <div className="flex flex-col gap-5">
-          <p className="text-meta text-dim">
-            This permanently removes {target.name} and their personal data. Audit records of
-            actions they took are retained. This cannot be undone.
-          </p>
-          <AppField
-            id="delete-confirm"
-            label="Type the user's email to confirm"
-            hint={target.email}
-          >
-            <AppInput id="delete-confirm" placeholder={target.email} />
-          </AppField>
-        </div>
-      </Modal>
+      <DeleteUserDialog name={target.name} email={target.email} closeHref={closeHref} />
     );
   }
 

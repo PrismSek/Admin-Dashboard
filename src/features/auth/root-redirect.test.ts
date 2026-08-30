@@ -7,9 +7,9 @@ describe("resolveRootDestination", () => {
   });
   it("routes everything else into the app, letting the proxy gate it", () => {
     // Not "/sign-in": a logged-in visitor opening the bare URL must land in the
-    // app, never the sign-in screen. The proxy on /dashboard decides logged-in
-    // (render, refreshing if needed) vs signed-out (bounce to sign-in).
-    expect(resolveRootDestination(undefined)).toBe("/dashboard");
-    expect(resolveRootDestination("whatever")).toBe("/dashboard");
+    // app, never the sign-in screen. The proxy on the landing route decides
+    // logged-in (render, refreshing if needed) vs signed-out (bounce to sign-in).
+    expect(resolveRootDestination(undefined)).toBe("/policies");
+    expect(resolveRootDestination("whatever")).toBe("/policies");
   });
 });

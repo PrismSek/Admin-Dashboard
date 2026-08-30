@@ -8,6 +8,7 @@ import { Modal } from "@/components/app/modal";
 import { PageBody } from "@/components/app/page-header";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { getCurrentUser, getOrganization } from "@/features/app-shell/data";
+import { getSsoConfig } from "@/features/settings/data";
 
 export const metadata: Metadata = { title: "Profile" };
 
@@ -24,10 +25,11 @@ export default async function ProfileSettingsPage({
 }: {
   searchParams: Promise<{ variant?: string; dialog?: string }>;
 }) {
-  const [{ variant, dialog }, user, organization] = await Promise.all([
+  const [{ variant, dialog }, user, organization, sso] = await Promise.all([
     searchParams,
     getCurrentUser(),
     getOrganization(),
+    getSsoConfig(),
   ]);
 
   const isSso = variant === "sso";
@@ -78,16 +80,20 @@ export default async function ProfileSettingsPage({
         <div className="flex items-start justify-between gap-6">
           <div className="min-w-0">
             <h3 className="text-app font-semibold text-strong">
-              {isSso ? "Single sign-on" : "PrismSek password"}
+              {isSso ? "Signed in with SSO" : "PrismSek password"}
             </h3>
             <p className="mt-1 text-meta text-dim">
               {isSso
-                ? `You sign in through your organization's identity provider. Your password is managed there, not in PrismSek.`
+                ? `You sign in through Northwind ${sso.provider}. Your password and multi-factor settings are managed by your identity provider, not PrismSek.`
                 : "You sign in with your email and a PrismSek password. Change it whenever you need to."}
             </p>
           </div>
 
-          {isSso ? null : (
+          {isSso ? (
+            <Button variant="appSecondary" size="app" width="auto" type="button">
+              Manage in {sso.provider}
+            </Button>
+          ) : (
             <Link
               href={`${base}${base.includes("?") ? "&" : "?"}dialog=change-password`}
               className={buttonVariants({ variant: "appSecondary", size: "app", width: "auto" })}
