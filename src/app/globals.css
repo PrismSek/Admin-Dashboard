@@ -63,6 +63,7 @@
 
   --ps-green-900: #0e6027;
   --ps-green-800: #166534;
+  --ps-green-600: #189054; /* domain/app "Allowed" disposition icon */
   --ps-green-200: #a7f0ba;
   --ps-green-050: #e8f5ea; /* light "Connected/Active" pill fill */
   --ps-blue-600: #3b6bc9;
@@ -169,6 +170,11 @@
   --color-destructive: var(--ps-red-600);
   --color-outline-warm: var(--ps-orange-200);
 
+  /* Domain / application disposition icons (icon-only; the label stays --color-strong) */
+  --color-allow: var(--ps-green-600);
+  --color-block: var(--ps-orange-600);
+  --color-monitor: var(--ps-grey-400);
+
   /* Radii */
   --radius-control: 10px; /* auth inputs, buttons */
   --radius-app: 6px; /* app inputs, buttons, cards */
@@ -267,6 +273,9 @@
   --color-state-unknown: var(--color-state-unknown);
   --color-destructive: var(--color-destructive);
   --color-outline-warm: var(--color-outline-warm);
+  --color-allow: var(--color-allow);
+  --color-block: var(--color-block);
+  --color-monitor: var(--color-monitor);
 
   --radius-app: var(--radius-app);
 

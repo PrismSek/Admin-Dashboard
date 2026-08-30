@@ -38,7 +38,10 @@ export function SideNav() {
 
   const allItems = navSections.flatMap((section) => section.items);
   const activeGroup = allItems.find(
-    (item) => item.children && isWithin(item.href, pathname),
+    (item) =>
+      item.children &&
+      (isWithin(item.href, pathname) ||
+        item.children.some((child) => isWithin(child.href, pathname))),
   )?.href;
 
   const [openGroups, setOpenGroups] = useState<string[]>(() =>
@@ -111,7 +114,9 @@ function NavEntry({
 }) {
   const submenuId = useId();
   const Icon = item.icon;
-  const containsRoute = isWithin(item.href, pathname);
+  const containsRoute =
+    isWithin(item.href, pathname) ||
+    (item.children?.some((child) => isWithin(child.href, pathname)) ?? false);
 
   const caret = (
     <span aria-hidden className="flex w-[9px] shrink-0 items-center justify-center">

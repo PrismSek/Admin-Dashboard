@@ -101,14 +101,14 @@ describe("proxy (route gating + auto-refresh)", () => {
 
   it("reverse-gate: sends a signed-in visitor (live access) away from /sign-in into the app", async () => {
     const res = await proxy(req({ access: jwt(now() + 900), url: "https://app.example/sign-in" }));
-    expect(location(res)).toBe("https://app.example/dashboard");
+    expect(location(res)).toBe("https://app.example/policies");
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("reverse-gate: sends a visitor with only a refresh token away from /sign-in (the app then refreshes)", async () => {
     const res = await proxy(req({ refresh: "r1", url: "https://app.example/sign-in" }));
-    expect(location(res)).toBe("https://app.example/dashboard");
-    expect(fetchMock).not.toHaveBeenCalled(); // no refresh here — /dashboard's own gate does that
+    expect(location(res)).toBe("https://app.example/policies");
+    expect(fetchMock).not.toHaveBeenCalled(); // no refresh here — the app's own gate does that
   });
 
   it("reverse-gate: shows the sign-in form when there is no session", async () => {
@@ -119,11 +119,9 @@ describe("proxy (route gating + auto-refresh)", () => {
   it("guards the authenticated app sections and reverse-gates the sign-in form", () => {
     expect(config.matcher).toEqual(
       expect.arrayContaining([
-        "/dashboard/:path*",
         "/endpoints/:path*",
         "/policies/:path*",
         "/manage/:path*",
-        "/incidents/:path*",
         "/settings/:path*",
         "/sign-in",
       ]),

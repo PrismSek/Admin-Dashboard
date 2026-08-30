@@ -1,126 +1,171 @@
+import { Copy, Info, ShieldCheck } from "lucide-react";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { ReactNode } from "react";
 
-import { Card } from "@/components/app/card";
+import { Modal } from "@/components/app/modal";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { EndpointDetailShell } from "@/features/endpoints/components/endpoint-detail-shell";
-import { getBrowserCoverage, getEndpoint } from "@/features/endpoints/data";
+import {
+  getEndpoint,
+  getRecentActivity,
+  type ActivityEvent,
+  type Endpoint,
+} from "@/features/endpoints/data";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Endpoint overview" };
 
+const reporting: Record<Endpoint["protection"], { label: string; tone: string }> = {
+  protected: { label: "Reporting normally", tone: "bg-state-ok" },
+  attention: { label: "Reporting with warnings", tone: "bg-state-warn" },
+  unknown: { label: "Not reporting", tone: "bg-state-unknown" },
+};
+
 export default async function EndpointOverviewPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ dialog?: string }>;
 }) {
-  const { id } = await params;
-  const [endpoint, browsers] = await Promise.all([getEndpoint(id), getBrowserCoverage()]);
+  const [{ id }, { dialog }] = await Promise.all([params, searchParams]);
+  const [endpoint, activity] = await Promise.all([getEndpoint(id), getRecentActivity(id)]);
 
   if (!endpoint) notFound();
 
-  const rows = [
-    {
-      label: "Protection",
-      value: "Protected",
-      tone: "ok" as const,
-      evidence: endpoint.evidence,
-      freshness: endpoint.lastSeen,
-    },
-    {
-      label: "Deployment",
-      value: "Current",
-      evidence: `${endpoint.agentVersion} · up to date`,
-      freshness: endpoint.lastSeen,
-    },
-    {
-      label: "Connectivity",
-      value: "Reporting",
-      evidence: "Signed channel active",
-      freshness: endpoint.lastSeen,
-    },
-    {
-      label: "Assignment",
-      value: endpoint.assignedUser?.split("@")[0] ?? "Unassigned",
-      evidence: "Directory association for this endpoint",
-      freshness: "10 Aug 09:00",
-    },
-    {
-      label: "Endpoint identity",
-      value: endpoint.deviceId,
-      evidence: "Tenant-bound device identity",
-      freshness: "09 Aug 06:21",
-    },
-  ];
-
-  const uncovered = browsers.flatMap((b) => b.profiles).filter((p) => !p.covered).length;
+  const report = reporting[endpoint.protection];
 
   return (
     <EndpointDetailShell endpoint={endpoint} tab="overview">
-      <Card className="divide-y divide-hair">
-        {rows.map((row) => (
-          <div
-            key={row.label}
-            className="grid items-center gap-4 px-6 py-4 md:grid-cols-[10rem_10rem_1fr_auto]"
-          >
-            <p className="text-meta text-dim">{row.label}</p>
-            <p
-              className={cn(
-                "text-app font-medium",
-                row.tone === "ok" ? "text-state-ok" : "text-strong",
-              )}
-            >
-              {row.value}
-            </p>
-            <p className="text-meta text-dim">{row.evidence}</p>
-            <p className="text-meta text-subtle md:text-right">{row.freshness}</p>
-          </div>
-        ))}
-      </Card>
+      <div className="grid gap-5 lg:grid-cols-3">
+        <DetailCard title="System">
+          <Row label="Endpoint type" value={endpoint.endpointType} />
+          <Row label="Operating system" value={endpoint.os.version} />
+          <Row label="Agent version" value={endpoint.os.agentVersion} />
+          <Row
+            label="Device identifier"
+            value={
+              <span className="inline-flex items-center gap-2">
+                {endpoint.deviceId}
+                <button
+                  type="button"
+                  aria-label="Copy device identifier"
+                  className="text-subtle transition-colors hover:text-copy"
+                >
+                  <Copy aria-hidden className="size-4" />
+                </button>
+              </span>
+            }
+          />
+        </DetailCard>
 
-      <h2 className="mt-8 text-app font-semibold text-strong">
-        {browsers.length} of {browsers.length} supported browsers actively covered · {uncovered}{" "}
-        profile not covered
-      </h2>
+        <DetailCard title="Management">
+          <Row
+            label="Assigned user"
+            value={
+              endpoint.assignedUser ? (
+                <span className="text-brand">{endpoint.assignedUser}</span>
+              ) : (
+                <span className="text-subtle">Unassigned</span>
+              )
+            }
+          />
+          <Row label="Groups" value={endpoint.groups.join(", ")} />
+          <Row label="Directory domain" value={endpoint.directoryDomain} />
+          <Row label="Deployment state" value={<Dotted tone="bg-state-ok" label={endpoint.deploymentState} />} />
+        </DetailCard>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-3">
-        {browsers.map((browser) => (
-          <Card key={browser.browser} className="p-5">
-            <p className="text-app font-medium text-copy">{browser.browser}</p>
-            <p className="mt-3 text-app font-medium text-state-ok">{browser.status}</p>
-            <p className="mt-1.5 text-meta text-dim">{browser.summary}</p>
-            <p className="mt-2 text-meta text-subtle">{browser.version}</p>
-
-            <div className="mt-4 border-t border-hair pt-4">
-              <p className="text-meta text-dim">
-                Profiles · {browser.profiles.length}{" "}
-                {browser.profiles.length === 1 ? "profile" : "profiles"}
-              </p>
-              <ul className="mt-2 flex flex-col gap-2.5">
-                {browser.profiles.map((profile) => (
-                  <li key={profile.name}>
-                    <p className="flex items-center gap-2 text-meta text-strong">
-                      <span
-                        aria-hidden
-                        className={cn(
-                          "size-2.5 shrink-0 rounded-[2px]",
-                          profile.covered
-                            ? "bg-state-ok"
-                            : "border border-hair-strong bg-transparent",
-                        )}
-                      />
-                      <span className="font-medium">{profile.name}</span>
-                      <span className="text-dim">
-                        — {profile.covered ? "Covered" : "Not covered"}
-                      </span>
-                    </p>
-                    <p className="mt-0.5 pl-4.5 text-meta text-subtle">{profile.detail}</p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </Card>
-        ))}
+        <DetailCard title="Connectivity">
+          <Row label="Last seen" value={endpoint.lastSeen} />
+          <Row label="Reporting state" value={<Dotted tone={report.tone} label={report.label} />} />
+          <Row label="IP address" value={endpoint.ipAddress} />
+          <Row label="Channel" value={endpoint.channel} />
+        </DetailCard>
       </div>
+
+      <div className="mt-5 rounded-card border border-hair-strong bg-chrome p-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-app-heading font-normal text-strong">Recent activity</h2>
+          <Link href="#" className="text-meta font-medium text-brand hover:text-brand-hover">
+            View all activity
+          </Link>
+        </div>
+        <ul className="mt-4 flex flex-col">
+          {activity.map((event) => (
+            <ActivityRow key={event.title} event={event} />
+          ))}
+        </ul>
+      </div>
+
+      {dialog === "isolate" ? (
+        <Modal
+          title={`Isolate ${endpoint.name}?`}
+          description="The endpoint stays powered on, but its network access is cut to everything except PrismSek. In-progress transfers are stopped. You can release it at any time."
+          closeHref={`/endpoints/${endpoint.id}`}
+          footer={
+            <>
+              <Link
+                href={`/endpoints/${endpoint.id}`}
+                className={buttonVariants({ variant: "appSecondary", size: "app", width: "auto" })}
+              >
+                Cancel
+              </Link>
+              <Button variant="appPrimary" size="app" width="auto" type="button">
+                Isolate endpoint
+              </Button>
+            </>
+          }
+        />
+      ) : null}
     </EndpointDetailShell>
+  );
+}
+
+function DetailCard({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="rounded-card border border-hair-strong bg-chrome">
+      <p className="border-b border-hair px-6 py-4 text-meta text-dim">{title}</p>
+      <dl className="flex flex-col gap-3.5 px-6 py-5">{children}</dl>
+    </section>
+  );
+}
+
+function Row({ label, value }: { label: string; value: ReactNode }) {
+  return (
+    <div className="flex items-start gap-4">
+      <dt className="w-36 shrink-0 text-meta text-dim">{label}</dt>
+      <dd className="min-w-0 text-app text-strong">{value}</dd>
+    </div>
+  );
+}
+
+function Dotted({ tone, label }: { tone: string; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-2">
+      <span aria-hidden className={cn("size-1.5 rounded-full", tone)} />
+      {label}
+    </span>
+  );
+}
+
+function ActivityRow({ event }: { event: ActivityEvent }) {
+  const Icon = event.kind === "protection" ? ShieldCheck : Info;
+  return (
+    <li className="flex items-start gap-3 border-t border-hair py-4 first:border-t-0 first:pt-0">
+      <Icon
+        aria-hidden
+        className={cn(
+          "mt-0.5 size-4 shrink-0",
+          event.kind === "protection" ? "text-state-ok" : "text-subtle-alt",
+        )}
+      />
+      <div className="min-w-0 flex-1">
+        <p className="text-app text-strong">{event.title}</p>
+        <p className="mt-0.5 text-meta text-dim">{event.detail}</p>
+      </div>
+      <p className="shrink-0 text-meta text-subtle">{event.time}</p>
+    </li>
   );
 }

@@ -12,5 +12,5 @@ import { authRoutes } from "@/features/auth/content";
  * screen.
  */
 export function resolveRootDestination(signin: string | undefined): string {
-  return signin === "failed" ? `${authRoutes.signIn}?error=google` : authRoutes.dashboard;
+  return signin === "failed" ? `${authRoutes.signIn}?error=google` : authRoutes.home;
 }

@@ -23,7 +23,7 @@ export const metadata: Metadata = { title: signedInContent.title };
 export default function SignedInPage() {
   return (
     <AuthCenteredLayout>
-      <RedirectAfter to={authRoutes.dashboard} />
+      <RedirectAfter to={authRoutes.home} />
 
       <StatusBadge tone="success" className="mb-6">
         <Check aria-hidden strokeWidth={2.5} />
@@ -39,7 +39,7 @@ export default function SignedInPage() {
       {/* Fallback: the automatic redirect needs JavaScript, and a stalled
           redirect must never leave the user stranded on a dead end. */}
       <Link
-        href={authRoutes.dashboard}
+        href={authRoutes.home}
         className="mt-8 rounded-sm text-body font-medium text-brand hover:underline"
       >
         {signedInContent.continueManually}
