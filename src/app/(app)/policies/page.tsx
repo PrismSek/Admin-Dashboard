@@ -7,8 +7,10 @@ import { ListFooter, SquareIconButton, Th, ToolbarSearch } from "@/components/ap
 import { PageBody, PageHeader } from "@/components/app/page-header";
 import { Tabs } from "@/components/app/tabs";
 import { buttonVariants } from "@/components/ui/button";
+import { getPolicyDetail, listPolicies } from "@/features/policies/api";
 import { HealthCell, LifecyclePill } from "@/features/policies/components/policy-cells";
-import { getPolicies, getPolicyCounts, type Policy } from "@/features/policies/data";
+import { PolicyDrawer } from "@/features/policies/components/policy-drawer";
+import type { PolicyListItem } from "@/features/policies/labels";
 
 export const metadata: Metadata = { title: "Policies" };
 
@@ -17,10 +19,15 @@ const PAGE_SIZE = 10;
 export default async function PoliciesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; q?: string; page?: string }>;
+  searchParams: Promise<{ tab?: string; q?: string; page?: string; policy?: string }>;
 }) {
   const params = await searchParams;
-  const [all, counts] = await Promise.all([getPolicies(), getPolicyCounts()]);
+  const all = await listPolicies();
+  const counts = {
+    all: all.length,
+    draft: all.filter((policy) => policy.lifecycle === "draft").length,
+    off: all.filter((policy) => policy.lifecycle === "off").length,
+  };
 
   const tab = params.tab === "draft" ? "draft" : params.tab === "off" ? "off" : "all";
   const query = params.q?.trim().toLowerCase() ?? "";
@@ -37,6 +44,10 @@ export default async function PoliciesPage({
   const start = (page - 1) * PAGE_SIZE;
   const visible = filtered.slice(start, start + PAGE_SIZE);
 
+  // The detail drawer opens over the list via `?policy=<id>` (server-rendered,
+  // shareable) and carries the ETag its lifecycle actions need.
+  const drawerDetail = params.policy ? await getPolicyDetail(params.policy) : null;
+
   const hrefWith = (overrides: { tab?: string; q?: string; page?: string }) => {
     const next = new URLSearchParams();
     const merged = { tab: params.tab, q: params.q, ...overrides };
@@ -45,6 +56,10 @@ export default async function PoliciesPage({
     const qs = next.toString();
     return qs ? `/policies?${qs}` : "/policies";
   };
+
+  const closeHref = hrefWith({});
+  const hrefForPolicy = (id: string) =>
+    `${closeHref}${closeHref.includes("?") ? "&" : "?"}policy=${id}`;
 
   return (
     <PageBody>
@@ -109,7 +124,7 @@ export default async function PoliciesPage({
             </thead>
             <tbody className="divide-y divide-hair">
               {visible.map((policy) => (
-                <PolicyRow key={policy.id} policy={policy} />
+                <PolicyRow key={policy.id} policy={policy} href={hrefForPolicy(policy.id)} />
               ))}
             </tbody>
           </table>
@@ -125,15 +140,19 @@ export default async function PoliciesPage({
           perPage={PAGE_SIZE}
         />
       </div>
+
+      {drawerDetail ? <PolicyDrawer detail={drawerDetail} closeHref={closeHref} /> : null}
     </PageBody>
   );
 }
 
-function PolicyRow({ policy }: { policy: Policy }) {
+function PolicyRow({ policy, href }: { policy: PolicyListItem; href: string }) {
   return (
     <tr className="align-middle transition-colors hover:bg-hover">
       <td className="px-5 py-4">
-        <span className="text-app font-medium text-strong">{policy.name}</span>
+        <Link href={href} className="text-app font-medium text-strong hover:text-brand-accent">
+          {policy.name}
+        </Link>
       </td>
       <td className="px-5 py-4">
         <LifecyclePill value={policy.lifecycle} />

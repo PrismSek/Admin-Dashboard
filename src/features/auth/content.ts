@@ -33,6 +33,7 @@ export const authApiRoutes = {
   refresh: "/api/auth/refresh",
   forgotPassword: "/api/auth/password/forgot",
   resetPassword: "/api/auth/password/reset",
+  acceptInvitation: "/api/auth/invitation/accept",
 } as const;
 
 /** Legal/support links shown in the footer of every auth screen. */
@@ -131,6 +132,23 @@ export const invitationContent = {
   accept: "Accept Invitation",
   mistakePrefix: "If you believe this invitation was sent to you by mistake,",
   contactSupport: "contact support.",
+} as const;
+
+export const acceptInvitationContent = {
+  title: "Accept your invitation",
+  subtitle: "Set your name and a password to join your team on PrismSek.",
+  nameLabel: "Full name",
+  namePlaceholder: "Enter your full name",
+  passwordLabel: "Password",
+  passwordPlaceholder: "Create a password",
+  passwordHint: "Use 8+ characters with a mix of letters, numbers & symbols",
+  confirmLabel: "Confirm password",
+  confirmPlaceholder: "Re-enter password",
+  submit: "Accept & continue",
+  backToSignIn: "Back to sign in",
+  linkInvalid:
+    "This invitation link is invalid, expired, or already used. Ask your administrator to resend it.",
+  failed: "Something went wrong accepting your invitation. Please try again.",
 } as const;
 
 export const invitationExpiredContent = {

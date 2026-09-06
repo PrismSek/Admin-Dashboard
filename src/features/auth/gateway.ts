@@ -96,3 +96,23 @@ export async function resetPassword(token: string, password: string): Promise<Re
   if (res.status === 422) return "weak-password";
   throw new Error(`resetPassword: unexpected gateway status ${res.status}`);
 }
+
+export type AcceptInviteOutcome = "ok" | "invalid";
+
+/**
+ * Redeem an invitation (`POST /v1/invites/accept`). Unauthenticated by
+ * definition — the invitee has no account yet, so the emailed token is the only
+ * credential. The gateway collapses "invalid, expired, already used, or password
+ * too short" into a single 400 so the route cannot be used to probe which tokens
+ * once existed; we mirror that with one `"invalid"` outcome.
+ */
+export async function acceptInvite(
+  token: string,
+  name: string,
+  password: string,
+): Promise<AcceptInviteOutcome> {
+  const res = await post("/v1/invites/accept", { token, name, password });
+  if (res.ok) return "ok";
+  if (res.status === 400) return "invalid";
+  throw new Error(`acceptInvite: unexpected gateway status ${res.status}`);
+}

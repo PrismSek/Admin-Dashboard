@@ -5,17 +5,24 @@ import type { ReactNode } from "react";
 
 import { AppInput } from "@/components/app/field";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { listPolicyChannels } from "@/features/policies/api";
+import { DescriptionField } from "@/features/policies/components/description-field";
 import { StepRail } from "@/features/policies/components/step-rail";
+import { channelLabel } from "@/features/policies/labels";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Create a policy" };
 
 /**
  * Create-policy form. Rendered as one page with the seven-step rail beside it
- * (the design is a single scrollable form, not a paged wizard). Controls are
- * presentational until the policy API is wired.
+ * (the design is a single scrollable form, not a paged wizard). The Channel
+ * list is populated from the policy-channels API (`authorable` only — `Other`
+ * is never authorable); the remaining controls stay presentational until the
+ * rest of the policy API is wired.
  */
-export default function CreatePolicyPage() {
+export default async function CreatePolicyPage() {
+  const { authorable } = await listPolicyChannels();
+
   return (
     <div className="flex min-h-full">
       <aside className="hidden shrink-0 border-r border-hair-strong bg-chrome px-8 py-10 lg:block">
@@ -40,12 +47,7 @@ export default function CreatePolicyPage() {
           <Field className="mt-8" label="Policy name">
             <AppInput defaultValue="Block Aadhaar to personal cloud" />
           </Field>
-          <Link
-            href="#"
-            className="mt-2 inline-block text-meta font-medium text-brand hover:text-brand-hover"
-          >
-            + Add a description
-          </Link>
+          <DescriptionField />
 
           {/* Who — audience */}
           <Field className="mt-6" label="Applies to">
@@ -68,11 +70,11 @@ export default function CreatePolicyPage() {
           <Field className="mt-6" label="Channel">
             <div className="flex flex-wrap items-center gap-3">
               <NativeSelect className="w-72" leading={<ArrowUp className="size-4 text-dim" />}>
-                <option>Browser</option>
-                <option>Removable media</option>
-                <option>Clipboard</option>
-                <option>Email</option>
-                <option>Print</option>
+                {authorable.map((id) => (
+                  <option key={id} value={id}>
+                    {channelLabel(id)}
+                  </option>
+                ))}
               </NativeSelect>
               <OutlinePill>Enforced today</OutlinePill>
               <span className="text-meta text-subtle">One channel per policy</span>

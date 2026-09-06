@@ -1,6 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { forgotPassword, login, logout, refresh, resetPassword } from "@/features/auth/gateway";
+import {
+  acceptInvite,
+  forgotPassword,
+  login,
+  logout,
+  refresh,
+  resetPassword,
+} from "@/features/auth/gateway";
 
 const SESSION = {
   token: "a.b.c",
@@ -117,6 +124,30 @@ describe("gateway auth client", () => {
     it("returns 'weak-password' on 422", async () => {
       fetchMock.mockResolvedValue(response(422));
       expect(await resetPassword("tok", "short")).toBe("weak-password");
+    });
+  });
+
+  describe("acceptInvite", () => {
+    it("posts token, name and password and returns 'ok' on 201", async () => {
+      fetchMock.mockResolvedValue(response(201));
+      expect(await acceptInvite("tok", "Amara Osei", "newpassword")).toBe("ok");
+      const [url, init] = fetchMock.mock.calls[0];
+      expect(url).toBe("https://gw.example/v1/invites/accept");
+      expect(JSON.parse(init.body)).toEqual({
+        token: "tok",
+        name: "Amara Osei",
+        password: "newpassword",
+      });
+    });
+
+    it("returns 'invalid' on 400 (bad/expired/used token or weak password)", async () => {
+      fetchMock.mockResolvedValue(response(400));
+      expect(await acceptInvite("bad", "Amara", "newpassword")).toBe("invalid");
+    });
+
+    it("throws on an unexpected status", async () => {
+      fetchMock.mockResolvedValue(response(500));
+      await expect(acceptInvite("tok", "Amara", "newpassword")).rejects.toThrow();
     });
   });
 });
