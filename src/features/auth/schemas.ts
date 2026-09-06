@@ -70,3 +70,31 @@ export const resetRequestSchema = z.object({
   password: newPasswordSchema,
 });
 export type ResetRequest = z.infer<typeof resetRequestSchema>;
+
+/**
+ * Client-side form contract for accepting an invitation. The invitee sets their
+ * display name and a password; the token rides in the URL, not the form.
+ */
+export const acceptInvitationSchema = z
+  .object({
+    name: z.string().trim().min(1, "Enter your name"),
+    password: newPasswordSchema,
+    confirmPassword: z.string().min(1, "Re-enter your password"),
+  })
+  .refine((values) => values.password === values.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+export type AcceptInvitationValues = z.infer<typeof acceptInvitationSchema>;
+
+/**
+ * Server-side body contract for `POST /api/auth/invitation/accept`. Re-validated
+ * because client validation is never a security control (§8); `confirmPassword`
+ * is client-only and is not sent.
+ */
+export const acceptInviteRequestSchema = z.object({
+  token: z.string().min(1),
+  name: z.string().trim().min(1),
+  password: newPasswordSchema,
+});
+export type AcceptInviteRequest = z.infer<typeof acceptInviteRequestSchema>;

@@ -2,10 +2,12 @@ import "server-only";
 
 /**
  * Settings data. Server-only fixtures matching the Figma content; swap each
- * body for a call through `lib/api-client.ts` when the API exists.
+ * body for a call through `lib/api-client.ts` when the API exists. User reads
+ * now go through `features/settings/api.ts`; the rest are still fixtures.
+ * Role values and labels live in `roles.ts` so the client drawer can share them.
  */
 
-export type UserStatus = "active" | "suspended" | "pending";
+export type UserStatus = "active" | "suspended" | "pending" | "deactivated";
 
 export type OrgUser = {
   id: string;
@@ -75,45 +77,6 @@ export type AlertCategory = {
   examples: string;
   additionalUpdates: boolean;
 };
-
-const users: OrgUser[] = [
-  { id: "u1", name: "Amara Osei", email: "amara.osei@northwind.example", role: "Org Owner", status: "active" },
-  { id: "u2", name: "Devan Rao", email: "devan.rao@northwind.example", role: "Policy Admin", status: "active" },
-  { id: "u3", name: "Hannah Beck", email: "h.beck@northwind.example", role: "Policy Admin", status: "active" },
-  { id: "u4", name: "Ivo Krause", email: "ivo.krause@northwind.example", role: "Analyst", status: "active" },
-  { id: "u5", name: "Jae Park", email: "jae.park@northwind.example", role: "Analyst", status: "active" },
-  { id: "u6", name: "Lena Fischer", email: "lena.fischer@northwind.example", role: "Analyst", status: "suspended" },
-  { id: "u7", name: "Marcus Hale", email: "marcus.hale@northwind.example", role: "Auditor", status: "active" },
-  { id: "u8", name: "Priya Desai", email: "priya.desai@northwind.example", role: "Viewer", status: "active" },
-  { id: "u9", name: "Rune Dahl", email: "rune.dahl@northwind.example", role: "Analyst", status: "active" },
-  { id: "u10", name: "Sofia Almeida", email: "sofia.almeida@northwind.example", role: "Viewer", status: "active" },
-  { id: "u11", name: "Tomas Nowak", email: "tomas.nowak@northwind.example", role: "Auditor", status: "active" },
-  { id: "u12", name: "Yuki Tanaka", email: "yuki.tanaka@northwind.example", role: "Analyst", status: "active" },
-];
-
-const invitations: Invitation[] = [
-  { id: "i1", email: "omar.sadiq@northwind.example", role: "Analyst", status: "pending", sentOn: "2 Aug 2026" },
-  { id: "i2", email: "k.oyelaran@northwind.example", role: "Auditor", status: "pending", sentOn: "31 Jul 2026" },
-  { id: "i3", email: "tomas.vela@northwind.example", role: "Analyst", status: "accepted", sentOn: "18 Jan 2026" },
-  { id: "i4", email: "contractor@vendor.example", role: "Auditor", status: "revoked", sentOn: "4 Jul 2026" },
-  { id: "i5", email: "j.mbeki@northwind.example", role: "Policy Admin", status: "expired", sentOn: "11 Jun 2026" },
-  { id: "i6", email: "priya.nair@northwind.example", role: "Analyst", status: "accepted", sentOn: "4 Jul 2025" },
-];
-
-/** Roles offered in the invite dialog and the role filter. */
-export const roles = ["Org Owner", "Policy Admin", "Analyst", "Auditor", "Viewer"] as const;
-
-export async function getUsers(): Promise<OrgUser[]> {
-  return users;
-}
-
-export async function getInvitations(): Promise<Invitation[]> {
-  return invitations;
-}
-
-export async function getUser(id: string): Promise<OrgUser | undefined> {
-  return users.find((user) => user.id === id);
-}
 
 export async function getAttentionItems(): Promise<AttentionItem[]> {
   return [

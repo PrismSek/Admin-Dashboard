@@ -10,15 +10,25 @@ import { CellStack, EmptyState, TBody, TD, THead, TR, TableFrame } from "@/compo
 import { Tabs } from "@/components/app/tabs";
 import { buttonVariants } from "@/components/ui/button";
 import { getOrganization } from "@/features/app-shell/data";
+import { getOrgUser, listInvitations, listOrgUsers } from "@/features/settings/api";
+import { InvitationActions } from "@/features/settings/components/invitation-actions";
 import { UserDialogs } from "@/features/settings/components/user-dialogs";
-import { getInvitations, getUsers, roles, type Invitation, type OrgUser } from "@/features/settings/data";
+import { UserDrawer } from "@/features/settings/components/user-drawer";
+import { type Invitation, type OrgUser } from "@/features/settings/data";
+import { roleLabels, roleValues } from "@/features/settings/roles";
+import { apiInviteStatusSchema, apiUserRoleSchema, apiUserStatusSchema } from "@/features/settings/schemas";
 
 export const metadata: Metadata = { title: "Users and Access" };
 
 const PAGE_SIZE = 25;
 
-const statusTone = { active: "ok", suspended: "neutral", pending: "pending" } as const;
-const statusLabel = { active: "Active", suspended: "Suspended", pending: "Pending" } as const;
+const statusTone = { active: "ok", suspended: "neutral", pending: "pending", deactivated: "neutral" } as const;
+const statusLabel = {
+  active: "Active",
+  suspended: "Suspended",
+  pending: "Pending",
+  deactivated: "Deactivated",
+} as const;
 
 const invitationStatusTone = {
   pending: "pending",
@@ -54,40 +64,63 @@ export default async function UsersAndAccessPage({
   searchParams: Promise<SearchParams>;
 }) {
   const params = await searchParams;
-  const [organization, allUsers, invitations] = await Promise.all([
-    getOrganization(),
-    getUsers(),
-    getInvitations(),
-  ]);
 
   const tab = params.tab === "invitations" ? "invitations" : "users";
-  const query = params.q?.trim().toLowerCase() ?? "";
+  const query = params.q?.trim() ?? "";
+  const page = Math.max(1, Number(params.page) || 1);
+
+  // URL filters are parsed with the gateway's own enums (§6): an unknown value
+  // means "no filter" rather than a query the gateway would reject. The raw
+  // strings are kept only to seed the <select>'s current selection.
   const roleFilter = params.role ?? "all";
   const statusFilter = params.status ?? "all";
+  const roleResult = apiUserRoleSchema.safeParse(params.role);
+  const role = roleResult.success ? roleResult.data : undefined;
+  const statusResult = apiUserStatusSchema.safeParse(params.status);
+  const status = statusResult.success ? statusResult.data : undefined;
+  const hasUserFilter = query !== "" || role !== undefined || status !== undefined;
 
-  const filteredUsers = allUsers.filter((user) => {
-    const matchesQuery =
-      !query ||
-      user.name.toLowerCase().includes(query) ||
-      user.email.toLowerCase().includes(query);
-    const matchesRole = roleFilter === "all" || user.role === roleFilter;
-    const matchesStatus = statusFilter === "all" || user.status === statusFilter;
-    return matchesQuery && matchesRole && matchesStatus;
-  });
+  // Users and invitations share the `status` param but have distinct status
+  // enums, so each tab parses it with its own schema.
+  const inviteStatusResult = apiInviteStatusSchema.safeParse(params.status);
+  const inviteStatus = inviteStatusResult.success ? inviteStatusResult.data : undefined;
+  const hasInviteFilter = query !== "" || role !== undefined || inviteStatus !== undefined;
 
-  const filteredInvitations = invitations.filter((invitation) => {
-    const matchesQuery = !query || invitation.email.toLowerCase().includes(query);
-    const matchesRole = roleFilter === "all" || invitation.role === roleFilter;
-    const matchesStatus = statusFilter === "all" || invitation.status === statusFilter;
-    return matchesQuery && matchesRole && matchesStatus;
-  });
+  const organization = await getOrganization();
 
-  const total = tab === "users" ? filteredUsers.length : filteredInvitations.length;
-  const page = Math.max(1, Number(params.page) || 1);
-  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const start = (page - 1) * PAGE_SIZE;
-  const visibleUsers = filteredUsers.slice(start, start + PAGE_SIZE);
-  const visibleInvitations = filteredInvitations.slice(start, start + PAGE_SIZE);
+  // The user drawer is opened by `?user=<id>` over the list; fetch that user
+  // server-side so the panel is server-rendered and the link is shareable.
+  const drawerUser = params.user ? await getOrgUser(params.user) : null;
+
+  // Users tab: the gateway filters, sorts and pages. Fetch the visible page, and
+  // (only when a filter narrows it) a second unfiltered count for the tab badge,
+  // which always reflects the whole tenant.
+  const usersResult =
+    tab === "users" ? await listOrgUsers({ q: query || undefined, role, status, page }) : null;
+  const orgUsersTotal =
+    usersResult && !hasUserFilter ? usersResult.total : (await listOrgUsers({})).total;
+
+  const usersPage = usersResult?.page ?? page;
+  const usersTotal = usersResult?.total ?? 0;
+  const usersPageCount = usersResult
+    ? Math.max(1, Math.ceil(usersResult.total / usersResult.pageSize))
+    : 1;
+  const visibleUsers = usersResult?.users ?? [];
+
+  // Invitations tab: the gateway filters, sorts and pages, mirroring the users tab.
+  const invitesResult =
+    tab === "invitations"
+      ? await listInvitations({ q: query || undefined, role, status: inviteStatus, page })
+      : null;
+  const orgInvitesTotal =
+    invitesResult && !hasInviteFilter ? invitesResult.total : (await listInvitations({})).total;
+
+  const invitesPage = invitesResult?.page ?? page;
+  const invitesTotal = invitesResult?.total ?? 0;
+  const invitesPageCount = invitesResult
+    ? Math.max(1, Math.ceil(invitesResult.total / invitesResult.pageSize))
+    : 1;
+  const visibleInvitations = invitesResult?.invitations ?? [];
 
   const hrefWith = (overrides: Record<string, string | undefined>) => {
     const next = new URLSearchParams();
@@ -101,8 +134,14 @@ export default async function UsersAndAccessPage({
 
   const roleOptions = [
     { value: "all", label: "All" },
-    ...roles.map((role) => ({ value: role, label: role })),
+    ...roleValues.map((value) => ({ value, label: roleLabels[value] })),
   ];
+
+  // The list URL with this user's drawer open, keeping the current filters.
+  const hrefForUser = (id: string) => {
+    const base = hrefWith({});
+    return `${base}${base.includes("?") ? "&" : "?"}user=${id}`;
+  };
 
   return (
     <PageBody>
@@ -122,8 +161,8 @@ export default async function UsersAndAccessPage({
       <Tabs
         className="mt-8"
         items={[
-          { label: "Users", href: hrefWith({ tab: undefined, page: undefined }), count: allUsers.length, active: tab === "users" },
-          { label: "Invitations", href: hrefWith({ tab: "invitations", page: undefined }), count: invitations.length, active: tab === "invitations" },
+          { label: "Users", href: hrefWith({ tab: undefined, page: undefined }), count: orgUsersTotal, active: tab === "users" },
+          { label: "Invitations", href: hrefWith({ tab: "invitations", page: undefined }), count: orgInvitesTotal, active: tab === "invitations" },
         ]}
       />
 
@@ -145,6 +184,7 @@ export default async function UsersAndAccessPage({
                 { value: "all", label: "All" },
                 { value: "active", label: "Active" },
                 { value: "suspended", label: "Suspended" },
+                { value: "deactivated", label: "Deactivated" },
               ]}
             />
           </FilterBar>
@@ -169,7 +209,7 @@ export default async function UsersAndAccessPage({
                 <THead case="caps" columns={["Name / email ↑", "Role", "Status", ""]} />
                 <TBody>
                   {visibleUsers.map((user) => (
-                    <UserRow key={user.id} user={user} />
+                    <UserRow key={user.id} user={user} href={hrefForUser(user.id)} />
                   ))}
                 </TBody>
               </TableFrame>
@@ -178,10 +218,10 @@ export default async function UsersAndAccessPage({
 
           <ListFooter
             visibleCount={visibleUsers.length}
-            total={filteredUsers.length}
+            total={usersTotal}
             noun="users"
-            page={page}
-            pageCount={pageCount}
+            page={usersPage}
+            pageCount={usersPageCount}
             hrefFor={(target) => hrefWith({ page: String(target) })}
           />
         </>
@@ -234,22 +274,18 @@ export default async function UsersAndAccessPage({
 
           <ListFooter
             visibleCount={visibleInvitations.length}
-            total={filteredInvitations.length}
+            total={invitesTotal}
             noun="invitations"
-            page={page}
-            pageCount={pageCount}
+            page={invitesPage}
+            pageCount={invitesPageCount}
             hrefFor={(target) => hrefWith({ page: String(target) })}
           />
         </>
       )}
 
-      <UserDialogs
-        dialog={params.dialog}
-        userId={params.user}
-        users={allUsers}
-        orgName={organization.name}
-        closeHref={hrefWith({})}
-      />
+      <UserDialogs dialog={params.dialog} orgName={organization.name} closeHref={hrefWith({})} />
+
+      {drawerUser ? <UserDrawer user={drawerUser} closeHref={hrefWith({})} /> : null}
     </PageBody>
   );
 }
@@ -283,7 +319,7 @@ function ListFooter({
   );
 }
 
-function UserRow({ user }: { user: OrgUser }) {
+function UserRow({ user, href }: { user: OrgUser; href: string }) {
   return (
     <TR>
       <TD>
@@ -295,7 +331,7 @@ function UserRow({ user }: { user: OrgUser }) {
       </TD>
       <TD align="middle" className="w-12 text-right">
         <Link
-          href={`/settings/users/${user.id}`}
+          href={href}
           aria-label={`View ${user.name}`}
           className="inline-flex text-subtle hover:text-copy"
         >
@@ -319,8 +355,8 @@ function InvitationRow({ invitation }: { invitation: Invitation }) {
         </Pill>
       </TD>
       <TD align="middle">{invitation.sentOn}</TD>
-      <TD align="middle" className="w-12 text-right">
-        <ChevronRight aria-hidden className="ml-auto inline-flex size-4 text-subtle" />
+      <TD align="middle" className="w-40 text-right">
+        <InvitationActions id={invitation.id} status={invitation.status} />
       </TD>
     </TR>
   );
