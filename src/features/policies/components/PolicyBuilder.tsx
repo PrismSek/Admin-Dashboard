@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 
 import { Button } from "@/components/ui/button";
 import { defaultPolicyAuthoringValues } from "@/features/policies/authoring-defaults";
+import { PolicyDataStep } from "@/features/policies/components/PolicyDataStep";
 import { PolicyStartStep } from "@/features/policies/components/PolicyStartStep";
 import { PolicyStepRail } from "@/features/policies/components/PolicyStepRail";
 import { PolicyWhereStep } from "@/features/policies/components/PolicyWhereStep";
@@ -70,10 +71,11 @@ export function PolicyBuilder({ catalogs }: { catalogs: PolicyCatalogs }) {
             <PolicyStartStep />
             <PolicyWhoStep audiences={catalogs.audiences} />
             <PolicyWhereStep channels={catalogs.channels} />
+            <PolicyDataStep catalogs={catalogs} />
 
-            {/* Data / Enforcement & Message / End-user Notification / Finish
-                slot in here once their own tasks land — the form values and
-                validation for all four already exist in the schema and
+            {/* Enforcement & Message / End-user Notification / Finish slot in
+                here once their own tasks land — the form values and
+                validation for all three already exist in the schema and
                 defaults, so adding them is additive, not a rewire. */}
           </div>
         </div>

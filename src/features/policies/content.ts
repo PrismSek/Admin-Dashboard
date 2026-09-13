@@ -109,9 +109,62 @@ export const policyBuilderContent = {
     collectionIs: "Collection is",
     oneOf: "one of",
     anyCollection: "any collection",
-    manageCollections: "Manage",
+    /** The picker used to add one more collection to `clipboard.collectionIds`
+     * (Figma's per-row "Finding"-style label, not drawn as its own text in
+     * the closed-state captures, so named in parallel with `findingLabel`). */
+    collectionLabel: "Collection",
+    addCollection: "Add collection",
+    removeCollection: "Remove collection",
+    manageCollections: "Manage →",
     collectionHelp: 'Left on "any collection" the rule matches on ownership alone.',
     readsAsPrefix: "Reads as —",
+
+    // Removable media channel's DEVICE section — "Registered as"
+    // (563:4823), catalogued by `removableTargets` in `data.ts`.
+    deviceChip: "DEVICE",
+    registeredAsLabel: "Registered as",
+    registeredAsHelp: 'Left on "any list" the rule matches on device class alone — no serial lookup.',
+
+    // Print channel's PRINTER section — "Printer is" (563:7670),
+    // catalogued by `printerTargets` in `data.ts`.
+    printerChip: "PRINTER",
+    printerIsLabel: "Printer is",
+    printerHelp:
+      "A queue we cannot vouch for — hand-installed drivers, direct-IP printers, anything on no list.",
+
+    // Desktop apps channel's APP section — "App is" (563:10020) and the
+    // app-selection popover (563:10405), catalogued by `applications` in
+    // `data.ts`. `ApplicationSelect`'s own trigger/summary copy.
+    appChip: "APP",
+    appIsLabel: "App is",
+    appsHelp:
+      "Only these apps match. Builds are matched by signed publisher and binary, not window title — a renamed executable still matches.",
+    chooseApplications: "Choose applications",
+    noApplicationsSelected: "No apps selected",
+    selectedApplicationsSummary: (labels: readonly string[]) => `Selected: ${labels.join(", ")}`,
+
+    /**
+     * The per-channel EXCEPTION picker (563:6411 removable / 563:8722 print /
+     * 563:12255 desktop apps) — drawn under the same "Enforcement" heading as
+     * the shared ACTION/REQUIRED/MESSAGE fields below, but modeled in the
+     * schema as each channel's own `exceptionIds` array (see the doc comments
+     * on `removableMediaRuleSchema`/`printRuleSchema`/`desktopAppRuleSchema`
+     * in `schemas.ts`), so it is authored here in the Data step rather than
+     * in the shared Enforcement & Message step (task 10). Clipboard has no
+     * `exceptionIds` field and renders no exception picker.
+     */
+    exceptionChip: "EXCEPTION",
+    letItThroughIf: "Let it through if",
+    noException: "never — no exception",
+    addException: "Add exception",
+    removeException: "Remove exception",
+    /** Placeholder text for the free-text exception input — the one worked
+     * example each channel's exception frame draws (no catalog of exception
+     * reasons exists; see `data.ts`'s "INCOMPLETE" notes on other Data-step
+     * catalogs for the same kind of gap). */
+    removableExceptionExample: "the volume is encrypted by us",
+    printExceptionExample: "every page is watermarked",
+    desktopExceptionExample: "the app is our managed build",
   },
 
   enforcement: {

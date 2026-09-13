@@ -31,10 +31,31 @@ const POLICY_CATALOGS: PolicyCatalogs = {
   collections: [{ value: "sanctioned-cloud-storage", label: "Sanctioned cloud storage" }],
   removableTargets: [{ value: "it-issued-encrypted-usb", label: "IT-issued encrypted USB" }],
   printerTargets: [{ value: "unknown", label: "Unknown" }],
-  applications: [{ value: "whatsapp", label: "WhatsApp", icon: "application" }],
+  applications: [
+    { value: "whatsapp", label: "WhatsApp", icon: "application" },
+    { value: "google-chrome", label: "Google Chrome", icon: "application" },
+  ],
   actions: [{ value: "Block", label: "Block" }],
   deployStates: [{ value: "Draft", label: "Draft" }],
 };
+
+/**
+ * Each channel's Data step shows exactly one distinguishing control — the
+ * other three channels' controls must not be in the document at all (not
+ * just visually hidden), since `PolicyDataStep` renders a single channel
+ * editor at a time. Labels are the real `content.ts` copy transcribed from
+ * each channel's Figma frame (`ClipboardConditions`/`RemovableMediaConditions`/
+ * `PrintConditions`/`DesktopAppConditions`), not the task brief's sample
+ * strings ("Destination class"/"Device target"/"Printer target"/
+ * "Applications"), which don't match any real label in this builder.
+ */
+const CHANNEL_DATA_MATRIX = [
+  ["Clipboard", "Class is"],
+  ["Removable media", "Registered as"],
+  ["Print", "Printer is"],
+  ["Desktop apps", "App is"],
+] as const;
+const ALL_DISTINGUISHING_LABELS = CHANNEL_DATA_MATRIX.map(([, label]) => label);
 
 describe("PolicyBuilder", () => {
   it("edits identity, audience, and channel without losing values", async () => {
@@ -54,5 +75,38 @@ describe("PolicyBuilder", () => {
     expect(screen.getByRole("textbox", { name: "Policy name" })).toHaveValue("Clipboard protection");
 
     expect((await axe(container)).violations).toEqual([]);
+  });
+
+  it.each(CHANNEL_DATA_MATRIX)("shows only %s's Data controls", async (channelLabel, visibleLabel) => {
+    const user = userEvent.setup();
+    render(<PolicyBuilder catalogs={POLICY_CATALOGS} />);
+
+    await user.click(screen.getByRole("combobox", { name: "Channel" }));
+    await user.click(screen.getByRole("option", { name: channelLabel }));
+
+    expect(screen.getByText(visibleLabel)).toBeVisible();
+    for (const other of ALL_DISTINGUISHING_LABELS.filter((label) => label !== visibleLabel)) {
+      expect(screen.queryByText(other)).not.toBeInTheDocument();
+    }
+  });
+
+  it("retains Desktop Apps selections after switching channels away and back", async () => {
+    const user = userEvent.setup();
+    render(<PolicyBuilder catalogs={POLICY_CATALOGS} />);
+
+    await user.click(screen.getByRole("combobox", { name: "Channel" }));
+    await user.click(screen.getByRole("option", { name: "Desktop apps" }));
+
+    await user.click(screen.getByRole("button", { name: "Choose applications" }));
+    await user.click(screen.getByRole("option", { name: "Google Chrome" }));
+
+    await user.click(screen.getByRole("combobox", { name: "Channel" }));
+    await user.click(screen.getByRole("option", { name: "Print" }));
+
+    await user.click(screen.getByRole("combobox", { name: "Channel" }));
+    await user.click(screen.getByRole("option", { name: "Desktop apps" }));
+
+    await user.click(screen.getByRole("button", { name: "Choose applications" }));
+    expect(screen.getByRole("option", { name: "Google Chrome" })).toHaveAttribute("aria-selected", "true");
   });
 });
