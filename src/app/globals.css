@@ -60,6 +60,9 @@
   --ps-hair-200: #eef0f3;
   --ps-hair-100: #f5f6f8;
   --ps-hair-050: #f9fafb;
+  --ps-policy-table-border: #e2e5ea;
+  --ps-policy-table-head: #fcfcfd;
+  --ps-policy-table-head-border: #e8ebf0;
 
   --ps-green-900: #0e6027;
   --ps-green-800: #166534;
@@ -73,7 +76,7 @@
   /* --- App sidebar palette ----------------------------------------------
      The signed-in chrome was redrawn as dark navy with a teal active accent
      (Figma file, modified 2026-08-25). These are the raw nav colours. */
-  --ps-nav-950: #0e1420; /* sidebar background */
+  --ps-nav-950: #0f090c; /* current Figma sidebar background */
   --ps-nav-900: #182130; /* active sub-item background */
   --ps-nav-800: #1b2330; /* sidebar divider */
   --ps-nav-500: #5c6879; /* section labels (OVERVIEW / ACCOUNT) */
@@ -130,6 +133,11 @@
 
   --color-focus: var(--ps-orange-600); /* focus ring */
 
+  /* Modal/dialog scrim (task 10: PolicyJsonPreview, UnsavedChangesGuard's
+     confirm dialog). A dedicated token rather than an ad-hoc `bg-black/40`
+     so every dialog's backdrop re-themes together. */
+  --color-overlay: rgb(15 17 21 / 45%);
+
   /* --- App-shell semantics (signed-in screens) --------------------------- */
   --color-canvas: var(--ps-app-canvas); /* page background behind cards */
   --color-chrome: var(--ps-white); /* top bar, sidebar, cards */
@@ -141,6 +149,9 @@
   --color-hover: var(--ps-hair-050); /* row/nav hover */
   --color-active: var(--ps-hair-100); /* selected nav item */
   --color-link: var(--ps-blue-600); /* secondary text links */
+  --color-policy-table-border: var(--ps-policy-table-border);
+  --color-policy-table-head: var(--ps-policy-table-head);
+  --color-policy-table-head-border: var(--ps-policy-table-head-border);
 
   /* Sidebar (dark navy chrome) */
   --color-nav-bg: var(--ps-nav-950);
@@ -150,6 +161,31 @@
   --color-nav-idle: var(--ps-nav-400); /* idle item ink */
   --color-nav-active-ink: var(--ps-nav-050); /* active sub-item ink */
   --color-nav-accent: var(--ps-teal-400); /* active top-level item */
+
+  /* Current signed-in Figma geometry (file 84ZFM7Vv9ILAxxs1aWxcgz). */
+  --size-app-sidebar: 16rem;
+  --size-app-header: 3rem;
+  --size-app-icon: 1.125rem;
+  --space-app-inline: 1.5rem;
+  --space-app-block-start: 1.625rem;
+  --space-app-block-end: 2rem;
+
+  /* Icon-only control size — content header utility buttons, the sidebar
+     avatar and the sign-out icon variant (Figma node 398:16105, ~32px). */
+  --size-icon-button: 2rem;
+
+  /* Sidebar row geometry — flat nav list, Help Centre and Log out rows
+     (Figma node 398:16105: 42px row height, 18px inline padding, 10px gap
+     between icon and label). */
+  --space-nav-inline: 1.125rem;
+  --space-nav-block: 0.75rem;
+  --space-nav-gap: 0.625rem;
+
+  /* Policy list content frame — the recurring outer padding shared by
+     PolicyList, PolicyListSkeleton and PolicyListError (48px horizontal,
+     32px vertical). */
+  --space-policy-content-inline: 3rem; /* 48px */
+  --space-policy-content-block: 2rem; /* 32px */
 
   /* Status pills */
   --color-pill-ok-bg: var(--ps-green-050);
@@ -175,16 +211,40 @@
   --color-block: var(--ps-orange-600);
   --color-monitor: var(--ps-grey-400);
 
+  /* Dropdown / select popup (PolicySelect — Figma "…drop down" menu family:
+     397:15024 Draft/Active/Off, 396:4985 Applies to). The popup border and
+     shadow reuse existing raw values (policy-table border, ink-900 shadow);
+     the row tint below is a new colour distinct from any existing token. */
+  --ps-dropdown-row-active: #fdf0eb; /* open-row hover/keyboard-active tint */
+  --color-dropdown-border: var(--ps-policy-table-border);
+  --color-dropdown-row-active-bg: var(--ps-dropdown-row-active);
+
   /* Radii */
   --radius-control: 10px; /* auth inputs, buttons */
   --radius-app: 6px; /* app inputs, buttons, cards */
   --radius-card: 8px;
   --radius-panel: 14px;
+  --radius-dropdown-row: 4px; /* select popup row highlight (Figma 397:15025) */
 
   /* Control sizing — normalised from Figma's 36px to meet the WCAG 2.2
      minimum target size. */
   --size-control: 2.75rem; /* 44px */
   --width-auth-column: 25rem; /* 400px (Figma 284px, normalised) */
+
+  /* PolicySelect geometry — app-scale (1:1), not the auth 0.7× normalisation.
+     Figma 470:6822 (trigger, 32px) and 397:15025 (option row, 34px). */
+  --size-select-control: 2rem; /* 32px */
+  --size-dropdown-row: 2.125rem; /* 34px */
+
+  /* Policy builder step rail (Figma 396:4444, Aside/Button family). Each
+     step's numbered badge is a 20px filled circle (cornerRadius 10), centred
+     in a 59px-tall row; the brand-coloured connector between two badges is
+     the row height minus the node diameter, split evenly above and below. */
+  --size-step-node: 1.25rem; /* 20px — badge diameter */
+  --space-step-row: 3.6875rem; /* 59px — vertical distance between step centres */
+
+  /* Popup elevation (Figma 397:15024 / 396:4985 "Background+Border+Shadow"). */
+  --shadow-dropdown: 0 10px 26px rgba(17, 24, 39, 0.12);
 }
 
 /* -------------------------------------------------------------------------
@@ -237,6 +297,7 @@
   --color-danger: var(--color-danger);
   --color-success: var(--color-success);
   --color-third-party: var(--color-third-party);
+  --color-overlay: var(--color-overlay);
 
   --color-canvas: var(--color-canvas);
   --color-chrome: var(--color-chrome);
@@ -248,6 +309,9 @@
   --color-hover: var(--color-hover);
   --color-active: var(--color-active);
   --color-link: var(--color-link);
+  --color-policy-table-border: var(--color-policy-table-border);
+  --color-policy-table-head: var(--color-policy-table-head);
+  --color-policy-table-head-border: var(--color-policy-table-head-border);
 
   --color-nav-bg: var(--color-nav-bg);
   --color-nav-surface: var(--color-nav-surface);
@@ -277,12 +341,17 @@
   --color-block: var(--color-block);
   --color-monitor: var(--color-monitor);
 
+  --color-dropdown-border: var(--color-dropdown-border);
+  --color-dropdown-row-active-bg: var(--color-dropdown-row-active-bg);
+  --shadow-dropdown: var(--shadow-dropdown);
+
   --radius-app: var(--radius-app);
+  --radius-dropdown-row: var(--radius-dropdown-row);
 
   /* App type ramp — the signed-in frames are drawn at ~1:1, so these are
      taken from Figma directly rather than normalised like the auth ramp. */
   --text-page-title: 1.5rem; /* 24px — page <h1> (Figma 2026-08-25, was 28px) */
-  --text-page-title--line-height: 1.4;
+  --text-page-title--line-height: 1.2917; /* 31px */
   --text-app-heading: 1.25rem; /* 20px — page-level section headings (regular weight) */
   --text-app-heading--line-height: 1.4;
   --text-section: 1rem; /* 16px — card section titles */
@@ -298,11 +367,9 @@
 
   /* Sidebar type — Figma sizes for the dark nav (2026-08-25). */
   --text-nav: 0.875rem; /* 14px — top-level items */
-  --text-nav--line-height: 1.3;
+  --text-nav--line-height: 1.4286; /* 20px */
   --text-nav-sub: 0.84375rem; /* 13.5px — Settings sub-items */
   --text-nav-sub--line-height: 1.26;
-  --text-nav-section: 0.6875rem; /* 11px — OVERVIEW / ACCOUNT headers */
-  --text-nav-section--line-height: 1.3;
 
   --color-art-coral: var(--ps-art-coral);
   --color-art-peach: var(--ps-art-peach);
@@ -316,6 +383,33 @@
 
   --spacing-control: var(--size-control);
   --spacing-auth-column: var(--width-auth-column);
+  --spacing-app-sidebar: var(--size-app-sidebar);
+  --spacing-app-header: var(--size-app-header);
+  --spacing-app-icon: var(--size-app-icon);
+  --spacing-app-inline: var(--space-app-inline);
+  --spacing-app-block-start: var(--space-app-block-start);
+  --spacing-app-block-end: var(--space-app-block-end);
+  --spacing-icon-button: var(--size-icon-button);
+  --spacing-nav-inline: var(--space-nav-inline);
+  --spacing-nav-block: var(--space-nav-block);
+  --spacing-nav-gap: var(--space-nav-gap);
+  --spacing-policy-content-inline: var(--space-policy-content-inline);
+  --spacing-policy-content-block: var(--space-policy-content-block);
+  --spacing-select-control: var(--size-select-control);
+  --spacing-dropdown-row: var(--size-dropdown-row);
+  --spacing-step-node: var(--size-step-node);
+  --spacing-step-row: var(--space-step-row);
+
+  /* Named `policy-thead`, not `policy-table-head`, so the `text-*` /
+     `tracking-*` utilities never collide with the `--color-policy-table-head`
+     background token above — Tailwind v4 resolves a `text-<name>` utility to
+     the color namespace whenever a `--color-<name>` token of the same name
+     exists, which silently dropped this font-size/line-height pairing. */
+  --text-policy-thead: 0.75rem;
+  --text-policy-thead--line-height: 1rem;
+  --text-policy-table-body: 0.8125rem;
+  --text-policy-table-body--line-height: 1.0625rem;
+  --tracking-policy-thead: 0.0225rem;
 
   /* Type ramp. Figma sizes normalised to web scale — one place to retune. */
   --text-heading: 1.5rem; /* 24px — screen titles */
@@ -335,6 +429,10 @@
   --text-fine--line-height: 1.4;
 
   --font-sans: var(--font-ibm-plex-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+@utility app-shell-grid {
+  grid-template-columns: var(--size-app-sidebar) minmax(0, 1fr);
 }
 
 /* -------------------------------------------------------------------------

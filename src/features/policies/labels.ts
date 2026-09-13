@@ -1,4 +1,11 @@
-import type { PolicyAction, PolicyChannelId, PolicyState } from "@/features/policies/schemas";
+import type { z } from "zod";
+
+import type {
+  PolicyAction,
+  PolicyChannelId,
+  PolicyState,
+  policyListItemSchema,
+} from "@/features/policies/schemas";
 
 /**
  * Display labels and the UI list shape for policies. Kept free of `server-only`
@@ -6,22 +13,16 @@ import type { PolicyAction, PolicyChannelId, PolicyState } from "@/features/poli
  * them; the API mapping lives in `api.ts`.
  */
 
+/** The Policy list row's display shape, derived from the fixture boundary
+ * schema (`policyListItemSchema`) so the data and the UI cannot drift apart. */
+export type PolicyListItem = z.infer<typeof policyListItemSchema>;
+
 /** The UI's lifecycle vocabulary. The API's `Active` maps to `enforced`. */
-export type Lifecycle = "enforced" | "draft" | "off";
+export type Lifecycle = PolicyListItem["lifecycle"];
 
-/** Deployment health is separate telemetry the admin-policy API does not carry. */
-export type Health = "unknown";
-
-export type PolicyListItem = {
-  id: string;
-  name: string;
-  lifecycle: Lifecycle;
-  /** Enforcement mode label for an active policy; null (rendered "—") otherwise. */
-  enforcementMode: string | null;
-  health: Health;
-  owner: string;
-  lastChange: string;
-};
+/** Deployment health, as drawn in the Figma list capture — separate telemetry
+ * the admin-policy gateway itself does not carry. */
+export type Health = PolicyListItem["health"];
 
 export const lifecycleLabel: Record<Lifecycle, string> = {
   enforced: "Enforced",
@@ -30,7 +31,11 @@ export const lifecycleLabel: Record<Lifecycle, string> = {
 };
 
 export const healthLabel: Record<Health, string> = {
-  unknown: "Unknown",
+  Healthy: "Healthy",
+  Degraded: "Degraded",
+  "Approval pending": "Approval pending",
+  Stale: "Stale",
+  "Not deployed": "Not deployed",
 };
 
 /** Enforcement action → display label. */

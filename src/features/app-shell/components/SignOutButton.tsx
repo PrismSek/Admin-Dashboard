@@ -1,13 +1,14 @@
 "use client";
 
-import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
 
+import { AppIcon } from "@/components/icons/AppIcon";
+import { appShellContent } from "@/features/app-shell/content";
 import { authApiRoutes, authRoutes } from "@/features/auth/content";
 
 const defaultClasses =
-  "flex size-9 items-center justify-center rounded-app text-copy transition-colors hover:bg-hover disabled:opacity-50 [&_svg]:size-[18px]";
+  "flex size-icon-button items-center justify-center rounded-app text-copy transition-colors hover:bg-hover disabled:opacity-50";
 
 /**
  * Ends the session and returns to sign-in. POSTs to our logout route (which
@@ -42,12 +43,12 @@ export function SignOutButton({
   return (
     <button
       type="button"
-      aria-label="Sign out"
+      aria-label={appShellContent.logOut}
       disabled={busy}
       onClick={signOut}
       className={className ?? defaultClasses}
     >
-      {children ?? <LogOut aria-hidden />}
+      {children ?? <AppIcon name="logout" className="size-app-icon" />}
     </button>
   );
 }

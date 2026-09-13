@@ -31,7 +31,7 @@ export default async function EndpointOverviewPage({
   searchParams: Promise<{ dialog?: string }>;
 }) {
   const [{ id }, { dialog }] = await Promise.all([params, searchParams]);
-  const [endpoint, activity] = await Promise.all([getEndpoint(id), getRecentActivity(id)]);
+  const [endpoint, activity] = await Promise.all([getEndpoint(id), getRecentActivity()]);
 
   if (!endpoint) notFound();
 

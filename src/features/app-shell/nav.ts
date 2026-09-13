@@ -1,29 +1,16 @@
 /**
  * The app's navigation tree — the single source of truth for sidebar
- * structure, labels, icons and URLs. Add a section here and the sidebar,
- * active-state highlighting and breadcrumbs all follow.
+ * structure, labels, icons and URLs. Add an item here and the sidebar and
+ * its active-state highlighting both follow.
  *
- * The signed-in sidebar (Figma, 2026-08-25) groups items under labelled
- * sections — OVERVIEW and ACCOUNT — so the tree is a list of sections rather
- * than a flat list.
+ * The signed-in sidebar (Figma, node 398:16105 "Policies") is a flat list —
+ * no OVERVIEW/ACCOUNT section grouping — so this is a flat array rather than
+ * a tree of sections.
  */
-import { FolderCog, Shield, Sun, type LucideIcon } from "lucide-react";
+import type { AppIconName } from "@/components/icons/AppIcon";
+import { appShellContent, appShellRoutes } from "@/features/app-shell/content";
 
 export type NavChild = { label: string; href: string };
-
-export type NavItem = {
-  label: string;
-  href: string;
-  icon: LucideIcon;
-  /** When present the item is a collapsible group. */
-  children?: NavChild[];
-};
-
-export type NavSection = {
-  /** Shown as an uppercase section header above the items. */
-  label: string;
-  items: NavItem[];
-};
 
 /** Departments under Manage. Slugs are used in `/manage/[department]`. */
 export const departments = [
@@ -46,26 +33,16 @@ export const settingsNav: NavChild[] = [
   { label: "Profile", href: "/settings/profile" },
 ];
 
-export const navSections: NavSection[] = [
-  {
-    label: "Overview",
-    items: [
-      { label: "Policies", href: "/policies", icon: Shield },
-      {
-        label: "Manage",
-        href: "/manage",
-        icon: FolderCog,
-        children: [
-          { label: "Users & Groups", href: "/manage/users" },
-          { label: "Endpoints", href: "/endpoints" },
-          { label: "Domains", href: "/manage/domains" },
-          { label: "Applications", href: "/manage/applications" },
-        ],
-      },
-    ],
-  },
-  {
-    label: "Account",
-    items: [{ label: "Settings", href: "/settings", icon: Sun, children: settingsNav }],
-  },
-];
+export type AppNavItem = {
+  label: string;
+  href: string;
+  icon: AppIconName;
+};
+
+export const appNavigation: readonly AppNavItem[] = [
+  { label: appShellContent.dashboard, href: appShellRoutes.dashboard, icon: "dashboard" },
+  { label: appShellContent.issues, href: appShellRoutes.issues, icon: "issues" },
+  { label: appShellContent.policies, href: appShellRoutes.policies, icon: "policy" },
+  { label: appShellContent.manage, href: appShellRoutes.manage, icon: "manage" },
+  { label: appShellContent.settings, href: appShellRoutes.settings, icon: "settings" },
+] as const;
