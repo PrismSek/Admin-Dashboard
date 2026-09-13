@@ -165,6 +165,17 @@
   --space-app-block-start: 1.625rem;
   --space-app-block-end: 2rem;
 
+  /* Icon-only control size — content header utility buttons, the sidebar
+     avatar and the sign-out icon variant (Figma node 398:16105, ~32px). */
+  --size-icon-button: 2rem;
+
+  /* Sidebar row geometry — flat nav list, Help Centre and Log out rows
+     (Figma node 398:16105: 42px row height, 18px inline padding, 10px gap
+     between icon and label). */
+  --space-nav-inline: 1.125rem;
+  --space-nav-block: 0.75rem;
+  --space-nav-gap: 0.625rem;
+
   /* Status pills */
   --color-pill-ok-bg: var(--ps-green-050);
   --color-pill-ok-fg: var(--ps-green-800);
@@ -339,6 +350,10 @@
   --spacing-app-inline: var(--space-app-inline);
   --spacing-app-block-start: var(--space-app-block-start);
   --spacing-app-block-end: var(--space-app-block-end);
+  --spacing-icon-button: var(--size-icon-button);
+  --spacing-nav-inline: var(--space-nav-inline);
+  --spacing-nav-block: var(--space-nav-block);
+  --spacing-nav-gap: var(--space-nav-gap);
 
   --text-policy-table-head: 0.75rem;
   --text-policy-table-head--line-height: 1rem;
