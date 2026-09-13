@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 
 import { ContentHeader } from "@/features/app-shell/components/ContentHeader";
 import { SideNav } from "@/features/app-shell/components/SideNav";
@@ -16,20 +16,31 @@ import type { CurrentUser } from "@/features/app-shell/data";
 export function AppShell({ user, children }: { user: CurrentUser; children: ReactNode }) {
   const [isNavOpen, setIsNavOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const navId = useId();
 
-  function closeNav() {
-    setIsNavOpen(false);
-    menuButtonRef.current?.focus();
-  }
+  // Restore focus to the menu button only *after* React has committed the
+  // close (and the content column has stopped being `inert`) — doing this
+  // synchronously in the click/Escape handler races the DOM update and the
+  // focus call silently no-ops (confirmed in real Chromium). The `wasOpen`
+  // guard keeps this from stealing focus on first mount, when `isNavOpen`
+  // is already `false`.
+  const wasOpenRef = useRef(false);
+  useEffect(() => {
+    if (wasOpenRef.current && !isNavOpen) {
+      menuButtonRef.current?.focus();
+    }
+    wasOpenRef.current = isNavOpen;
+  }, [isNavOpen]);
 
   return (
     <div className="app-shell-grid grid h-dvh bg-canvas max-lg:grid-cols-1">
-      <SideNav user={user} isOpen={isNavOpen} onClose={closeNav} />
+      <SideNav user={user} isOpen={isNavOpen} onClose={() => setIsNavOpen(false)} id={navId} />
       <div className="flex min-w-0 flex-col" inert={isNavOpen || undefined}>
         <ContentHeader
           onOpenNavigation={() => setIsNavOpen(true)}
           isNavOpen={isNavOpen}
           menuButtonRef={menuButtonRef}
+          navId={navId}
         />
         <main className="min-h-0 flex-1 overflow-y-auto">{children}</main>
       </div>

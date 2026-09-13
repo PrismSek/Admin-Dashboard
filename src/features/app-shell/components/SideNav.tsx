@@ -39,22 +39,26 @@ export function SideNav({
   user,
   isOpen = false,
   onClose,
+  id,
 }: {
   user: CurrentUser;
   isOpen?: boolean;
   onClose?: () => void;
+  /** Shared with the menu button's `aria-controls` (owned by `AppShell`). */
+  id?: string;
 }) {
   const pathname = usePathname();
-  const navId = useId();
-  const navRef = useRef<HTMLElement>(null);
+  const generatedId = useId();
+  const panelId = id ?? generatedId;
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!isOpen) return;
 
     // Move focus into the panel when it opens, matching the "aria-modal
-    // overlay" contract — there is no obvious first field, so the panel
-    // itself is the sensible target (tabIndex={-1} below).
-    navRef.current?.focus();
+    // overlay" contract — there is no obvious first field, so the dialog
+    // wrapper itself is the sensible target (tabIndex={-1} below).
+    dialogRef.current?.focus();
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") onClose?.();
@@ -63,63 +67,65 @@ export function SideNav({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
+  const nav = (
+    <nav
+      id={panelId}
+      aria-label={appShellContent.mainNavLabel}
+      className={cn(
+        "z-40 flex h-dvh w-app-sidebar shrink-0 flex-col overflow-y-auto bg-nav-bg",
+        "fixed inset-y-0 left-0 -translate-x-full transition-transform duration-200 ease-out",
+        "lg:static lg:h-full lg:translate-x-0 lg:transition-none",
+        isOpen && "translate-x-0",
+      )}
+    >
+      <CurrentUserSummary user={user} />
+
+      <ul className="flex-1 overflow-y-auto py-2">
+        {appNavigation.map((item) => {
+          const active = isWithin(item.href, pathname);
+          return (
+            <li key={item.href}>
+              <Link
+                href={item.href}
+                aria-current={active ? "page" : undefined}
+                onClick={onClose}
+                className={cn(rowBase, active ? rowActive : rowIdle)}
+              >
+                <AppIcon name={item.icon} className="size-app-icon shrink-0" />
+                {item.label}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+
+      <div className="border-t border-nav-divider py-2">
+        <Link href={appShellRoutes.helpCentre} onClick={onClose} className={cn(rowBase, rowIdle)}>
+          <AppIcon name="help" className="size-app-icon shrink-0" />
+          {appShellContent.helpCentre}
+        </Link>
+        <SignOutButton className={cn(rowBase, rowIdle, "w-full text-left")}>
+          <AppIcon name="logout" className="size-app-icon shrink-0" />
+          {appShellContent.logOut}
+        </SignOutButton>
+      </div>
+    </nav>
+  );
+
+  if (!isOpen) return nav;
+
   return (
     <>
-      {isOpen ? (
-        // Dismisses on pointer click; Escape (above) covers keyboard users,
-        // so this backdrop is deliberately not a focusable control.
-        <div aria-hidden onClick={onClose} className="fixed inset-0 z-30 bg-black/40 lg:hidden" />
-      ) : null}
+      {/* Dismisses on pointer click; Escape (above) covers keyboard users,
+          so this backdrop is deliberately not a focusable control. */}
+      <div aria-hidden onClick={onClose} className="fixed inset-0 z-30 bg-black/40 lg:hidden" />
 
-      <nav
-        id={navId}
-        ref={navRef}
-        // Programmatic focus target only (moved to on open, above) — never
-        // reached via Tab, so it does not need its own visible ring; every
-        // interactive row inside keeps the global :focus-visible style.
-        tabIndex={-1}
-        aria-label={appShellContent.mainNavLabel}
-        aria-modal={isOpen ? true : undefined}
-        role={isOpen ? "dialog" : undefined}
-        className={cn(
-          "z-40 flex h-dvh w-app-sidebar shrink-0 flex-col overflow-y-auto bg-nav-bg outline-none",
-          "fixed inset-y-0 left-0 -translate-x-full transition-transform duration-200 ease-out",
-          "lg:static lg:h-full lg:translate-x-0 lg:transition-none",
-          isOpen && "translate-x-0",
-        )}
-      >
-        <CurrentUserSummary user={user} />
-
-        <ul className="flex-1 overflow-y-auto py-2">
-          {appNavigation.map((item) => {
-            const active = isWithin(item.href, pathname);
-            return (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  aria-current={active ? "page" : undefined}
-                  onClick={onClose}
-                  className={cn(rowBase, active ? rowActive : rowIdle)}
-                >
-                  <AppIcon name={item.icon} className="size-app-icon shrink-0" />
-                  {item.label}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-
-        <div className="border-t border-nav-divider py-2">
-          <Link href={appShellRoutes.helpCentre} onClick={onClose} className={cn(rowBase, rowIdle)}>
-            <AppIcon name="help" className="size-app-icon shrink-0" />
-            {appShellContent.helpCentre}
-          </Link>
-          <SignOutButton className={cn(rowBase, rowIdle, "w-full text-left")}>
-            <AppIcon name="logout" className="size-app-icon shrink-0" />
-            {appShellContent.logOut}
-          </SignOutButton>
-        </div>
-      </nav>
+      {/* `role="dialog"` lives on this wrapper, not the `<nav>` itself —
+          `dialog` is not an allowed ARIA role on a `nav` element (axe:
+          aria-allowed-role), and the landmark should stay a landmark. */}
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={appShellContent.mainNavLabel} tabIndex={-1}>
+        {nav}
+      </div>
     </>
   );
 }

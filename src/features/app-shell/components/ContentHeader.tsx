@@ -16,10 +16,13 @@ export function ContentHeader({
   onOpenNavigation,
   isNavOpen,
   menuButtonRef,
+  navId,
 }: {
   onOpenNavigation: () => void;
   isNavOpen: boolean;
   menuButtonRef: RefObject<HTMLButtonElement | null>;
+  /** Id of the nav panel this button discloses — shared with `SideNav`. */
+  navId: string;
 }) {
   return (
     <header className="flex h-app-header shrink-0 items-center justify-between border-b border-hair-strong bg-chrome px-4">
@@ -29,6 +32,7 @@ export function ContentHeader({
           type="button"
           aria-label={appShellContent.openNavigation}
           aria-expanded={isNavOpen}
+          aria-controls={navId}
           onClick={onOpenNavigation}
           className="flex size-icon-button items-center justify-center rounded-app text-dim transition-colors hover:bg-hover lg:hidden"
         >
