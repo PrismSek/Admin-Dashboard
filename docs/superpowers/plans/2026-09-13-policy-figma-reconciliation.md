@@ -119,7 +119,7 @@
 **Files:**
 - Modify: `package.json`
 - Modify: `pnpm-lock.yaml`
-- Modify: `vitest.config.ts`
+- Modify: `vitest.config.mts`
 - Modify: `src/app/globals.css`
 - Create: `src/test/setup.ts`
 - Create: `src/components/icons/app-icon-definitions.ts`
@@ -136,7 +136,7 @@ Run:
 
 ```bash
 pnpm add --save-exact @tanstack/react-table@9.1.2
-pnpm add -D --save-exact @testing-library/dom@10.4.1 @testing-library/react@16.3.3 @testing-library/user-event@14.6.7 @testing-library/jest-dom@7.0.1 jest-axe@11.0.0 jsdom@30.0.1
+pnpm add -D --save-exact @testing-library/dom@10.4.1 @testing-library/react@16.3.3 @testing-library/user-event@14.6.7 @testing-library/jest-dom@7.0.1 jest-axe@11.0.0 @types/jest-axe@3.5.9 jsdom@30.0.1
 ```
 
 Add `setupFiles: ["./src/test/setup.ts"]` under the existing Vitest `test` configuration and create:
@@ -292,7 +292,7 @@ Expected: the test passes and the search prints no match.
 - [ ] **Step 7: Commit the foundation**
 
 ```bash
-git add package.json pnpm-lock.yaml vitest.config.ts src/test/setup.ts src/app/globals.css src/components/icons
+git add package.json pnpm-lock.yaml vitest.config.mts src/test/setup.ts src/app/globals.css src/components/icons
 git commit -m "feat(ui): add Figma tokens and SVG icon system"
 ```
 
