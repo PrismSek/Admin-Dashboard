@@ -72,6 +72,34 @@ export const policyBuilderContent = {
   stepRailLabel: "Policy builder steps",
   generateWithAi: "Generate with AI",
 
+  /** Dialog title for the Finish step's "View JSON" preview (Figma `398:19229`
+   * "Json"). This dialog is the schema-parsed authoring preview
+   * (`serializePolicyPreview`), not the "Bundle JSON" compiled-bundle example
+   * drawn in that same frame — the compiled bundle carries `tenantId` /
+   * `deviceId`, which this dialog must never surface (task 10 brief). */
+  jsonTitle: "Policy JSON",
+  /** Accessible name for the JSON dialog's close button. */
+  closeJson: "Close",
+
+  /** The in-app Cancel confirmation (task 10 — no Figma frame; the builder
+   * has no persistence yet, so every edit is by definition unsaved). */
+  unsavedChanges: {
+    title: "Leave without creating this policy?",
+    message: "Your edits are validated locally only and are lost once you leave this page.",
+    stay: "Stay",
+    discard: "Discard",
+  },
+
+  /** Validation copy that isn't part of the zod contract itself (schemas.ts
+   * keeps its own sibling-field messages inline, per the existing pattern
+   * for `content.findingIds` / `desktopApps.applicationIds` /
+   * `notification.title`/`message`) — `name` had no custom message before
+   * task 10, so this is applied via a small resolver wrapper in
+   * `PolicyBuilder` instead of editing the approved schema file. */
+  errors: {
+    nameRequired: "Enter a policy name",
+  },
+
   start: {
     nameLabel: "Policy name",
     addDescription: "+ Add a description",
@@ -188,6 +216,15 @@ export const policyBuilderContent = {
     /** Section heading inside the step (distinct casing from the rail label above). */
     title: "End-user notification",
     help: "Who hears about the issue, and what runs on its own once it is raised.",
+
+    /** Field labels for the schema's actual `{enabled, title, message}` shape
+     * (task 10) — see the PLAN-vs-FIGMA note on `PolicyNotificationStep` for
+     * why these, and not `channelLabel`/`remediations` below, back the real
+     * controls in this step. */
+    enabledLabel: "Notify the end user",
+    titleLabel: "Notification title",
+    messageLabel: "Notification message",
+
     channelChip: "NOTIFICATION CHANNEL",
     channelLabel: "Tell the team via",
     triggerChip: "WHEN ISSUE IS DETECTED",
@@ -218,6 +255,7 @@ export const policyBuilderContent = {
   finish: {
     deployAsLabel: "Deploy as:",
     cancel: "Cancel",
+    viewJson: "View JSON",
     create: "Create",
     /** No admin-policy create contract exists yet; the builder validates and
      * shows the designed local outcome without claiming persistence. */

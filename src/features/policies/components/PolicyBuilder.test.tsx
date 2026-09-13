@@ -35,8 +35,17 @@ const POLICY_CATALOGS: PolicyCatalogs = {
     { value: "whatsapp", label: "WhatsApp", icon: "application" },
     { value: "google-chrome", label: "Google Chrome", icon: "application" },
   ],
-  actions: [{ value: "Block", label: "Block" }],
-  deployStates: [{ value: "Draft", label: "Draft" }],
+  actions: [
+    { value: "AuditOnly", label: "Audit only" },
+    { value: "WarnJustify", label: "Warn & justify" },
+    { value: "BlockWithOverride", label: "Block with override" },
+    { value: "Block", label: "Block" },
+  ],
+  deployStates: [
+    { value: "Draft", label: "Draft" },
+    { value: "Active", label: "Active" },
+    { value: "Off", label: "Off" },
+  ],
 };
 
 /**
@@ -108,5 +117,35 @@ describe("PolicyBuilder", () => {
 
     await user.click(screen.getByRole("button", { name: "Choose applications" }));
     expect(screen.getByRole("option", { name: "Google Chrome" })).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("sets the enforcement action and required onUnknown fallback", async () => {
+    const user = userEvent.setup();
+    render(<PolicyBuilder catalogs={POLICY_CATALOGS} />);
+
+    await user.click(screen.getByRole("combobox", { name: "Do this" }));
+    await user.click(screen.getByRole("option", { name: "Audit only" }));
+    expect(screen.getByRole("combobox", { name: "Do this" })).toHaveTextContent("Audit only");
+
+    await user.click(screen.getByRole("combobox", { name: "Do this instead" }));
+    await user.click(screen.getByRole("option", { name: "Block with override" }));
+    expect(screen.getByRole("combobox", { name: "Do this instead" })).toHaveTextContent("Block with override");
+  });
+
+  it("disables the notification fields without discarding their value", async () => {
+    const user = userEvent.setup();
+    render(<PolicyBuilder catalogs={POLICY_CATALOGS} />);
+
+    const titleField = screen.getByRole("textbox", { name: "Notification title" });
+    const originalTitle = titleField.getAttribute("value") ?? (titleField as HTMLInputElement).value;
+    expect(titleField).toBeEnabled();
+
+    await user.click(screen.getByRole("checkbox", { name: "Notify the end user" }));
+    expect(titleField).toBeDisabled();
+    expect(titleField).toHaveValue(originalTitle);
+
+    await user.click(screen.getByRole("checkbox", { name: "Notify the end user" }));
+    expect(titleField).toBeEnabled();
+    expect(titleField).toHaveValue(originalTitle);
   });
 });

@@ -1,19 +1,38 @@
 "use client";
 
 import { useState } from "react";
-import { FormProvider, useForm } from "react-hook-form";
+import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { Button } from "@/components/ui/button";
 import { defaultPolicyAuthoringValues } from "@/features/policies/authoring-defaults";
 import { PolicyDataStep } from "@/features/policies/components/PolicyDataStep";
+import { PolicyEnforcementStep } from "@/features/policies/components/PolicyEnforcementStep";
+import { PolicyFinishStep } from "@/features/policies/components/PolicyFinishStep";
+import { PolicyNotificationStep } from "@/features/policies/components/PolicyNotificationStep";
 import { PolicyStartStep } from "@/features/policies/components/PolicyStartStep";
 import { PolicyStepRail } from "@/features/policies/components/PolicyStepRail";
 import { PolicyWhereStep } from "@/features/policies/components/PolicyWhereStep";
 import { PolicyWhoStep } from "@/features/policies/components/PolicyWhoStep";
-import { policyBuilderContent } from "@/features/policies/content";
+import { policyBuilderContent, policyRoutes } from "@/features/policies/content";
 import { policyAuthoringSchema, type PolicyAuthoringValues } from "@/features/policies/schemas";
 import type { PolicyCatalogs } from "@/features/policies/types";
+
+const zodPolicyResolver = zodResolver(policyAuthoringSchema);
+
+/**
+ * `name` is the one required field in the schema with no custom zod message
+ * (every sibling field's message lives inline in `schemas.ts` — see
+ * `content.ts`'s `errors` doc comment) — the approved schema stays untouched,
+ * so the friendlier copy is applied here, once, after `zodResolver` runs.
+ */
+const policyFormResolver: Resolver<PolicyAuthoringValues> = async (values, context, options) => {
+  const result = await zodPolicyResolver(values, context, options);
+  if (result.errors.name) {
+    result.errors.name.message = policyBuilderContent.errors.nameRequired;
+  }
+  return result;
+};
 
 /**
  * The Policy authoring shell (Figma "Create policy" frames, `396:4444` and
@@ -22,9 +41,8 @@ import type { PolicyCatalogs } from "@/features/policies/types";
  * wizard — so every step reads and writes the same `PolicyAuthoringValues`
  * through `FormProvider`.
  *
- * Only Start/Who/Where are built here; `shouldUnregister: false` keeps the
- * remaining four steps' default values intact so Data/Enforcement/
- * Notification/Finish (later tasks) can slot in without disturbing what's
+ * `shouldUnregister: false` keeps every step's default values intact while
+ * another step is on screen, so switching around never disturbs what's
  * already wired. A valid submit only flips local UI state — there is no
  * policy-creation API yet (see `policyBuilderContent.finish.localOnlyNotice`),
  * so nothing here calls a mutation.
@@ -32,16 +50,28 @@ import type { PolicyCatalogs } from "@/features/policies/types";
 export function PolicyBuilder({ catalogs }: { catalogs: PolicyCatalogs }) {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const form = useForm<PolicyAuthoringValues>({
-    resolver: zodResolver(policyAuthoringSchema),
+    resolver: policyFormResolver,
     defaultValues: defaultPolicyAuthoringValues,
     mode: "onBlur",
     shouldUnregister: false,
   });
 
+  /**
+   * Named per the task brief, replacing the interim inline callback. Marks
+   * the form clean (`form.reset` clears `isDirty`) so `UnsavedChangesGuard`
+   * drops its `beforeunload` listener the moment local validation succeeds —
+   * nothing is persisted, but there is also nothing left to warn about
+   * losing.
+   */
+  function handleValidSubmit(values: PolicyAuthoringValues) {
+    setIsSubmitted(true);
+    form.reset(values);
+  }
+
   return (
     <FormProvider {...form}>
       <form
-        onSubmit={form.handleSubmit(() => setIsSubmitted(true))}
+        onSubmit={form.handleSubmit(handleValidSubmit)}
         noValidate
         className="flex min-h-full"
         aria-label={policyBuilderContent.pageTitle}
@@ -62,21 +92,17 @@ export function PolicyBuilder({ catalogs }: { catalogs: PolicyCatalogs }) {
               </Button>
             </div>
 
-            {isSubmitted ? (
-              <p role="status" className="mt-4 text-meta text-success">
-                {policyBuilderContent.finish.localOnlyNotice}
-              </p>
-            ) : null}
-
             <PolicyStartStep />
             <PolicyWhoStep audiences={catalogs.audiences} />
             <PolicyWhereStep channels={catalogs.channels} />
             <PolicyDataStep catalogs={catalogs} />
-
-            {/* Enforcement & Message / End-user Notification / Finish slot in
-                here once their own tasks land — the form values and
-                validation for all three already exist in the schema and
-                defaults, so adding them is additive, not a rewire. */}
+            <PolicyEnforcementStep actions={catalogs.actions} />
+            <PolicyNotificationStep />
+            <PolicyFinishStep
+              deployStates={catalogs.deployStates}
+              isSubmitted={isSubmitted}
+              cancelHref={policyRoutes.list}
+            />
           </div>
         </div>
       </form>

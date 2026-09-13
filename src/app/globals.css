@@ -133,6 +133,11 @@
 
   --color-focus: var(--ps-orange-600); /* focus ring */
 
+  /* Modal/dialog scrim (task 10: PolicyJsonPreview, UnsavedChangesGuard's
+     confirm dialog). A dedicated token rather than an ad-hoc `bg-black/40`
+     so every dialog's backdrop re-themes together. */
+  --color-overlay: rgb(15 17 21 / 45%);
+
   /* --- App-shell semantics (signed-in screens) --------------------------- */
   --color-canvas: var(--ps-app-canvas); /* page background behind cards */
   --color-chrome: var(--ps-white); /* top bar, sidebar, cards */
@@ -286,6 +291,7 @@
   --color-danger: var(--color-danger);
   --color-success: var(--color-success);
   --color-third-party: var(--color-third-party);
+  --color-overlay: var(--color-overlay);
 
   --color-canvas: var(--color-canvas);
   --color-chrome: var(--color-chrome);
