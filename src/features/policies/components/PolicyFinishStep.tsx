@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Controller, useFormContext, useWatch } from "react-hook-form";
+import { Controller, useFormContext } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import { PolicyJsonPreview } from "@/features/policies/components/PolicyJsonPreview";
@@ -34,10 +34,16 @@ export function PolicyFinishStep({
 }) {
   const {
     control,
+    getValues,
     formState: { errors, isDirty },
   } = useFormContext<PolicyAuthoringValues>();
-  const values = useWatch<PolicyAuthoringValues>({ control });
   const [isJsonOpen, setIsJsonOpen] = useState(false);
+
+  // `getValues()`, not `useWatch` with no `name` — the latter's return type
+  // is a deep-partial of the form (every field optional), which doesn't
+  // satisfy `PolicyJsonPreviewProps.values: PolicyAuthoringValues`.
+  // `getValues()` is fully typed and re-read on every render this component
+  // already produces (e.g. the `isJsonOpen` toggle that opens the dialog).
 
   return (
     <section id="policy-finish" aria-label={policyBuilderSteps[6].title} className="mt-8 border-t border-hair-strong pt-8">
@@ -85,7 +91,7 @@ export function PolicyFinishStep({
         </div>
       )}
 
-      <PolicyJsonPreview values={values} isOpen={isJsonOpen} onClose={() => setIsJsonOpen(false)} />
+      <PolicyJsonPreview values={getValues()} isOpen={isJsonOpen} onClose={() => setIsJsonOpen(false)} />
     </section>
   );
 }
