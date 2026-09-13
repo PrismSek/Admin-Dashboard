@@ -109,9 +109,9 @@ export const policyChannelsResponseSchema = z.object({
 
 /**
  * The Policy list row's display shape (the UI's own vocabulary, not the
- * gateway's). This is the fixture boundary for `data.ts`'s 20 Figma rows;
- * `labels.ts` derives its `PolicyListItem` type from this schema so the
- * fixture data and the UI cannot drift apart.
+ * gateway's). This is the fixture boundary for `data.ts`'s Figma-sourced list
+ * rows (15; see data.ts); `labels.ts` derives its `PolicyListItem` type from
+ * this schema so the fixture data and the UI cannot drift apart.
  */
 export const policyListItemSchema = z.object({
   id: z.string(),

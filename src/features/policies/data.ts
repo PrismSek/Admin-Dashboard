@@ -186,7 +186,11 @@ const FIGMA_POLICY_ROWS: readonly PolicyListItem[] = FIGMA_ROWS.map((row) => ({
   lastChange: row.lastChange,
 }));
 
-const policyFixtureSchema = z.array(policyListItemSchema).length(FIGMA_POLICY_ROWS.length);
+// Hardcoded (not `FIGMA_POLICY_ROWS.length`, which would make this
+// tautological): the Figma capture has exactly 15 real rows — see the module
+// doc comment above — so an accidental future row add/remove fails loudly
+// here rather than only in a test.
+const policyFixtureSchema = z.array(policyListItemSchema).length(15);
 const POLICY_FIXTURES: readonly PolicyListItem[] = policyFixtureSchema.parse(FIGMA_POLICY_ROWS);
 
 /**
@@ -256,15 +260,16 @@ const POLICY_CATALOGS: PolicyCatalogs = {
   ],
 
   // Desktop apps picker (563:10405): the frame draws each app as a plain
-  // checkbox + name, with no logo artwork at all, so these icons are
-  // simplified, officially-coloured placeholders rather than exported Figma
-  // vectors — see the app-icon-definitions.ts comment and the task report.
+  // checkbox + name, with no logo artwork at all. Rather than fabricate
+  // per-brand marks, every row shares one neutral `application` glyph and is
+  // distinguished by its label text; a real per-app brand-asset pass is
+  // future design work (see app-icon-definitions.ts and the task report).
   applications: [
-    { value: "whatsapp", label: "WhatsApp", icon: "application-whatsapp" },
-    { value: "signal", label: "Signal", icon: "application-signal" },
-    { value: "telegram", label: "Telegram", icon: "application-telegram" },
-    { value: "slack", label: "Slack", icon: "application-slack" },
-    { value: "microsoft-teams", label: "Microsoft Teams", icon: "application-microsoft-teams" },
+    { value: "whatsapp", label: "WhatsApp", icon: "application" },
+    { value: "signal", label: "Signal", icon: "application" },
+    { value: "telegram", label: "Telegram", icon: "application" },
+    { value: "slack", label: "Slack", icon: "application" },
+    { value: "microsoft-teams", label: "Microsoft Teams", icon: "application" },
   ],
 
   // "Do this" / "Do this instead" fallback action list, consistent across the
