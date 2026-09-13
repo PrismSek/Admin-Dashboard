@@ -168,4 +168,29 @@ export const policyBuilderContent = {
     localOnlyNotice:
       "This preview is validated locally. It is not saved until a policy-creation API exists.",
   },
+
+  /**
+   * Visible default field values for a new, unedited builder form (used by
+   * `authoring-defaults.ts`'s `defaultPolicyAuthoringValues`) — transcribed,
+   * not invented, from the "Create policy" example already drawn into the
+   * builder frames (`396:4444` and its variants `398:17484`/`398:17144`/
+   * `397:15764`/`398:18879`; the notification pair is the clipboard channel
+   * frame `512:421`, the one matching this default's `channel: "clipboard"`).
+   *
+   * The "End user Notification" step in this file's frames is drawn as a
+   * NOTIFICATION CHANNEL picker ("Tell the team via" → a channel like Slack)
+   * plus a WHEN-ISSUE-IS-DETECTED remediation radio group — not a free-text
+   * title/message pair. `notificationTitle`/`notificationMessage` below are
+   * the closest real, concrete strings for that same drawn configuration:
+   * the selected remediation's own label ("Remove public link") as the short
+   * title, and its "Reads as —" sentence as the message.
+   */
+  defaults: {
+    name: "Block Aadhaar to personal cloud",
+    reasonCode: "DLP-PII-EGRESS",
+    message: "Aadhaar information cannot be uploaded to this destination.",
+    notificationTitle: "Remove public link",
+    notificationMessage:
+      "Public links on the related resources are revoked automatically, and the owner is told.",
+  },
 } as const;
