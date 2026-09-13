@@ -85,22 +85,19 @@ test.describe("Policy list — desktop shell, table contract, and type ramp", ()
 
     const table = page.getByRole("table", { name: TABLE_LABEL });
     const firstHeader = table.getByRole("columnheader").first();
-    // BUG (see task-11-report.md "Concerns"): `globals.css` defines both
-    // `--color-policy-table-head` and `--text-policy-table-head`. Tailwind
-    // v4 resolves the `text-policy-table-head` utility against the *color*
-    // namespace when both exist for the same suffix, so the class the `<th>`
-    // carries compiles to `color: var(--color-policy-table-head)` only —
-    // the intended `font-size: .75rem; line-height: 1rem` pairing is never
-    // emitted. The colour collision is invisible (the same element also
-    // carries `text-strong`, which cascades later and wins), but the
-    // font-size/line-height regression is real: headers render at the
-    // browser default (16px/24px) instead of the Figma 12px/16px. Asserting
-    // the current (buggy) value here, not the token's stated intent — a
-    // fixed size/weight/tracking token would need a non-colliding name.
-    await expect(firstHeader).toHaveCSS("font-size", "16px");
+    // Table header type ramp (--text-policy-thead / --tracking-policy-thead,
+    // globals.css). Previously named `--text-policy-table-head`, which
+    // collided with the `--color-policy-table-head` background token — in
+    // Tailwind v4 a `text-<name>` utility resolves to the *color* namespace
+    // whenever a `--color-<name>` token of the same name exists, so the
+    // font-size/line-height pairing was silently dropped and headers
+    // rendered at the browser default (16px/24px) instead of the Figma
+    // 12px/16px. Renaming the font-size token to `policy-thead` removed the
+    // collision; this now asserts the corrected, intended value.
+    await expect(firstHeader).toHaveCSS("font-size", "12px");
     await expect(firstHeader).toHaveCSS("font-weight", "500");
     await expect(firstHeader).toHaveCSS("letter-spacing", "0.36px");
-    expect(await cssPx(firstHeader, "line-height")).toBeCloseTo(24, 0);
+    expect(await cssPx(firstHeader, "line-height")).toBeCloseTo(16, 0);
 
     const firstBodyCell = table.getByRole("row").nth(1).getByRole("cell").first();
     await expect(firstBodyCell).toHaveCSS("font-size", "13px");

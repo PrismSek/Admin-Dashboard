@@ -394,11 +394,16 @@
   --spacing-step-node: var(--size-step-node);
   --spacing-step-row: var(--space-step-row);
 
-  --text-policy-table-head: 0.75rem;
-  --text-policy-table-head--line-height: 1rem;
+  /* Named `policy-thead`, not `policy-table-head`, so the `text-*` /
+     `tracking-*` utilities never collide with the `--color-policy-table-head`
+     background token above — Tailwind v4 resolves a `text-<name>` utility to
+     the color namespace whenever a `--color-<name>` token of the same name
+     exists, which silently dropped this font-size/line-height pairing. */
+  --text-policy-thead: 0.75rem;
+  --text-policy-thead--line-height: 1rem;
   --text-policy-table-body: 0.8125rem;
   --text-policy-table-body--line-height: 1.0625rem;
-  --tracking-policy-table-head: 0.0225rem;
+  --tracking-policy-thead: 0.0225rem;
 
   /* Type ramp. Figma sizes normalised to web scale — one place to retune. */
   --text-heading: 1.5rem; /* 24px — screen titles */

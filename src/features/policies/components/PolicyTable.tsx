@@ -36,7 +36,7 @@ export function PolicyTable({ rows }: PolicyTableProps) {
               <th
                 key={header.id}
                 scope="col"
-                className="px-5 py-3 text-policy-table-head font-medium tracking-policy-table-head text-strong"
+                className="px-5 py-3 text-policy-thead font-medium tracking-policy-thead text-strong"
               >
                 {header.isPlaceholder ? null : <table.FlexRender header={header} />}
               </th>
