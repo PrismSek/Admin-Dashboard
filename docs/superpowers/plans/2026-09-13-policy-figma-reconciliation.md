@@ -130,7 +130,27 @@
 - Consumes: exact vector exports from the open Figma file and the token values in spec §4.
 - Produces: `AppIconName`, `AppIcon({ name, label?, className? })`, jsdom component testing, and semantic utilities used by every later task.
 
-- [ ] **Step 1: Write the failing icon behavior test**
+- [ ] **Step 1: Add exact component-test dependencies and setup**
+
+Run:
+
+```bash
+pnpm add --save-exact @tanstack/react-table@9.1.2
+pnpm add -D --save-exact @testing-library/dom@10.4.1 @testing-library/react@16.3.3 @testing-library/user-event@14.6.7 @testing-library/jest-dom@7.0.1 jest-axe@11.0.0 jsdom@30.0.1
+```
+
+Add `setupFiles: ["./src/test/setup.ts"]` under the existing Vitest `test` configuration and create:
+
+```ts
+import "@testing-library/jest-dom/vitest";
+
+import { cleanup } from "@testing-library/react";
+import { afterEach } from "vitest";
+
+afterEach(cleanup);
+```
+
+- [ ] **Step 2: Write the failing icon behavior test**
 
 ```tsx
 // @vitest-environment jsdom
@@ -154,31 +174,11 @@ describe("AppIcon", () => {
 });
 ```
 
-- [ ] **Step 2: Run the test and confirm the missing module failure**
+- [ ] **Step 3: Run the test and confirm the missing module failure**
 
 Run: `pnpm vitest run src/components/icons/AppIcon.test.tsx`
 
 Expected: FAIL because `@/components/icons/AppIcon` does not exist.
-
-- [ ] **Step 3: Add exact component-test dependencies and setup**
-
-Run:
-
-```bash
-pnpm add --save-exact @tanstack/react-table@9.1.2
-pnpm add -D --save-exact @testing-library/dom@10.4.1 @testing-library/react@16.3.3 @testing-library/user-event@14.6.7 @testing-library/jest-dom@7.0.1 jest-axe@11.0.0 jsdom@30.0.1
-```
-
-Add `setupFiles: ["./src/test/setup.ts"]` under the existing Vitest `test` configuration and create:
-
-```ts
-import "@testing-library/jest-dom/vitest";
-
-import { cleanup } from "@testing-library/react";
-import { afterEach } from "vitest";
-
-afterEach(cleanup);
-```
 
 - [ ] **Step 4: Add the exact shared Figma tokens**
 
