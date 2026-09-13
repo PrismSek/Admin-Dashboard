@@ -225,6 +225,13 @@
   --size-select-control: 2rem; /* 32px */
   --size-dropdown-row: 2.125rem; /* 34px */
 
+  /* Policy builder step rail (Figma 396:4444, Aside/Button family). Each
+     step's numbered badge is a 20px filled circle (cornerRadius 10), centred
+     in a 59px-tall row; the brand-coloured connector between two badges is
+     the row height minus the node diameter, split evenly above and below. */
+  --size-step-node: 1.25rem; /* 20px — badge diameter */
+  --space-step-row: 3.6875rem; /* 59px — vertical distance between step centres */
+
   /* Popup elevation (Figma 397:15024 / 396:4985 "Background+Border+Shadow"). */
   --shadow-dropdown: 0 10px 26px rgba(17, 24, 39, 0.12);
 }
@@ -378,6 +385,8 @@
   --spacing-nav-gap: var(--space-nav-gap);
   --spacing-select-control: var(--size-select-control);
   --spacing-dropdown-row: var(--size-dropdown-row);
+  --spacing-step-node: var(--size-step-node);
+  --spacing-step-row: var(--space-step-row);
 
   --text-policy-table-head: 0.75rem;
   --text-policy-table-head--line-height: 1rem;

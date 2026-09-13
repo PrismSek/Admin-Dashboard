@@ -67,6 +67,9 @@ export const policyBuilderContent = {
   scopeNote: "Applies to every device in the compiled scope — who it covers is decided upstream.",
   bundleJson: "Bundle JSON",
   stepRailNote: "The seven-step order is inherited and cannot be reordered or merged.",
+  /** Accessible name for the step rail's `<nav>` landmark — not drawn as
+   * visible text in Figma, so it isn't shown on screen. */
+  stepRailLabel: "Policy builder steps",
   generateWithAi: "Generate with AI",
 
   start: {
