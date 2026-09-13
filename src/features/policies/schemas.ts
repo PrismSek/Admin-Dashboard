@@ -106,3 +106,22 @@ export const policyChannelsResponseSchema = z.object({
   all: z.array(policyChannelIdSchema),
   note: z.string().optional(),
 });
+
+/**
+ * The Policy list row's display shape (the UI's own vocabulary, not the
+ * gateway's). This is the fixture boundary for `data.ts`'s 20 Figma rows;
+ * `labels.ts` derives its `PolicyListItem` type from this schema so the
+ * fixture data and the UI cannot drift apart.
+ */
+export const policyListItemSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  /** The UI's lifecycle vocabulary. The gateway's `Active` maps to `enforced`. */
+  lifecycle: z.enum(["enforced", "draft", "off"]),
+  /** Enforcement mode label for an active policy; null (rendered "—") otherwise. */
+  enforcementMode: z.string().nullable(),
+  /** Deployment health, as drawn in the Figma list capture (398:16105). */
+  health: z.enum(["Healthy", "Degraded", "Approval pending", "Stale", "Not deployed"]),
+  owner: z.string(),
+  lastChange: z.string(),
+});

@@ -1,6 +1,31 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getPolicyDetail, listPolicies } from "@/features/policies/api";
+import { getPolicyCatalogs, getPolicyFixtures } from "@/features/policies/data";
+import { APP_ICON_NAMES } from "@/components/icons/app-icon-definitions";
+import { policyListItemSchema } from "@/features/policies/schemas";
+import { z } from "zod";
+
+// The Figma list capture (398:16105) row order, transcribed verbatim. Only 15
+// rows exist in that frame — see data.ts's module doc comment for why this
+// fixture has 15 rows rather than the 20 the frame's own footer text claims.
+const EXPECTED_FIXTURE_NAMES = [
+  "Financial records to unmanaged cloud",
+  "Customer PII to web destinations",
+  "India Aadhaar & PAN — removable media",
+  "Source code to personal Git remotes",
+  "Highly Confidential label — print",
+  "Contract drafts to AI assistants",
+  "Patient records to email attachments",
+  "Payroll exports to network shares",
+  "Cardholder data to removable media",
+  "Board minutes to personal email",
+  "Screen capture in payroll application",
+  "CRM bulk export to browser downloads",
+  "Vendor contracts to unmanaged sync",
+  "Credentials and API keys to any channel",
+  "HR case files to print",
+];
 
 const apiFetchMock = vi.fn();
 const apiFetchWithEtagMock = vi.fn();
@@ -24,45 +49,55 @@ function apiPolicy(overrides: Record<string, unknown> = {}) {
   };
 }
 
+describe("getPolicyFixtures", () => {
+  it("is the Figma reference list (15 rows — see data.ts), each row valid against policyListItemSchema", async () => {
+    const fixtures = await getPolicyFixtures();
+    expect(fixtures).toHaveLength(EXPECTED_FIXTURE_NAMES.length);
+    expect(() =>
+      z.array(policyListItemSchema).length(EXPECTED_FIXTURE_NAMES.length).parse(fixtures),
+    ).not.toThrow();
+  });
+
+  it("keeps its rows in Figma capture order (398:16105)", async () => {
+    const fixtures = await getPolicyFixtures();
+    expect(fixtures.map((row) => row.name)).toEqual(EXPECTED_FIXTURE_NAMES);
+  });
+
+  it("only marks a row enforced with an enforcement mode; draft/off rows carry none", async () => {
+    const fixtures = await getPolicyFixtures();
+    for (const row of fixtures) {
+      if (row.lifecycle === "enforced") {
+        expect(typeof row.enforcementMode).toBe("string");
+      } else {
+        expect(row.enforcementMode).toBeNull();
+      }
+    }
+  });
+});
+
+describe("getPolicyCatalogs", () => {
+  it("parses every authoring catalog with at least one option", async () => {
+    const catalogs = await getPolicyCatalogs();
+    for (const [key, options] of Object.entries(catalogs)) {
+      expect(options.length, `${key} should not be empty`).toBeGreaterThan(0);
+    }
+  });
+
+  it("only uses application/channel icons that exist in the AppIcon definitions", async () => {
+    const catalogs = await getPolicyCatalogs();
+    for (const application of catalogs.applications) {
+      expect(APP_ICON_NAMES).toContain(application.icon);
+    }
+    for (const channel of catalogs.channels) {
+      expect(APP_ICON_NAMES).toContain(channel.icon);
+    }
+  });
+});
+
 describe("listPolicies", () => {
-  beforeEach(() => apiFetchMock.mockReset());
-
-  it("maps an active policy to an enforced row with its action label", async () => {
-    apiFetchMock.mockResolvedValue({ policies: [apiPolicy()] });
-
-    const [row] = await listPolicies();
-
-    expect(apiFetchMock).toHaveBeenCalledWith("/v1/policies");
-    expect(row).toMatchObject({
-      id: "p1",
-      name: "Financial records to unmanaged cloud",
-      lifecycle: "enforced",
-      enforcementMode: "Block",
-      health: "unknown",
-      owner: "R. Advani",
-    });
-    expect(row.lastChange).toMatch(/ago/);
-  });
-
-  it("shows no enforcement mode for draft and off policies", async () => {
-    apiFetchMock.mockResolvedValue({
-      policies: [
-        apiPolicy({ id: "p2", state: "Draft", intent: undefined }),
-        apiPolicy({ id: "p3", state: "Off" }),
-      ],
-    });
-
-    const rows = await listPolicies();
-    expect(rows[0]).toMatchObject({ lifecycle: "draft", enforcementMode: null });
-    expect(rows[1]).toMatchObject({ lifecycle: "off", enforcementMode: null });
-  });
-
-  it("falls back to the creator when a policy has no last editor", async () => {
-    apiFetchMock.mockResolvedValue({
-      policies: [apiPolicy({ updatedBy: undefined, createdBy: "Compliance" })],
-    });
-    const [row] = await listPolicies();
-    expect(row.owner).toBe("Compliance");
+  it("delegates to the server-only Figma fixture set", async () => {
+    const [viaApi, viaFixtures] = await Promise.all([listPolicies(), getPolicyFixtures()]);
+    expect(viaApi).toEqual(viaFixtures);
   });
 });
 

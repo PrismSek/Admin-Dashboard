@@ -1,10 +1,10 @@
 import "server-only";
 
-import { actionLabels, lifecycleForState, type PolicyListItem } from "@/features/policies/labels";
+import { getPolicyFixtures } from "@/features/policies/data";
+import type { PolicyListItem } from "@/features/policies/labels";
 import {
   type Policy,
   type PolicyVersion,
-  listPoliciesResponseSchema,
   listPolicyVersionsResponseSchema,
   policyChannelsResponseSchema,
   policySchema,
@@ -12,16 +12,15 @@ import {
 import { apiErrorStatus, apiFetch, apiFetchWithEtag } from "@/lib/api-client";
 
 /**
- * Server-only reads for the admin-policy surface. The list endpoint returns the
- * whole tenant (no server-side filter/paging), so the page filters and pages in
- * memory; the detail read also carries the ETag the drawer needs for mutations.
+ * Server-only reads for the Policy surface. The list is Figma-fixture data for
+ * this frontend-only phase (no admin-policy list/create contract exists yet);
+ * the detail/version-history/channel-registry reads below still talk to the
+ * gateway and are retained for the designed surfaces that will need them.
  */
 
-/** One page of the tenant's policies, mapped to the list's display shape. */
-export async function listPolicies(): Promise<PolicyListItem[]> {
-  const body = await apiFetch("/v1/policies");
-  const { policies } = listPoliciesResponseSchema.parse(body);
-  return policies.map(toListItem);
+/** The Figma reference list (see data.ts), in Figma order. */
+export async function listPolicies(): Promise<readonly PolicyListItem[]> {
+  return getPolicyFixtures();
 }
 
 export type PolicyDetail = {
@@ -55,39 +54,4 @@ export async function listPolicyVersions(id: string): Promise<PolicyVersion[]> {
 export async function listPolicyChannels() {
   const body = await apiFetch("/v1/policy-channels");
   return policyChannelsResponseSchema.parse(body);
-}
-
-/** Project a gateway policy onto the list row. */
-function toListItem(policy: Policy): PolicyListItem {
-  const lifecycle = lifecycleForState(policy.state);
-  const action = policy.intent?.response?.action;
-  return {
-    id: policy.id,
-    name: policy.name,
-    lifecycle,
-    // Enforcement mode reads as the acting verb, but only once a policy is live.
-    enforcementMode: lifecycle === "enforced" && action ? actionLabels[action] : null,
-    // Deployment health is separate telemetry the admin-policy API does not carry.
-    health: "unknown",
-    owner: policy.updatedBy ?? policy.createdBy ?? "—",
-    lastChange: policy.updatedAt ? relativeTime(policy.updatedAt) : "—",
-  };
-}
-
-const RELATIVE_UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
-  ["year", 365 * 24 * 3600],
-  ["month", 30 * 24 * 3600],
-  ["day", 24 * 3600],
-  ["hour", 3600],
-  ["minute", 60],
-];
-
-/** An ISO timestamp as "2 days ago" / "25 minutes ago", picking the largest unit. */
-function relativeTime(iso: string): string {
-  const seconds = Math.round((Date.now() - new Date(iso).getTime()) / 1000);
-  const formatter = new Intl.RelativeTimeFormat("en", { numeric: "always" });
-  for (const [unit, size] of RELATIVE_UNITS) {
-    if (Math.abs(seconds) >= size) return formatter.format(-Math.floor(seconds / size), unit);
-  }
-  return formatter.format(-seconds, "second");
 }

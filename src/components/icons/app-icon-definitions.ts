@@ -24,6 +24,11 @@ export const APP_ICON_NAMES = [
   "removable-media",
   "print",
   "desktop-apps",
+  "application-whatsapp",
+  "application-signal",
+  "application-telegram",
+  "application-slack",
+  "application-microsoft-teams",
 ] as const;
 
 export type AppIconName = (typeof APP_ICON_NAMES)[number];
@@ -139,6 +144,56 @@ export const APP_ICON_DEFINITIONS: Record<AppIconName, AppIconDefinition> = {
     body: [
       { kind: "path", d: "M26 2h4v4h-4zm0 6h4v4h-4zm-6-6h4v4h-4zm0 6h4v4h-4z" },
       { kind: "path", d: "M28 16v6H4V6h12V4H4a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h8v4H8v2h16v-2h-4v-4h8a2 2 0 0 0 2-2v-6ZM18 28h-4v-4h4Z" },
+    ],
+  },
+  // The five marks below back the Desktop-apps channel's application picker
+  // (Figma "Desktop channel apps selection", 563:10405). That frame draws each
+  // app as a checkbox + name only — no logo artwork — so these are simplified,
+  // officially-colored placeholders (not exported Figma vectors) pending a
+  // brand-asset pass; see docs/FIGMA-DEVIATIONS.md / task-3 report.
+  "application-whatsapp": {
+    viewBox,
+    body: [
+      { kind: "circle", cx: 16, cy: 16, r: 14, fill: "#25D366" },
+      {
+        kind: "path",
+        fill: "#FFFFFF",
+        d: "M9 8h16a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H16l-5 5v-5h-2a3 3 0 0 1-3-3v-8a3 3 0 0 1 3-3Z",
+      },
+    ],
+  },
+  "application-signal": {
+    viewBox,
+    body: [
+      { kind: "circle", cx: 16, cy: 16, r: 14, fill: "#3A76F0" },
+      {
+        kind: "path",
+        fill: "#FFFFFF",
+        d: "M9 8h16a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H16l-5 5v-5h-2a3 3 0 0 1-3-3v-8a3 3 0 0 1 3-3Z",
+      },
+    ],
+  },
+  "application-telegram": {
+    viewBox,
+    body: [
+      { kind: "circle", cx: 16, cy: 16, r: 14, fill: "#29B6F2" },
+      { kind: "path", fill: "#FFFFFF", d: "M6 15 27 6l-6 21-4.5-8.5L6 15Zm10.2 3.4 3.3-3.8-7.7-2.4Z" },
+    ],
+  },
+  "application-slack": {
+    viewBox,
+    body: [
+      { kind: "circle", cx: 11, cy: 11, r: 4, fill: "#36C5F0" },
+      { kind: "circle", cx: 21, cy: 11, r: 4, fill: "#2EB67D" },
+      { kind: "circle", cx: 11, cy: 21, r: 4, fill: "#ECB22E" },
+      { kind: "circle", cx: 21, cy: 21, r: 4, fill: "#E01E5A" },
+    ],
+  },
+  "application-microsoft-teams": {
+    viewBox,
+    body: [
+      { kind: "circle", cx: 16, cy: 16, r: 14, fill: "#5059C9" },
+      { kind: "path", fill: "#FFFFFF", d: "M9.5 9h13v3h-5v11h-3V12h-5Z" },
     ],
   },
 };
