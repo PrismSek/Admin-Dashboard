@@ -75,6 +75,27 @@ describe("PolicyFinishStep (via PolicyBuilder)", () => {
     expect(trigger).toHaveFocus();
   });
 
+  it("disarms the beforeunload guard before navigating away on confirmed Discard", async () => {
+    const user = userEvent.setup();
+    render(<PolicyBuilder catalogs={POLICY_CATALOGS} />);
+
+    // Dirty the form so both the Cancel confirmation and the beforeunload
+    // guard are armed.
+    await user.type(screen.getByRole("textbox", { name: "Policy name" }), " v2");
+
+    await user.click(screen.getByRole("link", { name: "Cancel" }));
+    expect(screen.getByRole("alertdialog")).toBeVisible();
+
+    await user.click(screen.getByRole("button", { name: "Discard" }));
+
+    // If the fix regresses, this still-armed listener would call
+    // `preventDefault`, which is exactly the native double-prompt on top of
+    // the Discard confirmation the admin just gave.
+    const event = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(false);
+  });
+
   it("submits a valid form and shows the local-only outcome instead of the button row", async () => {
     const user = userEvent.setup();
     render(<PolicyBuilder catalogs={POLICY_CATALOGS} />);

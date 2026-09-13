@@ -38,6 +38,9 @@ export const policyListContent = {
   resultsSummary: (visible: number, total: number) => `Showing ${visible} of ${total} policies`,
   /** "Showing {from} to {to} of {total}" pagination-footer copy. */
   pageSummary: (from: number, to: number, total: number) => `Showing ${from} to ${to} of ${total}`,
+  /** Accessible names for the pagination footer's prev/next arrow links. */
+  previousPage: "Previous page",
+  nextPage: "Next page",
   empty: {
     title: "No policies match your filters.",
     action: "Clear filters",

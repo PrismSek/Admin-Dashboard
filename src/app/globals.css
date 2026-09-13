@@ -162,7 +162,7 @@
   --color-nav-active-ink: var(--ps-nav-050); /* active sub-item ink */
   --color-nav-accent: var(--ps-teal-400); /* active top-level item */
 
-  /* Current signed-in Figma geometry (file 2CUGuQCAn2abgFkIz39t5V). */
+  /* Current signed-in Figma geometry (file 84ZFM7Vv9ILAxxs1aWxcgz). */
   --size-app-sidebar: 16rem;
   --size-app-header: 3rem;
   --size-app-icon: 1.125rem;
@@ -180,6 +180,12 @@
   --space-nav-inline: 1.125rem;
   --space-nav-block: 0.75rem;
   --space-nav-gap: 0.625rem;
+
+  /* Policy list content frame — the recurring outer padding shared by
+     PolicyList, PolicyListSkeleton and PolicyListError (48px horizontal,
+     32px vertical). */
+  --space-policy-content-inline: 3rem; /* 48px */
+  --space-policy-content-block: 2rem; /* 32px */
 
   /* Status pills */
   --color-pill-ok-bg: var(--ps-green-050);
@@ -364,8 +370,6 @@
   --text-nav--line-height: 1.4286; /* 20px */
   --text-nav-sub: 0.84375rem; /* 13.5px — Settings sub-items */
   --text-nav-sub--line-height: 1.26;
-  --text-nav-section: 0.6875rem; /* 11px — OVERVIEW / ACCOUNT headers */
-  --text-nav-section--line-height: 1.3;
 
   --color-art-coral: var(--ps-art-coral);
   --color-art-peach: var(--ps-art-peach);
@@ -389,6 +393,8 @@
   --spacing-nav-inline: var(--space-nav-inline);
   --spacing-nav-block: var(--space-nav-block);
   --spacing-nav-gap: var(--space-nav-gap);
+  --spacing-policy-content-inline: var(--space-policy-content-inline);
+  --spacing-policy-content-block: var(--space-policy-content-block);
   --spacing-select-control: var(--size-select-control);
   --spacing-dropdown-row: var(--size-dropdown-row);
   --spacing-step-node: var(--size-step-node);

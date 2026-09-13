@@ -118,7 +118,7 @@ export function SideNav({
     <>
       {/* Dismisses on pointer click; Escape (above) covers keyboard users,
           so this backdrop is deliberately not a focusable control. */}
-      <div aria-hidden onClick={onClose} className="fixed inset-0 z-30 bg-black/40 lg:hidden" />
+      <div aria-hidden onClick={onClose} className="fixed inset-0 z-30 bg-overlay lg:hidden" />
 
       {/* `role="dialog"` lives on this wrapper, not the `<nav>` itself —
           `dialog` is not an allowed ARIA role on a `nav` element (axe:

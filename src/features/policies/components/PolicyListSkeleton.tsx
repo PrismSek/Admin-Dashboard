@@ -18,7 +18,7 @@ function Bar({ className }: { className?: string }) {
  */
 export function PolicyListSkeleton() {
   return (
-    <div className="px-12 py-8">
+    <div className="px-policy-content-inline py-policy-content-block">
       <h1 className="text-page-title font-normal text-strong">{policyListContent.title}</h1>
 
       <div

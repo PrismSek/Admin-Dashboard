@@ -17,7 +17,7 @@ export type PolicyListErrorProps = {
  */
 export function PolicyListError({ retry, correlationId }: PolicyListErrorProps) {
   return (
-    <div className="px-12 py-8">
+    <div className="px-policy-content-inline py-policy-content-block">
       <section
         aria-labelledby="policy-error-title"
         className="mt-4 flex flex-col items-center gap-3 rounded-app border border-policy-table-border bg-chrome px-5 py-16 text-center"

@@ -30,7 +30,7 @@ export function PolicyList({ state, selection }: PolicyListProps) {
   const to = Math.min(page * pageSize, total);
 
   return (
-    <div className="px-12 py-8">
+    <div className="px-policy-content-inline py-policy-content-block">
       <h1 className="text-page-title font-normal text-strong">{policyListContent.title}</h1>
 
       <PolicyTabs state={state} counts={counts} className="mt-5" />
@@ -79,7 +79,8 @@ const pageArrowClass =
  * than a link to nowhere. */
 function PageArrow({ direction, href }: { direction: "previous" | "next"; href?: string }) {
   const icon: AppIconName = direction === "previous" ? "chevron-left" : "chevron-right";
-  const label = direction === "previous" ? "Previous page" : "Next page";
+  const label =
+    direction === "previous" ? policyListContent.previousPage : policyListContent.nextPage;
 
   if (!href) {
     return (

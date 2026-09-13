@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, type MouseEvent } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { policyBuilderContent } from "@/features/policies/content";
@@ -34,10 +34,19 @@ export function UnsavedChangesGuard({ isDirty, cancelHref }: UnsavedChangesGuard
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const copy = policyBuilderContent.unsavedChanges;
 
+  // Checked by `handleBeforeUnload` on every fire, and flipped off in
+  // `handleDiscard` before the navigation it triggers — otherwise that
+  // navigation is itself a page unload, and the still-armed listener would
+  // pop the browser's own native leave-prompt right on top of the Stay/
+  // Discard dialog the admin just confirmed.
+  const isArmedRef = useRef(true);
+
   useEffect(() => {
     if (!isDirty) return;
+    isArmedRef.current = true;
 
     function handleBeforeUnload(event: BeforeUnloadEvent) {
+      if (!isArmedRef.current) return;
       event.preventDefault();
       // Chrome only shows its native prompt when `returnValue` is set.
       event.returnValue = "";
@@ -54,6 +63,7 @@ export function UnsavedChangesGuard({ isDirty, cancelHref }: UnsavedChangesGuard
   }
 
   function handleDiscard() {
+    isArmedRef.current = false;
     setIsConfirmOpen(false);
     window.location.href = cancelHref;
   }
