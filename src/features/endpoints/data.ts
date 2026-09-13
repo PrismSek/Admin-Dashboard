@@ -185,7 +185,7 @@ export async function getEndpointCounts() {
 
 // Illustrative recent-activity feed for the detail Overview. Same shape the
 // audit API will return; not endpoint-specific in the fixture.
-export async function getRecentActivity(_id: string): Promise<ActivityEvent[]> {
+export async function getRecentActivity(): Promise<ActivityEvent[]> {
   return [
     { kind: "protection", title: "Protection status changed to Protected", detail: "Policy v18 acknowledged", time: "12 min ago" },
     { kind: "info", title: "Connection established", detail: "Signed channel active", time: "12 min ago" },

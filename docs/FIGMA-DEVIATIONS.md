@@ -213,15 +213,15 @@ Unlike the auth frames (§1), the signed-in frames use realistic sizes: 14px nav
 text, 13px descriptions, 16px card titles. These were implemented as drawn. The auth
 normalisation happens to land on the same 14px body size, so the two halves now agree.
 
-## 12. Dashboard, Incidents and Policies have no frames
+## 12. Dashboard and Incidents have no frames
 
-All three are in the sidebar but nothing in the file designs them. The routes exist so the
+Both are in the sidebar but nothing in the file designs them. The routes exist so the
 shell is navigable, and each renders an explicit "this screen has not been designed yet"
 placeholder rather than invented filler — a fabricated security dashboard would be worse
 than an honest gap, and this keeps the remaining design work visible.
 
-Notably, **Policies has no frames at all** — which is one of the two pillars you described
-for this product.
+Policies previously had no frames either; that has since changed — see "Policy
+reconciliation (2026-09-13)" below.
 
 ## 13. Twelve department frames became one parameterised route
 
@@ -275,12 +275,14 @@ rather than cosmetic.
 The Settings frames were redrawn (file modified 2026-08-25). The screens and shared app
 components were brought back to the new design; all values remain tokens in `globals.css`.
 
-- **Sidebar is now dark navy** (`#0E1420`, 232px) with a teal active accent (`#59E9DF`),
-  `OVERVIEW` / `ACCOUNT` section groups and Log out moved into it. This is shared chrome,
-  so it changes every signed-in screen (not just Settings) — done at the product owner's
-  request. New `--color-nav-*` / `--color-nav-accent` tokens. `Incidents` and `Endpoints`
-  are kept in `OVERVIEW`: the Settings frames show a condensed nav, but those routes are
-  built and dropping their nav entries would strand them.
+- **Sidebar is now dark navy** (`#0E1420`, 232px, as first read from the 2026-08-25
+  Settings frames) with a teal active accent (`#59E9DF`), `OVERVIEW` / `ACCOUNT` section
+  groups and Log out moved into it. This is shared chrome, so it changes every signed-in
+  screen (not just Settings) — done at the product owner's request. New `--color-nav-*` /
+  `--color-nav-accent` tokens. `Incidents` and `Endpoints` are kept in `OVERVIEW`: the
+  Settings frames show a condensed nav, but those routes are built and dropping their nav
+  entries would strand them. **Superseded** by the Policy reconciliation below: the
+  current build matches the shell at 256px / `#0F090C`, not the values read here.
 - **Page background** cooled from `#FAF9F5` to `#F5F6F8` (`--ps-app-canvas`).
 - **Card radius** 6px → 8px (`rounded-card`); **page title** 28px → 24px, regular weight;
   **primary buttons** `#F2601A` → `#E04F27` (see §10).
@@ -302,6 +304,72 @@ Not re-fetched: the four **SAML setup wizard** step frames and the SSO activatio
 the Figma image/nodes API was rate-limiting the token during this pass. The wizard renders
 through the same updated `Card` / button / field components and tokens, so it inherits the
 new styling, but its step-indicator layout was not re-checked against the current frames.
+
+---
+
+## 20. Policy reconciliation (2026-09-13)
+
+Policies is now built (§12 no longer applies to it). This section records the design
+source used and the decisions made while building it.
+
+**Current source.** Figma file [`84ZFM7Vv9ILAxxs1aWxcgz`](https://www.figma.com/design/84ZFM7Vv9ILAxxs1aWxcgz/PrismSek?node-id=132-2)
+("PrismSek"), page `Screens`, reviewed 2026-09-13. An earlier duplicate file key,
+`DAHl890KCir4PzFHCPH56G`, is deleted (the API now 404s on it) — do not cite it in future
+work.
+
+**Two frame kinds on one page.** `Screens` mixes DOM captures of the running app with
+hand-authored designs, and treating them the same produces wrong values:
+
+- **1440×957 frames** — the Policies list (`398:16105`), Issues, and the side-panels — are
+  captures of the running app. Their pixel oddities (see the list-fixture and sidebar notes
+  below) are capture artifacts, not intent.
+- **1440×1676+ frames** — Create policy and its channel/dropdown/required/collection/draft/
+  JSON states — are hand-authored designs and are treated as the source of truth for those
+  screens.
+
+Shell and list values follow the plan's human-verified tokens, not whatever a capture
+happened to render. For example, the list-capture frame shows a 227px `#0E1420` sidebar;
+that was ignored in favour of the verified 256px `#0F090C` sidebar the rest of the
+signed-in shell already uses (§19).
+
+**Signed-in shell.** 256px `#0F090C` sidebar, a content-only 48px header, and an `#F5F6F8`
+canvas, matched at the 1440×957 reference. Below desktop, navigation collapses to an
+`aria-modal` overlay; the reference frame itself is unchanged.
+
+**Assets.** All shell and Policy visuals are exact SVG, matched to the Figma vectors. The
+one exception: the Desktop-apps marks (WhatsApp, Signal, Telegram, Slack, Microsoft Teams)
+have no artwork anywhere in the Figma file. A single neutral generic `application` glyph is
+used as an honest placeholder for all five rather than inventing per-brand marks; real
+per-brand SVGs are a future asset pass. No raster asset was introduced for this.
+
+**List fixture — 15 rows, not padded to 20.** The capture frame contains exactly 15
+row-frames, and its own footer text is internally inconsistent (it reads both "19 of 19"
+and "20 of 20" in the same capture — an artifact of whatever list state was open when it
+was captured). Rather than trust either number, the fixture ships 15 rows. Deployment
+health carries the 5 real values the design implies: Healthy, Degraded, Approval pending,
+Stale, Not deployed.
+
+**Detail drawer removed.** The current Figma has no Policy detail surface at all. A prior
+`?policy=` drawer in this repo predates this reconciliation and was never verified against
+a Figma frame — it has been removed rather than kept as invented UI.
+
+**Notification step — known deviation.** This was built per the original plan schema as an
+enabled/title/message form. Figma's actual "End-user Notification" frame is different: a
+notification-channel picker ("Tell the team via") plus a when-issue-detected remediation
+radio group (none / engage assignee / remove public link / apply label). The built form
+does not match the frame. To be reconciled in a follow-up task.
+
+**Catalog gaps.** `findings` and `destinationClasses` list only the worked-example options
+Figma actually draws in the channel/collection frames. Neither is a complete catalogue;
+fuller option lists depend on backend/design work not yet done.
+
+**Persistence.** Policy Create validates locally with its zod schema and shows a "not
+saved until a create API exists" notice. It never implies a record was saved.
+
+**Toolchain note.** `@tanstack/react-table@9.1.2`, as installed in this repo, is a v9 API
+(`useTable`, `table.FlexRender`, `createColumnHelper`) — not the publicly documented v8
+API. Anyone extending `PolicyTable` should read the installed package's types, not the
+public TanStack Table v8 docs.
 
 ---
 
