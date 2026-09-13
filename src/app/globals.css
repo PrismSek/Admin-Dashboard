@@ -200,16 +200,33 @@
   --color-block: var(--ps-orange-600);
   --color-monitor: var(--ps-grey-400);
 
+  /* Dropdown / select popup (PolicySelect — Figma "…drop down" menu family:
+     397:15024 Draft/Active/Off, 396:4985 Applies to). The popup border and
+     shadow reuse existing raw values (policy-table border, ink-900 shadow);
+     the row tint below is a new colour distinct from any existing token. */
+  --ps-dropdown-row-active: #fdf0eb; /* open-row hover/keyboard-active tint */
+  --color-dropdown-border: var(--ps-policy-table-border);
+  --color-dropdown-row-active-bg: var(--ps-dropdown-row-active);
+
   /* Radii */
   --radius-control: 10px; /* auth inputs, buttons */
   --radius-app: 6px; /* app inputs, buttons, cards */
   --radius-card: 8px;
   --radius-panel: 14px;
+  --radius-dropdown-row: 4px; /* select popup row highlight (Figma 397:15025) */
 
   /* Control sizing — normalised from Figma's 36px to meet the WCAG 2.2
      minimum target size. */
   --size-control: 2.75rem; /* 44px */
   --width-auth-column: 25rem; /* 400px (Figma 284px, normalised) */
+
+  /* PolicySelect geometry — app-scale (1:1), not the auth 0.7× normalisation.
+     Figma 470:6822 (trigger, 32px) and 397:15025 (option row, 34px). */
+  --size-select-control: 2rem; /* 32px */
+  --size-dropdown-row: 2.125rem; /* 34px */
+
+  /* Popup elevation (Figma 397:15024 / 396:4985 "Background+Border+Shadow"). */
+  --shadow-dropdown: 0 10px 26px rgba(17, 24, 39, 0.12);
 }
 
 /* -------------------------------------------------------------------------
@@ -305,7 +322,12 @@
   --color-block: var(--color-block);
   --color-monitor: var(--color-monitor);
 
+  --color-dropdown-border: var(--color-dropdown-border);
+  --color-dropdown-row-active-bg: var(--color-dropdown-row-active-bg);
+  --shadow-dropdown: var(--shadow-dropdown);
+
   --radius-app: var(--radius-app);
+  --radius-dropdown-row: var(--radius-dropdown-row);
 
   /* App type ramp — the signed-in frames are drawn at ~1:1, so these are
      taken from Figma directly rather than normalised like the auth ramp. */
@@ -354,6 +376,8 @@
   --spacing-nav-inline: var(--space-nav-inline);
   --spacing-nav-block: var(--space-nav-block);
   --spacing-nav-gap: var(--space-nav-gap);
+  --spacing-select-control: var(--size-select-control);
+  --spacing-dropdown-row: var(--size-dropdown-row);
 
   --text-policy-table-head: 0.75rem;
   --text-policy-table-head--line-height: 1rem;
