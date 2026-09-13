@@ -18,6 +18,8 @@ export const policyRoutes = {
 
 export const policyListContent = {
   title: "Policies",
+  /** Accessible name for the loading skeleton's `role="status"` region. */
+  loading: "Loading policies",
   tabs: { all: "All", draft: "Draft", off: "Off" },
   columns: [
     "Policy name",
@@ -42,6 +44,9 @@ export const policyListContent = {
   },
   error: {
     title: "We couldn't load policies.",
+    description: "Something went wrong on our end. Try again, or share the reference below if it keeps happening.",
+    /** Support-safe stand-in for the thrown error — never the error message itself. */
+    correlationLabel: (id: string) => `Reference: ${id}`,
     retry: "Retry",
   },
 } as const;
