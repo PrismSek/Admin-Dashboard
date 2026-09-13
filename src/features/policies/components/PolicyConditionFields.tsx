@@ -75,7 +75,12 @@ export function PolicyConditionFields({ findings }: { findings: readonly PolicyC
       </div>
 
       {modeField.field.value === "specific" ? (
-        <div className="mt-3 flex flex-col gap-3">
+        <div
+          role="group"
+          aria-label={data.findingLabel}
+          aria-describedby={errors.content?.findingIds ? findingsErrorId : undefined}
+          className="mt-3 flex flex-col gap-3"
+        >
           {chosen.length > 0 ? (
             <ul className="flex flex-wrap gap-2">
               {chosen.map((findingId, index) => {

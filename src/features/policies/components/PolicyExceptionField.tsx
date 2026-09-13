@@ -48,7 +48,7 @@ export function PolicyExceptionField({
       ) : (
         <ul className="mt-2 flex flex-col gap-2">
           {field.value.map((reason, index) => (
-            <li key={keys[index] ?? String(index)} className="flex items-center gap-2">
+            <li key={keys[index] ?? reason} className="flex items-center gap-2">
               <span className="flex-1 rounded-app border border-hair-strong bg-chrome px-3 py-1.5 text-meta text-strong">
                 {reason}
               </span>

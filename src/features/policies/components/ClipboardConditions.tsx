@@ -52,7 +52,12 @@ export function ClipboardConditions({ catalogs }: { catalogs: PolicyCatalogs }) 
           <p className="mt-2 max-w-md text-meta text-dim">{data.destinationHelp}</p>
         </div>
 
-        <div className="mt-4">
+        <div
+          role="group"
+          aria-label={data.collectionIs}
+          aria-describedby={errors.clipboard?.collectionIds ? "policy-data-clipboard-collections-error" : undefined}
+          className="mt-4"
+        >
           <span className="text-body font-medium text-label">{data.collectionIs}</span>
           <p className="mt-1 text-meta text-dim">{chosenCollections.length === 0 ? data.anyCollection : data.oneOf}</p>
 
