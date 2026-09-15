@@ -7,6 +7,8 @@ import { FilterBar } from "@/components/app/filter-bar";
 import { ListFooter, ScopeSelect, SquareIconButton, Th, ToolbarSearch } from "@/components/app/list-controls";
 import { PageBody, PageHeader } from "@/components/app/page-header";
 import { ProtectionCell } from "@/components/app/protection";
+import { EmptyState } from "@/components/app/table";
+import { buttonVariants } from "@/components/ui/button";
 import { BrowserMarks, OsGlyph } from "@/features/endpoints/components/glyphs";
 import { getEndpointCounts, getEndpoints, type Endpoint } from "@/features/endpoints/data";
 import { cn } from "@/lib/utils";
@@ -92,34 +94,59 @@ export default async function EndpointsPage({
         <StatTile label="Offline" value={counts.offline} icon={<WifiOff className="size-4 text-subtle-alt" />} />
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-app border border-hair-strong bg-chrome">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[880px] border-collapse text-left">
-            <thead>
-              <tr className="border-b border-hair">
-                <Th>Endpoint</Th>
-                <Th>Assigned user</Th>
-                <Th>Operating system</Th>
-                <Th>Browser coverage</Th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-hair">
-              {visible.map((endpoint) => (
-                <EndpointRow key={endpoint.id} endpoint={endpoint} />
-              ))}
-            </tbody>
-          </table>
+      {total === 0 ? (
+        <div className="mt-6 rounded-app border border-hair-strong bg-chrome">
+          <EmptyState
+            title="No endpoints yet"
+            description="PrismSek can only see a machine once the agent is installed on it. Deploy the agent to your first machines to start protecting them."
+            action={
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <Link
+                  href="/manage/deployment"
+                  className={buttonVariants({ variant: "appPrimary", size: "app", width: "auto" })}
+                >
+                  Deploy agent
+                </Link>
+                <button
+                  type="button"
+                  className={buttonVariants({ variant: "appSecondary", size: "app", width: "auto" })}
+                >
+                  Download agent
+                </button>
+              </div>
+            }
+          />
         </div>
+      ) : (
+        <div className="mt-6 overflow-hidden rounded-app border border-hair-strong bg-chrome">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[880px] border-collapse text-left">
+              <thead>
+                <tr className="border-b border-hair">
+                  <Th>Endpoint</Th>
+                  <Th>Assigned user</Th>
+                  <Th>Operating system</Th>
+                  <Th>Browser coverage</Th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-hair">
+                {visible.map((endpoint) => (
+                  <EndpointRow key={endpoint.id} endpoint={endpoint} />
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-        <ListFooter
-          from={total ? start + 1 : 0}
-          to={Math.min(start + PAGE_SIZE, total)}
-          total={total}
-          page={page}
-          pageCount={pageCount}
-          hrefFor={(target) => hrefWith({ page: target > 1 ? String(target) : undefined })}
-        />
-      </div>
+          <ListFooter
+            from={total ? start + 1 : 0}
+            to={Math.min(start + PAGE_SIZE, total)}
+            total={total}
+            page={page}
+            pageCount={pageCount}
+            hrefFor={(target) => hrefWith({ page: target > 1 ? String(target) : undefined })}
+          />
+        </div>
+      )}
     </PageBody>
   );
 }

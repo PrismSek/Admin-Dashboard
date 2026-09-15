@@ -75,6 +75,11 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
 export const config = {
   matcher: [
+    // Dashboard root and Issues are signed-in app routes too; gate them like
+    // the rest. The employee onboarding flow (/employee/*) is deliberately
+    // absent — it is a public, link-based flow for end users, not admins.
+    "/",
+    "/issues/:path*",
     "/endpoints/:path*",
     "/policies/:path*",
     "/manage/:path*",

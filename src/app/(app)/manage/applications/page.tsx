@@ -12,6 +12,7 @@ import {
 } from "@/components/app/list-controls";
 import { PageBody, PageHeader } from "@/components/app/page-header";
 import { Checkbox } from "@/components/ui/checkbox";
+import { AddApplicationsDrawer } from "@/features/manage/components/add-applications-drawer";
 import { DispositionCell } from "@/features/manage/components/disposition-cell";
 import { appCollections, getApplications, type Application } from "@/features/manage/applications";
 
@@ -20,13 +21,20 @@ export const metadata: Metadata = { title: "Applications" };
 export default async function ApplicationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ collection?: string; q?: string }>;
+  searchParams: Promise<{ collection?: string; q?: string; panel?: string }>;
 }) {
   const params = await searchParams;
   const all = await getApplications();
 
   const collection = params.collection ?? "all";
   const query = params.q?.trim().toLowerCase() ?? "";
+
+  const closeParams = new URLSearchParams();
+  if (params.collection) closeParams.set("collection", params.collection);
+  if (params.q) closeParams.set("q", params.q);
+  const closeHref = closeParams.toString()
+    ? `/manage/applications?${closeParams.toString()}`
+    : "/manage/applications";
   const rows = all.filter(
     (app) =>
       (collection === "all" || app.collection === collection) &&
@@ -52,7 +60,7 @@ export default async function ApplicationsPage({
               defaultValue={params.q}
               className="w-72"
             />
-            <AddAction href="/manage/applications?panel=add">
+            <AddAction href={`${closeHref}${closeHref.includes("?") ? "&" : "?"}panel=add`}>
               <Plus className="size-4" />
               Add applications
             </AddAction>
@@ -99,6 +107,8 @@ export default async function ApplicationsPage({
 
         <ListFooter from={rows.length ? 1 : 0} to={rows.length} total={all.length} />
       </div>
+
+      {params.panel === "add" ? <AddApplicationsDrawer closeHref={closeHref} /> : null}
     </PageBody>
   );
 }

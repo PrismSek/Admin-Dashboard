@@ -16,6 +16,18 @@ export const appShellContent = {
   search: "Search",
   notifications: "Notifications",
   openNavigation: "Open navigation",
+  // Manage group sub-items
+  usersAndGroups: "Users and Groups",
+  endpoints: "Endpoints",
+  deployment: "Deployment",
+  domains: "Domains",
+  applications: "Applications",
+  // Settings group sub-items
+  settingsOverview: "Overview",
+  organization: "Organization",
+  usersAndAccess: "Users and Access",
+  authenticationSso: "Authentication/SSO",
+  profile: "Profile",
 } as const;
 
 export const appShellRoutes = {
@@ -25,4 +37,17 @@ export const appShellRoutes = {
   manage: "/manage",
   settings: "/settings",
   helpCentre: "/help",
+  // Manage group sub-items
+  usersAndGroups: "/manage/users",
+  endpoints: "/endpoints",
+  deployment: "/manage/deployment",
+  domains: "/manage/domains",
+  applications: "/manage/applications",
+  // Settings group sub-items
+  settingsOverview: "/settings/overview",
+  organization: "/settings/organization",
+  usersAndAccess: "/settings/users",
+  authenticationSso: "/settings/sso",
+  notifications: "/settings/notifications",
+  profile: "/settings/profile",
 } as const;

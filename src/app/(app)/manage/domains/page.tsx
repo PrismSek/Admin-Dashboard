@@ -12,6 +12,7 @@ import {
 } from "@/components/app/list-controls";
 import { PageBody, PageHeader } from "@/components/app/page-header";
 import { Checkbox } from "@/components/ui/checkbox";
+import { AddDomainsDrawer } from "@/features/manage/components/add-domains-drawer";
 import { DispositionCell } from "@/features/manage/components/disposition-cell";
 import {
   domainCollections,
@@ -25,13 +26,20 @@ export const metadata: Metadata = { title: "Domains" };
 export default async function DomainsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ collection?: string; q?: string }>;
+  searchParams: Promise<{ collection?: string; q?: string; panel?: string }>;
 }) {
   const params = await searchParams;
   const all = await getDomains();
 
   const collection = params.collection ?? "all";
   const query = params.q?.trim().toLowerCase() ?? "";
+
+  const closeParams = new URLSearchParams();
+  if (params.collection) closeParams.set("collection", params.collection);
+  if (params.q) closeParams.set("q", params.q);
+  const closeHref = closeParams.toString()
+    ? `/manage/domains?${closeParams.toString()}`
+    : "/manage/domains";
   const rows = all.filter(
     (entry) =>
       (collection === "all" || entry.collection === collection) &&
@@ -55,7 +63,7 @@ export default async function DomainsPage({
               defaultValue={params.q}
               className="w-64"
             />
-            <AddAction href="/manage/domains?panel=add">
+            <AddAction href={`${closeHref}${closeHref.includes("?") ? "&" : "?"}panel=add`}>
               <Plus className="size-4" />
               Add domains
             </AddAction>
@@ -102,6 +110,8 @@ export default async function DomainsPage({
 
         <ListFooter from={rows.length ? 1 : 0} to={rows.length} total={all.length} />
       </div>
+
+      {params.panel === "add" ? <AddDomainsDrawer closeHref={closeHref} /> : null}
     </PageBody>
   );
 }
