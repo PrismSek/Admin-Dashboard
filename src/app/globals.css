@@ -73,16 +73,34 @@
   --ps-orange-200: #f2c4a3;
   --ps-red-600: #dc2626;
 
+  /* Issues severity + soft status/evidence badges (Figma Issues 596:1677 and
+     the severity side panels 597:*). Severity is text-only, coloured by level;
+     badges are a soft fill + hairline + ink triple in three tones. */
+  --ps-sev-critical: #a8260a;
+  --ps-sev-high: #bf3c14;
+  --ps-sev-medium: #92400e;
+  --ps-sev-low: #7a8492;
+  --ps-badge-amber-bg: #fdf8ec;
+  --ps-badge-amber-line: #eed6a8;
+  --ps-badge-blue-bg: #f0f5fe;
+  --ps-badge-blue-line: #bfd3f6;
+  --ps-badge-blue-fg: #204eb2;
+  --ps-badge-green-bg: #eef8f2;
+  --ps-badge-green-line: #b3dec5;
+  --ps-badge-green-fg: #156e42;
+
   /* --- App sidebar palette ----------------------------------------------
-     The signed-in chrome was redrawn as dark navy with a teal active accent
-     (Figma file, modified 2026-08-25). These are the raw nav colours. */
-  --ps-nav-950: #0f090c; /* current Figma sidebar background */
-  --ps-nav-900: #182130; /* active sub-item background */
-  --ps-nav-800: #1b2330; /* sidebar divider */
-  --ps-nav-500: #5c6879; /* section labels (OVERVIEW / ACCOUNT) */
-  --ps-nav-400: #8792a3; /* idle nav items */
-  --ps-nav-050: #edf1f5; /* active sub-item text */
-  --ps-teal-400: #59e9df; /* sidebar active accent */
+     The signed-in chrome is a near-black rail with an identity block,
+     expandable Manage/Settings groups and a rose radial glow behind the
+     active row (Figma "Sidebar" component 635:1239, modified 2026-09-13).
+     These are the raw nav colours. */
+  --ps-nav-950: #0f090c; /* sidebar background */
+  --ps-nav-name: #e8eaf6; /* identity name */
+  --ps-nav-role: #90a4ae; /* identity role, dividers-of-thought */
+  --ps-nav-online: #34c759; /* online status dot */
+  --ps-nav-icon: #959394; /* idle row icon */
+  --ps-nav-glow-core: #cc8b8b; /* active-row radial glow, centre */
+  --ps-nav-glow-edge: #a33b3b; /* active-row radial glow, fades out */
 
   /* Decorative gradient artwork on the split layout */
   --ps-art-coral: #ff5f6d;
@@ -90,6 +108,11 @@
   --ps-art-amber: #ffc371;
   --ps-art-violet: #a870ef;
   --ps-art-lilac: #cf8bf3;
+
+  /* Windows UAC prompt mock on the employee "windows approval" screen. These
+     mimic the OS dialog and are intentionally fixed (they never re-theme). */
+  --ps-uac-titlebar: #0f1621;
+  --ps-uac-accent: #0078d4;
 
   /* -----------------------------------------------------------------------
      2. SEMANTICS — what components actually consume.
@@ -153,14 +176,18 @@
   --color-policy-table-head: var(--ps-policy-table-head);
   --color-policy-table-head-border: var(--ps-policy-table-head-border);
 
-  /* Sidebar (dark navy chrome) */
+  /* Sidebar (near-black rail, Figma "Sidebar" component 635:1239) */
   --color-nav-bg: var(--ps-nav-950);
-  --color-nav-surface: var(--ps-nav-900); /* active sub-item fill */
-  --color-nav-divider: var(--ps-nav-800);
-  --color-nav-label: var(--ps-nav-500); /* section headers */
-  --color-nav-idle: var(--ps-nav-400); /* idle item ink */
-  --color-nav-active-ink: var(--ps-nav-050); /* active sub-item ink */
-  --color-nav-accent: var(--ps-teal-400); /* active top-level item */
+  --color-nav-name: var(--ps-nav-name); /* identity name */
+  --color-nav-role: var(--ps-nav-role); /* identity role */
+  --color-nav-online: var(--ps-nav-online); /* online status dot */
+  --color-nav-icon-idle: var(--ps-nav-icon); /* idle row icon */
+  --color-nav-ink-idle: rgb(255 255 255 / 56%); /* idle row label + chevron */
+  --color-nav-ink-active: var(--ps-white); /* active row label + icon */
+  --color-nav-active-fill: rgb(255 255 255 / 3%); /* active row base fill */
+  --color-nav-hover-fill: rgb(255 255 255 / 5%); /* row hover */
+  --color-nav-divider: rgb(255 255 255 / 8%); /* Line 01/02 hairline */
+  --color-nav-avatar-bg: rgb(255 255 255 / 10%); /* initials-avatar fill */
 
   /* Current signed-in Figma geometry (file 84ZFM7Vv9ILAxxs1aWxcgz). */
   --size-app-sidebar: 16rem;
@@ -170,16 +197,23 @@
   --space-app-block-start: 1.625rem;
   --space-app-block-end: 2rem;
 
-  /* Icon-only control size — content header utility buttons, the sidebar
-     avatar and the sign-out icon variant (Figma node 398:16105, ~32px). */
+  /* Icon-only control size — content header utility buttons and the
+     sign-out icon variant (Figma node 398:16105, ~32px). */
   --size-icon-button: 2rem;
 
-  /* Sidebar row geometry — flat nav list, Help Centre and Log out rows
-     (Figma node 398:16105: 42px row height, 18px inline padding, 10px gap
-     between icon and label). */
-  --space-nav-inline: 1.125rem;
-  --space-nav-block: 0.75rem;
-  --space-nav-gap: 0.625rem;
+  /* Sidebar geometry — Figma "Sidebar" component 635:1239. The rail is 256px
+     wide; its content is inset 24px and top/bottom-padded 24px. Rows are 56px
+     tall with a 12px radius, 20px inline padding and a 16px icon→label gap;
+     sub-items indent their label to 60px so it aligns under the parent's. */
+  --space-nav-edge: 1.5rem; /* 24px content inset + top/bottom padding */
+  --size-nav-row: 3.5rem; /* 56px row height */
+  --space-nav-inline: 1.25rem; /* 20px row inline padding */
+  --space-nav-gap: 1rem; /* 16px icon→label gap */
+  --space-nav-sub-inline: 3.75rem; /* 60px sub-item label indent */
+  --size-nav-icon: 1.5rem; /* 24px row icon */
+  --size-nav-avatar: 3rem; /* 48px identity avatar */
+  --size-nav-dot: 0.75rem; /* 12px online dot */
+  --radius-nav-row: 0.75rem; /* 12px row radius */
 
   /* Policy list content frame — the recurring outer padding shared by
      PolicyList, PolicyListSkeleton and PolicyListError (48px horizontal,
@@ -198,6 +232,21 @@
   --color-pill-info-fg: var(--ps-blue-600);
   --color-pill-pending-bg: #fdece9; /* invitation "Pending" — light red */
   --color-pill-pending-fg: #b42318;
+
+  /* Issues severity ink + soft badges (see raw tokens above) */
+  --color-sev-critical: var(--ps-sev-critical);
+  --color-sev-high: var(--ps-sev-high);
+  --color-sev-medium: var(--ps-sev-medium);
+  --color-sev-low: var(--ps-sev-low);
+  --color-badge-amber-bg: var(--ps-badge-amber-bg);
+  --color-badge-amber-line: var(--ps-badge-amber-line);
+  --color-badge-amber-fg: var(--ps-sev-medium);
+  --color-badge-blue-bg: var(--ps-badge-blue-bg);
+  --color-badge-blue-line: var(--ps-badge-blue-line);
+  --color-badge-blue-fg: var(--ps-badge-blue-fg);
+  --color-badge-green-bg: var(--ps-badge-green-bg);
+  --color-badge-green-line: var(--ps-badge-green-line);
+  --color-badge-green-fg: var(--ps-badge-green-fg);
 
   /* Status dots / inline state */
   --color-state-ok: var(--ps-green-800);
@@ -314,12 +363,16 @@
   --color-policy-table-head-border: var(--color-policy-table-head-border);
 
   --color-nav-bg: var(--color-nav-bg);
-  --color-nav-surface: var(--color-nav-surface);
+  --color-nav-name: var(--color-nav-name);
+  --color-nav-role: var(--color-nav-role);
+  --color-nav-online: var(--color-nav-online);
+  --color-nav-icon-idle: var(--color-nav-icon-idle);
+  --color-nav-ink-idle: var(--color-nav-ink-idle);
+  --color-nav-ink-active: var(--color-nav-ink-active);
+  --color-nav-active-fill: var(--color-nav-active-fill);
+  --color-nav-hover-fill: var(--color-nav-hover-fill);
   --color-nav-divider: var(--color-nav-divider);
-  --color-nav-label: var(--color-nav-label);
-  --color-nav-idle: var(--color-nav-idle);
-  --color-nav-active-ink: var(--color-nav-active-ink);
-  --color-nav-accent: var(--color-nav-accent);
+  --color-nav-avatar-bg: var(--color-nav-avatar-bg);
 
   --color-pill-ok-bg: var(--color-pill-ok-bg);
   --color-pill-ok-fg: var(--color-pill-ok-fg);
@@ -331,6 +384,20 @@
   --color-pill-info-fg: var(--color-pill-info-fg);
   --color-pill-pending-bg: var(--color-pill-pending-bg);
   --color-pill-pending-fg: var(--color-pill-pending-fg);
+
+  --color-sev-critical: var(--color-sev-critical);
+  --color-sev-high: var(--color-sev-high);
+  --color-sev-medium: var(--color-sev-medium);
+  --color-sev-low: var(--color-sev-low);
+  --color-badge-amber-bg: var(--color-badge-amber-bg);
+  --color-badge-amber-line: var(--color-badge-amber-line);
+  --color-badge-amber-fg: var(--color-badge-amber-fg);
+  --color-badge-blue-bg: var(--color-badge-blue-bg);
+  --color-badge-blue-line: var(--color-badge-blue-line);
+  --color-badge-blue-fg: var(--color-badge-blue-fg);
+  --color-badge-green-bg: var(--color-badge-green-bg);
+  --color-badge-green-line: var(--color-badge-green-line);
+  --color-badge-green-fg: var(--color-badge-green-fg);
 
   --color-state-ok: var(--color-state-ok);
   --color-state-warn: var(--color-state-warn);
@@ -365,17 +432,32 @@
   --text-micro: 0.75rem; /* 12px — column headers, pills */
   --text-micro--line-height: 1.35;
 
-  /* Sidebar type — Figma sizes for the dark nav (2026-08-25). */
-  --text-nav: 0.875rem; /* 14px — top-level items */
+  /* Sidebar type — Figma "Sidebar" component 635:1239. Rows are 14px/20px;
+     the identity name is 14px/24px and its role 12px/24px, both -0.01em.
+     Named `nav-title`/`nav-eyebrow`/`nav-avatar` rather than `nav-name`/
+     `nav-role` so the `text-*` utility never collides with the same-named
+     `--color-nav-name`/`--color-nav-role` tokens — Tailwind v4 resolves a
+     `text-<name>` to the colour namespace whenever a `--color-<name>` exists,
+     which would silently drop the font-size (see `policy-thead` above). */
+  --text-nav: 0.875rem; /* 14px — row labels (top-level + sub-items) */
   --text-nav--line-height: 1.4286; /* 20px */
-  --text-nav-sub: 0.84375rem; /* 13.5px — Settings sub-items */
-  --text-nav-sub--line-height: 1.26;
+  --text-nav-title: 0.875rem; /* 14px — identity name */
+  --text-nav-title--line-height: 1.7143; /* 24px */
+  --text-nav-title--letter-spacing: -0.01em;
+  --text-nav-eyebrow: 0.75rem; /* 12px — identity role */
+  --text-nav-eyebrow--line-height: 2; /* 24px */
+  --text-nav-eyebrow--letter-spacing: -0.01em;
+  --text-nav-avatar: 1.0625rem; /* 17px — initials inside the 48px avatar */
+  --text-nav-avatar--line-height: 1;
 
   --color-art-coral: var(--ps-art-coral);
   --color-art-peach: var(--ps-art-peach);
   --color-art-amber: var(--ps-art-amber);
   --color-art-violet: var(--ps-art-violet);
   --color-art-lilac: var(--ps-art-lilac);
+
+  --color-uac-titlebar: var(--ps-uac-titlebar);
+  --color-uac-accent: var(--ps-uac-accent);
 
   --radius-control: var(--radius-control);
   --radius-card: var(--radius-card);
@@ -390,9 +472,15 @@
   --spacing-app-block-start: var(--space-app-block-start);
   --spacing-app-block-end: var(--space-app-block-end);
   --spacing-icon-button: var(--size-icon-button);
+  --spacing-nav-edge: var(--space-nav-edge);
+  --spacing-nav-row: var(--size-nav-row);
   --spacing-nav-inline: var(--space-nav-inline);
-  --spacing-nav-block: var(--space-nav-block);
   --spacing-nav-gap: var(--space-nav-gap);
+  --spacing-nav-sub-inline: var(--space-nav-sub-inline);
+  --spacing-nav-icon: var(--size-nav-icon);
+  --spacing-nav-avatar: var(--size-nav-avatar);
+  --spacing-nav-dot: var(--size-nav-dot);
+  --radius-nav-row: var(--radius-nav-row);
   --spacing-policy-content-inline: var(--space-policy-content-inline);
   --spacing-policy-content-block: var(--space-policy-content-block);
   --spacing-select-control: var(--size-select-control);
@@ -428,11 +516,29 @@
   --text-fine: 0.75rem; /* 12px — footer, legal, meta */
   --text-fine--line-height: 1.4;
 
+  /* Employee onboarding screens (Figma 2030:*): a light 18px screen title. */
+  --text-employee-title: 1.125rem; /* 18px */
+  --text-employee-title--line-height: 1.4;
+
   --font-sans: var(--font-ibm-plex-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
 @utility app-shell-grid {
   grid-template-columns: var(--size-app-sidebar) minmax(0, 1fr);
+}
+
+/* Active sidebar row — the near-transparent white fill plus the rose radial
+   "Lights" glow behind the label (Figma "Sidebar" component 635:1239: fill
+   #ffffff @3%, radial glow #cc8b8b → transparent). Applied to the active
+   nav row and its sub-items in place of the idle hover fill. */
+@utility nav-active {
+  background-color: var(--color-nav-active-fill);
+  background-image: radial-gradient(
+    120% 140% at 22% 50%,
+    color-mix(in srgb, var(--ps-nav-glow-core) 30%, transparent) 0%,
+    color-mix(in srgb, var(--ps-nav-glow-edge) 12%, transparent) 45%,
+    transparent 72%
+  );
 }
 
 /* -------------------------------------------------------------------------

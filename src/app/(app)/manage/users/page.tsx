@@ -1,5 +1,6 @@
 import { Filter, MoreVertical, Plus, RotateCw, Upload } from "lucide-react";
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { FilterBar } from "@/components/app/filter-bar";
 import {
@@ -12,10 +13,16 @@ import {
 } from "@/components/app/list-controls";
 import { PageBody, PageHeader } from "@/components/app/page-header";
 import { StateMarker } from "@/components/app/pill";
+import { EmptyState } from "@/components/app/table";
 import { PillTabs } from "@/components/app/tabs";
+import { buttonVariants } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { departments } from "@/features/app-shell/nav";
 import { ProtectionCell } from "@/components/app/protection";
+import { AddUsersDrawer } from "@/features/manage/components/add-users-drawer";
+import { BulkUploadDrawer } from "@/features/manage/components/bulk-upload-drawer";
+import { MembershipDrawer } from "@/features/manage/components/membership-drawer";
+import { UserRowActions } from "@/features/manage/components/user-row-actions";
 import {
   getManageEndpoints,
   getManageUsers,
@@ -30,7 +37,14 @@ export const metadata: Metadata = { title: "Users & Groups" };
 const PAGE_SIZE = 20;
 const departmentLabel = Object.fromEntries(departments.map((d) => [d.slug, d.label]));
 
-type SearchParams = { tab?: string; department?: string; q?: string; page?: string };
+type SearchParams = {
+  tab?: string;
+  department?: string;
+  q?: string;
+  page?: string;
+  panel?: string;
+  membership?: string;
+};
 
 export default async function UsersAndGroupsPage({
   searchParams,
@@ -83,6 +97,12 @@ export default async function UsersAndGroupsPage({
     ...departments.map((d) => ({ value: d.slug, label: d.label })),
   ];
 
+  // The drawers (add / bulk-upload / membership) live in the URL; closing one
+  // returns to the same filtered view. hrefWith already drops panel/membership.
+  const closeHref = hrefWith({});
+  const withParam = (key: string, value: string) =>
+    `${closeHref}${closeHref.includes("?") ? "&" : "?"}${key}=${value}`;
+
   return (
     <PageBody>
       <PageHeader title="Users & Groups" />
@@ -99,11 +119,11 @@ export default async function UsersAndGroupsPage({
           action="/manage/users"
           trailing={
             <div className="flex items-center gap-4">
-              <AddAction href="/manage/users?panel=bulk-upload">
+              <AddAction href={withParam("panel", "bulk-upload")}>
                 <Upload className="size-4" />
                 Bulk upload
               </AddAction>
-              <AddAction href="/manage/users?panel=add">
+              <AddAction href={withParam("panel", "add")}>
                 <Plus className="size-4" />
                 Add users
               </AddAction>
@@ -131,6 +151,30 @@ export default async function UsersAndGroupsPage({
         </FilterBar>
       </div>
 
+      {tab === "users" && filteredUsers.length === 0 ? (
+        <div className="mt-6 rounded-app border border-hair-strong bg-chrome">
+          <EmptyState
+            title="No users yet"
+            description="Add people directly, or deploy the agent — an enrolled machine reports the user signed in on it."
+            action={
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <Link
+                  href={withParam("panel", "add")}
+                  className={buttonVariants({ variant: "appPrimary", size: "app", width: "auto" })}
+                >
+                  Add users
+                </Link>
+                <Link
+                  href={withParam("panel", "bulk-upload")}
+                  className={buttonVariants({ variant: "appSecondary", size: "app", width: "auto" })}
+                >
+                  Bulk upload
+                </Link>
+              </div>
+            }
+          />
+        </div>
+      ) : (
       <div className="mt-6 overflow-hidden rounded-app border border-hair-strong bg-chrome">
         <div className="overflow-x-auto">
           {tab === "users" ? (
@@ -149,7 +193,11 @@ export default async function UsersAndGroupsPage({
               </thead>
               <tbody className="divide-y divide-hair">
                 {visibleUsers.map((user) => (
-                  <UserRow key={user.id} user={user} />
+                  <UserRow
+                    key={user.id}
+                    user={user}
+                    membershipHref={withParam("membership", user.id)}
+                  />
                 ))}
               </tbody>
             </table>
@@ -185,6 +233,13 @@ export default async function UsersAndGroupsPage({
           hrefFor={(target) => hrefWith({ page: target > 1 ? String(target) : undefined })}
         />
       </div>
+      )}
+
+      {params.panel === "add" ? <AddUsersDrawer closeHref={closeHref} /> : null}
+      {params.panel === "bulk-upload" ? <BulkUploadDrawer closeHref={closeHref} /> : null}
+      {params.membership ? (
+        <MembershipDrawer userId={params.membership} closeHref={closeHref} />
+      ) : null}
     </PageBody>
   );
 }
@@ -201,14 +256,16 @@ function RowKebab({ label }: { label: string }) {
   );
 }
 
-function UserRow({ user }: { user: ManageUser }) {
+function UserRow({ user, membershipHref }: { user: ManageUser; membershipHref: string }) {
   return (
     <tr className="align-middle transition-colors hover:bg-hover">
       <td className="px-5 py-4">
         <Checkbox aria-label={`Select ${user.name}`} />
       </td>
       <td className="px-5 py-4">
-        <p className="text-app text-strong">{user.name}</p>
+        <Link href={`/manage/users/${user.id}`} className="text-app text-strong hover:text-brand">
+          {user.name}
+        </Link>
         <p className="mt-0.5 text-meta text-subtle">{user.email}</p>
       </td>
       <td className="px-5 py-4 text-app text-copy">{user.role}</td>
@@ -217,7 +274,11 @@ function UserRow({ user }: { user: ManageUser }) {
         <StateMarker shape="dot" tone={memberStatusTone[user.status]} label={memberStatusLabel[user.status]} />
       </td>
       <td className="px-5 py-4">
-        <RowKebab label={`Actions for ${user.name}`} />
+        <UserRowActions
+          name={user.name}
+          detailHref={`/manage/users/${user.id}`}
+          membershipHref={membershipHref}
+        />
       </td>
     </tr>
   );
