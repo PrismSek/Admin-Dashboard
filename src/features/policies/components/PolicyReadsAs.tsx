@@ -18,8 +18,9 @@ export function PolicyReadsAs({ catalogs }: { catalogs: PolicyCatalogs }) {
   const content = useWatch({ control, name: "content" });
   const targetOp = useWatch({ control, name: "clipboard.targetOp" });
   const targetIds = useWatch({ control, name: "clipboard.targetIds" });
-  const removableTarget = useWatch({ control, name: "removableMedia.target" });
+  const deviceClass = useWatch({ control, name: "removableMedia.deviceClass" });
   const printTarget = useWatch({ control, name: "print.target" });
+  const appOp = useWatch({ control, name: "desktopApps.appOp" });
   const applicationIds = useWatch({ control, name: "desktopApps.applicationIds" });
   const action = useWatch({ control, name: "enforcement.action" });
   const onUnknown = useWatch({ control, name: "enforcement.onUnknown" });
@@ -31,8 +32,9 @@ export function PolicyReadsAs({ catalogs }: { catalogs: PolicyCatalogs }) {
       allOf: content.allOf,
       targetOp,
       targetIds,
-      removableTarget,
+      deviceClass,
       printTarget,
+      appOp,
       applicationIds,
       action,
       onUnknown,

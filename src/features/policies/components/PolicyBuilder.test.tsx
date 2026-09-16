@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { describe, expect, it } from "vitest";
@@ -39,8 +39,23 @@ const POLICY_CATALOGS: PolicyCatalogs = {
     { value: "messengers", label: "Messengers", category: "apps" },
     { value: "collaboration-apps", label: "Collaboration apps", category: "apps" },
   ],
-  removableTargets: [{ value: "it-issued-encrypted-usb", label: "IT-issued encrypted USB" }],
-  printerTargets: [{ value: "unknown", label: "Unknown" }],
+  deviceClasses: [
+    { value: "personal-or-unrecognised", label: "Personal or unrecognised" },
+    { value: "any-device", label: "Any Device" },
+  ],
+  transfers: [
+    { value: "copy", label: "copy to the device" },
+    { value: "read", label: "read off the device" },
+    { value: "any", label: "any transfer" },
+  ],
+  removableTargets: [
+    { value: "it-issued-encrypted-usb", label: "IT-issued encrypted USB" },
+    { value: "lab-capture-drives", label: "Lab capture drives" },
+  ],
+  printerTargets: [
+    { value: "unknown", label: "Unknown" },
+    { value: "authorized", label: "Authorized" },
+  ],
   applications: [
     { value: "whatsapp", label: "WhatsApp", icon: "application" },
     { value: "google-chrome", label: "Google Chrome", icon: "application" },
@@ -117,6 +132,39 @@ describe("PolicyBuilder", () => {
     expect(screen.queryByText("Class is")).not.toBeInTheDocument();
   });
 
+  it("shows the print PRINTER control defaulting to Unknown, offering Authorized, and no exception field", async () => {
+    const user = userEvent.setup();
+    render(<PolicyBuilder catalogs={POLICY_CATALOGS} />);
+
+    await user.click(screen.getByRole("combobox", { name: "Channel" }));
+    await user.click(screen.getByRole("option", { name: "Print" }));
+
+    // "Printer is" opens on Unknown (a real default value, not a "Select
+    // printer" placeholder), matching the base-state artifact.
+    expect(screen.getByRole("combobox", { name: "Printer is" })).toHaveTextContent("Unknown");
+
+    // Both printer targets from the artifact's dropdown are offered.
+    await user.click(screen.getByRole("combobox", { name: "Printer is" }));
+    expect(screen.getByRole("option", { name: "Unknown" })).toBeVisible();
+    expect(screen.getByRole("option", { name: "Authorized" })).toBeVisible();
+
+    // Print's Conditions card carries no EXCEPTION field — the escape hatch is
+    // edited in the Enforcement step, which shows nothing under "Audit only".
+    expect(screen.queryByRole("button", { name: "Add exception" })).not.toBeInTheDocument();
+  });
+
+  it("shows the removable-media DEVICE controls: device class, registration, transfer", async () => {
+    const user = userEvent.setup();
+    render(<PolicyBuilder catalogs={POLICY_CATALOGS} />);
+
+    await user.click(screen.getByRole("combobox", { name: "Channel" }));
+    await user.click(screen.getByRole("option", { name: "Removable media" }));
+
+    expect(screen.getByText("Device is")).toBeVisible();
+    expect(screen.getByText("Registered as")).toBeVisible();
+    expect(screen.getByText("Transfer is")).toBeVisible();
+  });
+
   it("edits identity, audience, and channel without losing values", async () => {
     const user = userEvent.setup();
     const { container } = render(<PolicyBuilder catalogs={POLICY_CATALOGS} />);
@@ -149,6 +197,37 @@ describe("PolicyBuilder", () => {
     }
   });
 
+  it("shows the desktop-apps APP controls: App is operator, apps multi-select, Fires when", async () => {
+    const user = userEvent.setup();
+    render(<PolicyBuilder catalogs={POLICY_CATALOGS} />);
+
+    await user.click(screen.getByRole("combobox", { name: "Channel" }));
+    await user.click(screen.getByRole("option", { name: "Desktop apps" }));
+
+    // "App is" — the match operator defaults to "one of" and offers "not one of".
+    expect(screen.getByRole("combobox", { name: "App is" })).toHaveTextContent("one of");
+    await user.click(screen.getByRole("combobox", { name: "App is" }));
+    expect(screen.getByRole("option", { name: "one of" })).toBeVisible();
+    expect(screen.getByRole("option", { name: "not one of" })).toBeVisible();
+    await user.keyboard("{Escape}");
+
+    // Apps — a checkbox-per-row multi-select over the app catalog.
+    await user.click(screen.getByRole("button", { name: "Applications" }));
+    expect(screen.getByRole("option", { name: "WhatsApp" })).toBeVisible();
+    expect(screen.getByRole("option", { name: "Google Chrome" })).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Done" }));
+
+    // "Fires when" — defaults to "a file is sent" and offers the other triggers.
+    expect(screen.getByRole("combobox", { name: "Fires when" })).toHaveTextContent("a file is sent");
+    await user.click(screen.getByRole("combobox", { name: "Fires when" }));
+    expect(screen.getByRole("option", { name: "text is pasted" })).toBeVisible();
+    expect(screen.getByRole("option", { name: "anything moves" })).toBeVisible();
+    await user.keyboard("{Escape}");
+
+    // The APP card carries no EXCEPTION field (edited in the Enforcement step).
+    expect(screen.queryByRole("button", { name: "Add exception" })).not.toBeInTheDocument();
+  });
+
   it("retains Desktop Apps selections after switching channels away and back", async () => {
     const user = userEvent.setup();
     render(<PolicyBuilder catalogs={POLICY_CATALOGS} />);
@@ -156,8 +235,9 @@ describe("PolicyBuilder", () => {
     await user.click(screen.getByRole("combobox", { name: "Channel" }));
     await user.click(screen.getByRole("option", { name: "Desktop apps" }));
 
-    await user.click(screen.getByRole("button", { name: "Choose applications" }));
+    await user.click(screen.getByRole("button", { name: "Applications" }));
     await user.click(screen.getByRole("option", { name: "Google Chrome" }));
+    await user.click(screen.getByRole("button", { name: "Done" }));
 
     await user.click(screen.getByRole("combobox", { name: "Channel" }));
     await user.click(screen.getByRole("option", { name: "Print" }));
@@ -165,7 +245,7 @@ describe("PolicyBuilder", () => {
     await user.click(screen.getByRole("combobox", { name: "Channel" }));
     await user.click(screen.getByRole("option", { name: "Desktop apps" }));
 
-    await user.click(screen.getByRole("button", { name: "Choose applications" }));
+    await user.click(screen.getByRole("button", { name: "Applications" }));
     expect(screen.getByRole("option", { name: "Google Chrome" })).toHaveAttribute("aria-selected", "true");
   });
 
@@ -180,6 +260,58 @@ describe("PolicyBuilder", () => {
     await user.click(screen.getByRole("combobox", { name: "Do this instead" }));
     await user.click(screen.getByRole("option", { name: "Block with override" }));
     expect(screen.getByRole("combobox", { name: "Do this instead" })).toHaveTextContent("Block with override");
+  });
+
+  it("labels the onUnknown fallback's audit option as the engine default, distinct from the action", async () => {
+    const user = userEvent.setup();
+    render(<PolicyBuilder catalogs={POLICY_CATALOGS} />);
+
+    // ACTION's "Do this" uses the plain "Audit only" label…
+    await user.click(screen.getByRole("combobox", { name: "Do this" }));
+    expect(screen.getByRole("option", { name: "Audit only" })).toBeVisible();
+    expect(screen.queryByRole("option", { name: "Audit only - engine default" })).not.toBeInTheDocument();
+    await user.keyboard("{Escape}");
+
+    // …while the "If we can't tell" fallback marks it as the engine default.
+    await user.click(screen.getByRole("combobox", { name: "Do this instead" }));
+    expect(screen.getByRole("option", { name: "Audit only - engine default" })).toBeVisible();
+    expect(screen.queryByRole("option", { name: "Audit only" })).not.toBeInTheDocument();
+  });
+
+  it("renders the enforcement pills without their helper sub-notes", async () => {
+    const user = userEvent.setup();
+    render(<PolicyBuilder catalogs={POLICY_CATALOGS} />);
+
+    // The unanswered fallback shows only the REQUIRED badge — no amber sentence.
+    expect(screen.queryByText(/Mandatory\. Left unset/)).not.toBeInTheDocument();
+
+    // The EXCEPTION escape hatch (revealed by an interrupting action) carries no
+    // explanatory note under its pill either.
+    await user.click(screen.getByRole("combobox", { name: "Channel" }));
+    await user.click(screen.getByRole("option", { name: "Desktop apps" }));
+    await user.click(screen.getByRole("combobox", { name: "Do this" }));
+    await user.click(screen.getByRole("option", { name: "Block" }));
+    expect(screen.getByRole("combobox", { name: "Let it through if" })).toBeVisible();
+    expect(screen.queryByText(/No way through/)).not.toBeInTheDocument();
+  });
+
+  it("shows the EXCEPTION escape hatch for clipboard too, keeping the Enforcement UI uniform", async () => {
+    const user = userEvent.setup();
+    render(<PolicyBuilder catalogs={POLICY_CATALOGS} />);
+
+    // Pick clipboard explicitly, then an interrupting action so the escape hatch
+    // is relevant.
+    await user.click(screen.getByRole("combobox", { name: "Channel" }));
+    await user.click(screen.getByRole("option", { name: "Clipboard" }));
+    await user.click(screen.getByRole("combobox", { name: "Do this" }));
+    await user.click(screen.getByRole("option", { name: "Block" }));
+
+    // Clipboard now carries the same EXCEPTION row as the other channels.
+    const exception = screen.getByRole("combobox", { name: "Let it through if" });
+    expect(exception).toBeVisible();
+    await user.click(exception);
+    expect(screen.getByRole("option", { name: "never — no exception" })).toBeVisible();
+    expect(screen.getByRole("option", { name: "the destination is a managed app" })).toBeVisible();
   });
 
   it("reveals the MESSAGE block when the onUnknown fallback interrupts, even under Audit only", async () => {
@@ -220,5 +352,18 @@ describe("PolicyBuilder", () => {
     await user.click(screen.getByRole("combobox", { name: "Tell the team via" }));
     await user.click(screen.getByRole("option", { name: "Slack" }));
     expect(screen.getByRole("combobox", { name: "Tell the team via" })).toHaveTextContent("Slack");
+  });
+
+  it("badges each remediation with the integrations it touches", () => {
+    render(<PolicyBuilder catalogs={POLICY_CATALOGS} />);
+
+    // Scoped to the remediation radio group so the "Slack"/"Teams" here are the
+    // integration badges, not the "Tell the team via" channel options.
+    const group = screen.getByRole("radiogroup", { name: "When issue is detected, do this" });
+    expect(within(group).getByText("Slack")).toBeVisible();
+    expect(within(group).getByText("Teams")).toBeVisible();
+    // Remove-public-link and Apply-label both touch Google Workspace + Microsoft 365.
+    expect(within(group).getAllByText("Google Workspace")).toHaveLength(2);
+    expect(within(group).getAllByText("Microsoft 365")).toHaveLength(2);
   });
 });

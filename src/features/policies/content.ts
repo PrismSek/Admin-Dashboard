@@ -14,6 +14,7 @@ export const policyRoutes = {
   list: "/policies",
   create: "/policies/new",
   manageDomains: "/manage/domains",
+  manageApplications: "/manage/applications",
 } as const;
 
 export const policyListContent = {
@@ -210,7 +211,13 @@ export const policyBuilderContent = {
        * the "not one of" (allowlist) phrasing. */
       pasteTargetFallback: "any paste target",
       pasteTargetExcept: (targets: string) => `anywhere outside ${targets}`,
+      /** Removable media "Reads as" destination, per device class. */
+      removableDrive: (deviceClass: string) => `a ${deviceClass} drive`,
+      removableAnyDrive: "any removable drive",
       printDestination: (printer: string) => `${printer} printers`,
+      /** Desktop apps "Reads as" destination — the "not one of" (allowlist)
+       * phrasing; the plain "one of" case reads as the joined app names. */
+      appExcept: (apps: string) => `any app except ${apps}`,
       actions: {
         AuditOnly: "audit it",
         WarnJustify: "warn the user and require justification",
@@ -226,30 +233,63 @@ export const policyBuilderContent = {
     // Removable media channel's DEVICE section — "Registered as"
     // (563:4823), catalogued by `removableTargets` in `data.ts`.
     deviceChip: "DEVICE",
+    /** "Device is" — the removable-media device class (`removableMedia.deviceClass`). */
+    deviceIsLabel: "Device is",
+    /** Help under "Device is" — one line per class. */
+    deviceClassNotes: {
+      "personal-or-unrecognised": "Anything IT did not issue — including a drive plugged in for the first time.",
+      "corporate-not-encrypted": "Company hardware without enforced encryption.",
+      "corporate-issued": "Managed, encrypted, IT-issued hardware.",
+      "any-device": "Any device — the rule matches on registration and transfer alone.",
+    } as Record<string, string>,
+    /** "Registered as" — the match operator (`registrationOp`, reuses
+     * `targetOperators`) beside a multi-select over the registration lists. */
     registeredAsLabel: "Registered as",
-    /** Placeholder in the "Registered as" pill before a device class is picked. */
-    registeredAsPlaceholder: "Select registration",
-    registeredAsHelp: 'Left on "any list" the rule matches on device class alone — no serial lookup.',
+    anyList: "any list",
+    /** Accessible name for the registration multi-select ("any list" / "N lists"). */
+    registrationSelectLabel: "Registration lists",
+    listsSummary: (count: number) => `${count} lists`,
+    manageRegistrations: "Manage →",
+    /** Help under "Registered as" — one line per state. */
+    registeredAsHelp: 'With "any list", the rule matches on device class alone.',
+    registeredAsHelpOneOf: "Only devices on these lists match.",
+    registeredAsHelpNotOneOf: "Everything except these lists matches — the allowlist shape.",
+    /** "Transfer is" — the transfer direction (`removableMedia.transfer`). */
+    transferLabel: "Transfer is",
 
     // Print channel's PRINTER section — "Printer is" (563:7670),
     // catalogued by `printerTargets` in `data.ts`.
     printerChip: "PRINTER",
     printerIsLabel: "Printer is",
-    /** Placeholder in the "Printer is" pill before a printer target is picked. */
-    printerPlaceholder: "Select printer",
     printerHelp:
       "A queue we cannot vouch for — hand-installed drivers, direct-IP printers, anything on no list.",
 
-    // Desktop apps channel's APP section — "App is" (563:10020) and the
-    // app-selection popover (563:10405), catalogued by `applications` in
-    // `data.ts`. `ApplicationSelect`'s own trigger/summary copy.
+    // Desktop apps channel's APP section — "App is" (563:10020) + the
+    // checkbox-per-row app multi-select (563:10405) + "Fires when", catalogued by
+    // `applications` in `data.ts`. Same PASTE TARGET shape as clipboard: a match
+    // operator (reusing `targetOperators`) beside the app multi-select, then a
+    // "Fires when" single-select.
     appChip: "APP",
+    /** The "App is" pill: a leading label + the match-operator value. */
     appIsLabel: "App is",
-    appsHelp:
-      "Only these apps match. Builds are matched by signed publisher and binary, not window title — a renamed executable still matches.",
-    chooseApplications: "Choose applications",
-    noApplicationsSelected: "No apps selected",
-    selectedApplicationsSummary: (labels: readonly string[]) => `Selected: ${labels.join(", ")}`,
+    /** Accessible name for the apps multi-select (its summary is drawn in the
+     * trigger). */
+    appSelectLabel: "Applications",
+    /** Trigger summary when nothing is picked yet / when more than one app is. */
+    selectApps: "Select apps",
+    appsSummary: (count: number) => `${count} apps`,
+    manageApps: "Manage →",
+    appsHelp: "Only these apps match. Renaming an app does not get around the rule.",
+    /** The "Fires when" options for desktop apps (`desktopApps.firesWhen`). */
+    appFiresWhenOptions: [
+      { value: "file-sent", label: "a file is sent" },
+      { value: "text-pasted", label: "text is pasted" },
+      { value: "anything", label: "anything moves" },
+    ],
+    /** Help under "Fires when" — one line per trigger option. */
+    appFiresWhenNotes: {
+      "file-sent": "Attachments and drag-and-drop into the app window.",
+    } as Record<string, string>,
 
     /**
      * The per-channel EXCEPTION picker (563:6411 removable / 563:8722 print /
@@ -271,7 +311,6 @@ export const policyBuilderContent = {
      * reasons exists; see `data.ts`'s "INCOMPLETE" notes on other Data-step
      * catalogs for the same kind of gap). */
     removableExceptionExample: "the volume is encrypted by us",
-    printExceptionExample: "every page is watermarked",
     desktopExceptionExample: "the app is our managed build",
   },
 
@@ -285,36 +324,22 @@ export const policyBuilderContent = {
     answered: "Answered",
     doThisInstead: "Do this instead",
     chooseOne: "Choose one…",
-    /** Note under the required "If we can't tell" row while it is unanswered. */
-    onUnknownRequiredNote: "Mandatory. Left unset the engine would silently audit — say it on purpose.",
+    /** The fallback's audit option is labelled as the engine default, to set it
+     * apart from the primary ACTION's plain "Audit only" (its options otherwise
+     * reuse the `actions` catalog). */
+    auditOnlyEngineDefault: "Audit only - engine default",
 
     exceptionChip: "EXCEPTION",
     letItThroughIf: "Let it through if",
     noException: "never — no exception",
     /** The escape hatch each channel offers, shown as a second "Let it through
-     * if" option — only for the channels that draw one, and only when the action
-     * isn't "Audit only". `noneNote` reads under "never — no exception";
-     * `selectedNote` reads when the escape is chosen. Keyed by builder `channel`
-     * (clipboard offers none). */
+     * if" option — only when the action isn't "Audit only". Every channel draws
+     * one so the Enforcement card is uniform; keyed by builder `channel`. */
     exceptionsByChannel: {
-      "removable-media": {
-        value: "encrypted",
-        label: "the volume is encrypted by us",
-        noneNote: "No way through from the device — encrypted corporate drives are stopped too.",
-        selectedNote: "A drive we provisioned and encrypted is trusted even when the content matches.",
-      },
-      print: {
-        value: "watermark",
-        label: "every page is watermarked",
-        noneNote: "No way through — the job is dropped at the spooler, managed queues included.",
-        selectedNote: "The job prints, stamped per page with the person, the time and the job id.",
-      },
-      "desktop-apps": {
-        value: "managed-build",
-        label: "the app is our managed build",
-        noneNote: "No way through — the send is stopped even in a tenant-managed app.",
-        selectedNote: "A signed build inside our tenant is trusted — the same app installed personally is not.",
-      },
+      clipboard: { value: "managed-destination", label: "the destination is a managed app" },
+      "removable-media": { value: "encrypted", label: "the volume is encrypted by us" },
+      print: { value: "watermark", label: "every page is watermarked" },
+      "desktop-apps": { value: "managed-build", label: "the app is our managed build" },
     },
 
     messageChip: "MESSAGE",
@@ -345,13 +370,14 @@ export const policyBuilderContent = {
     triggerChip: "WHEN ISSUE IS DETECTED",
     /** The automated remediation run when an issue is raised ("When issue is
      * detected"). `icon` is an AppIcon name; `badges` are the integrations each
-     * remediation touches — rendered as neutral chips in our palette, never the
-     * vendor's brand colour (per "follow our colour scheme"). */
+     * remediation touches — each a `{ label, logo }` where `logo` is a
+     * `BrandLogo` name, so the card shows the vendor's own brand mark beside the
+     * name (the one place we use full-colour vendor logos rather than tokens). */
     remediations: [
       { value: "none", label: "None", description: "No automated remediation when an issue is detected", icon: "dash", badges: [] },
-      { value: "engage-assignee", label: "Engage assignee", description: "Contact the end user related to this issue", icon: "mail", badges: ["Slack", "Teams"] },
-      { value: "remove-public-link", label: "Remove public link", description: "Remove public links from related resources", icon: "link-off", badges: ["Google Workspace", "Microsoft 365"] },
-      { value: "apply-label", label: "Apply label", description: "Apply labels to related resources", icon: "tag", badges: ["Google Workspace", "Microsoft 365"] },
+      { value: "engage-assignee", label: "Engage assignee", description: "Contact the end user related to this issue", icon: "mail", badges: [{ label: "Slack", logo: "slack" }, { label: "Teams", logo: "teams" }] },
+      { value: "remove-public-link", label: "Remove public link", description: "Remove public links from related resources", icon: "link-off", badges: [{ label: "Google Workspace", logo: "google" }, { label: "Microsoft 365", logo: "microsoft" }] },
+      { value: "apply-label", label: "Apply label", description: "Apply labels to related resources", icon: "tag", badges: [{ label: "Google Workspace", logo: "google" }, { label: "Microsoft 365", logo: "microsoft" }] },
     ],
 
     /** Accessible name for the remediation radio group (the `triggerChip` is a

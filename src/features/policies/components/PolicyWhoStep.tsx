@@ -15,7 +15,7 @@ export function PolicyWhoStep({ audiences }: { audiences: readonly PolicyCatalog
   } = useFormContext<PolicyAuthoringValues>();
 
   return (
-    <section id="policy-who" aria-label={policyBuilderSteps[1].title} className="mt-6">
+    <section id="policy-who" aria-label={policyBuilderSteps[1].title} className="mt-8 border-t border-hair-strong pt-8">
       <Controller
         name="appliesTo"
         control={control}

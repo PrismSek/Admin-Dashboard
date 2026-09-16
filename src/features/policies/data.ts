@@ -256,6 +256,23 @@ const POLICY_CATALOGS: PolicyCatalogs = {
     { value: "local-files-and-editors", label: "Local files and editors", category: "local" },
   ],
 
+  // Removable media "Device is" class (563:3248). Ordered least-committal-last:
+  // the builder defaults to the first entry (a restrictive class), as the
+  // artifact's base state shows.
+  deviceClasses: [
+    { value: "personal-or-unrecognised", label: "Personal or unrecognised" },
+    { value: "corporate-not-encrypted", label: "Corporate, not encrypted" },
+    { value: "corporate-issued", label: "Corporate-issued" },
+    { value: "any-device", label: "Any Device" },
+  ],
+
+  // Removable media "Transfer is" direction (563:3248).
+  transfers: [
+    { value: "copy", label: "copy to the device" },
+    { value: "read", label: "read off the device" },
+    { value: "any", label: "any transfer" },
+  ],
+
   // Removable media "Registered as" open dropdown (563:4823).
   removableTargets: [
     { value: "it-issued-encrypted-usb", label: "IT-issued encrypted USB" },
@@ -291,14 +308,10 @@ const POLICY_CATALOGS: PolicyCatalogs = {
   // generic top-level "Applies to" mockup family; this uses the
   // channel-specific, already-tested casing.
   actions: [
-    { value: "AuditOnly", label: "Audit only", description: "Let it through and record the event. The person sees nothing." },
-    { value: "WarnJustify", label: "Warn & justify", description: "Interrupt, ask for a written reason, then allow." },
-    {
-      value: "BlockWithOverride",
-      label: "Block with override",
-      description: "Stop it, but allow an audited override with a typed reason.",
-    },
-    { value: "Block", label: "Block", description: "Stop it. There is no way through." },
+    { value: "AuditOnly", label: "Audit only" },
+    { value: "WarnJustify", label: "Warn & justify" },
+    { value: "BlockWithOverride", label: "Block with override" },
+    { value: "Block", label: "Block" },
   ],
 
   // "Deploy as" open menu (Draft-1/2/3: 397:15047, 397:15048, 397:15406) —

@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Controller, useFormContext } from "react-hook-form";
+import { Controller, useFormContext, useWatch } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import { PolicyJsonPreview } from "@/features/policies/components/PolicyJsonPreview";
 import { PolicySelect } from "@/features/policies/components/PolicySelect";
 import { UnsavedChangesGuard } from "@/features/policies/components/UnsavedChangesGuard";
 import { policyBuilderContent, policyBuilderSteps } from "@/features/policies/content";
-import type { PolicyAuthoringValues } from "@/features/policies/schemas";
+import { policyAuthoringSchema, type PolicyAuthoringValues } from "@/features/policies/schemas";
 import type { PolicyCatalogOption } from "@/features/policies/types";
 
 const finish = policyBuilderContent.finish;
@@ -39,6 +39,16 @@ export function PolicyFinishStep({
   } = useFormContext<PolicyAuthoringValues>();
   const [isJsonOpen, setIsJsonOpen] = useState(false);
 
+  // Create is clickable only once the whole form satisfies
+  // `policyAuthoringSchema` — name, audience, channel, that channel's
+  // conditions/target, the required "If we can't tell" fallback, and the
+  // message block when the action interrupts. Re-parsing the watched values
+  // (rather than reading `formState.isValid`, which the form's `mode: "onBlur"`
+  // leaves stale until a blur) tracks completeness live on every change, while
+  // leaving the on-blur error display untouched — this gate never shows an error.
+  const values = useWatch({ control });
+  const isComplete = policyAuthoringSchema.safeParse(values).success;
+
   // `getValues()`, not `useWatch` with no `name` — the latter's return type
   // is a deep-partial of the form (every field optional), which doesn't
   // satisfy `PolicyJsonPreviewProps.values: PolicyAuthoringValues`.
@@ -47,21 +57,49 @@ export function PolicyFinishStep({
 
   return (
     <section id="policy-finish" aria-label={policyBuilderSteps[6].title} className="mt-8 border-t border-hair-strong pt-8">
-      <div className="max-w-xs">
-        <Controller
-          name="deployAs"
-          control={control}
-          render={({ field }) => (
-            <PolicySelect
-              id="policy-finish-deployAs"
-              label={finish.deployAsLabel}
-              value={field.value}
-              onChange={field.onChange}
-              options={deployStates}
-              error={errors.deployAs?.message}
-            />
-          )}
-        />
+      {/* One row (Figma `397:15047`): "Deploy as: [Draft ▾]" on the left, the
+          actions on the right; they stack on narrow widths. */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <span className="text-body font-medium text-label">{finish.deployAsLabel}</span>
+          <Controller
+            name="deployAs"
+            control={control}
+            render={({ field }) => (
+              <PolicySelect
+                pill
+                dropUp
+                id="policy-finish-deployAs"
+                label={finish.deployAsLabel}
+                ariaLabel={finish.deployAsLabel}
+                value={field.value}
+                onChange={field.onChange}
+                options={deployStates}
+                error={errors.deployAs?.message}
+              />
+            )}
+          />
+        </div>
+
+        {isSubmitted ? null : (
+          <div className="flex items-center gap-3">
+            <UnsavedChangesGuard isDirty={isDirty} cancelHref={cancelHref} />
+
+            <Button
+              type="button"
+              variant="appSecondary"
+              size="app"
+              width="auto"
+              onClick={() => setIsJsonOpen(true)}
+            >
+              {finish.viewJson}
+            </Button>
+
+            <Button type="submit" variant="appPrimary" size="app" width="auto" disabled={!isComplete}>
+              {finish.create}
+            </Button>
+          </div>
+        )}
       </div>
 
       {isSubmitted ? (
@@ -71,25 +109,7 @@ export function PolicyFinishStep({
         >
           {finish.localOnlyNotice}
         </p>
-      ) : (
-        <div className="mt-6 flex items-center gap-3">
-          <UnsavedChangesGuard isDirty={isDirty} cancelHref={cancelHref} />
-
-          <Button
-            type="button"
-            variant="appSecondary"
-            size="app"
-            width="auto"
-            onClick={() => setIsJsonOpen(true)}
-          >
-            {finish.viewJson}
-          </Button>
-
-          <Button type="submit" variant="appPrimary" size="app" width="auto">
-            {finish.create}
-          </Button>
-        </div>
-      )}
+      ) : null}
 
       <PolicyJsonPreview values={getValues()} isOpen={isJsonOpen} onClose={() => setIsJsonOpen(false)} />
     </section>

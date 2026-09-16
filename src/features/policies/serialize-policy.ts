@@ -8,9 +8,16 @@ import { isConditionRowFilled, policyAuthoringSchema, type PolicyAuthoringValues
  */
 export type SerializedPolicyChannel =
   | { kind: "clipboard"; targetOp: string; targetIds: string[]; firesWhen: string }
-  | { kind: "removable-media"; target: string; exceptionIds: string[] }
+  | {
+      kind: "removable-media";
+      deviceClass: string;
+      registrationOp: string;
+      registrationIds: string[];
+      transfer: string;
+      exceptionIds: string[];
+    }
   | { kind: "print"; target: string; exceptionIds: string[] }
-  | { kind: "desktop-apps"; applicationIds: string[]; exceptionIds: string[] };
+  | { kind: "desktop-apps"; appOp: string; applicationIds: string[]; firesWhen: string; exceptionIds: string[] };
 
 /** The Finish step's read-only preview of what a policy will do — the local,
  * validated stand-in for a create-policy API response (see
@@ -49,7 +56,10 @@ function serializeSelectedChannel(values: PolicyAuthoringValues): SerializedPoli
     case "removable-media":
       return {
         kind: "removable-media",
-        target: values.removableMedia.target,
+        deviceClass: values.removableMedia.deviceClass,
+        registrationOp: values.removableMedia.registrationOp,
+        registrationIds: values.removableMedia.registrationIds,
+        transfer: values.removableMedia.transfer,
         exceptionIds: values.removableMedia.exceptionIds,
       };
     case "print":
@@ -61,7 +71,9 @@ function serializeSelectedChannel(values: PolicyAuthoringValues): SerializedPoli
     case "desktop-apps":
       return {
         kind: "desktop-apps",
+        appOp: values.desktopApps.appOp,
         applicationIds: values.desktopApps.applicationIds,
+        firesWhen: values.desktopApps.firesWhen,
         exceptionIds: values.desktopApps.exceptionIds,
       };
     case "":

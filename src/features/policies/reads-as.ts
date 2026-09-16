@@ -50,8 +50,11 @@ export type ReadsAsInput = {
   /** Clipboard "Paste into": the match operator + the chosen paste targets. */
   targetOp: string;
   targetIds: readonly string[];
-  removableTarget: string;
+  /** Removable media "Device is" class. */
+  deviceClass: string;
   printTarget: string;
+  /** Desktop apps "App is": the match operator + the chosen apps. */
+  appOp: string;
   applicationIds: readonly string[];
   action: PolicyAction;
   /** The "If we can't tell" fallback; `""` (unanswered) reads as "not decided yet". */
@@ -100,8 +103,10 @@ function destinationPhrase(input: ReadsAsInput, catalogs: PolicyCatalogs): strin
       return input.targetOp === "not-one-of" ? readsAs.pasteTargetExcept(joined) : joined;
     }
     case "removable-media": {
-      const label = labelOf(catalogs.removableTargets, input.removableTarget);
-      return label ? label.toLowerCase() : readsAs.destinationFallback;
+      const label = labelOf(catalogs.deviceClasses, input.deviceClass);
+      return !label || input.deviceClass === "any-device"
+        ? readsAs.removableAnyDrive
+        : readsAs.removableDrive(label.toLowerCase());
     }
     case "print": {
       const label = labelOf(catalogs.printerTargets, input.printTarget);
@@ -111,7 +116,9 @@ function destinationPhrase(input: ReadsAsInput, catalogs: PolicyCatalogs): strin
       const labels = input.applicationIds
         .map((id) => labelOf(catalogs.applications, id))
         .filter((label): label is string => Boolean(label));
-      return labels.length > 0 ? joinWithOr(labels) : readsAs.destinationFallback;
+      if (labels.length === 0) return readsAs.destinationFallback;
+      const joined = joinWithOr(labels);
+      return input.appOp === "not-one-of" ? readsAs.appExcept(joined) : joined;
     }
     case "":
     default:

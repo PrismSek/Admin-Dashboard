@@ -76,8 +76,14 @@ export function PolicyBuilder({ catalogs }: { catalogs: PolicyCatalogs }) {
         className="flex min-h-full"
         aria-label={policyBuilderContent.pageTitle}
       >
-        <aside className="hidden shrink-0 border-r border-hair-strong bg-chrome px-8 py-10 lg:block">
-          <PolicyStepRail />
+        {/* Full-height chrome column (border + fill span the whole scroll
+            height), but the rail itself sticks to the top so it stays in view
+            while the form scrolls past it — only scrolling internally on the
+            rare viewport too short to hold all seven stages. */}
+        <aside className="hidden shrink-0 border-r border-hair-strong bg-chrome lg:block">
+          <div className="sticky top-0 max-h-dvh overflow-y-auto px-8 py-10">
+            <PolicyStepRail />
+          </div>
         </aside>
 
         <div className="min-w-0 flex-1 px-8 py-10 xl:px-14">

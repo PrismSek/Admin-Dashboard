@@ -13,12 +13,15 @@ import { cn } from "@/lib/utils";
 
 const enforcement = policyBuilderContent.enforcement;
 
-/** The three builder channels that draw an "escape hatch" exception, and their
- * escape option + notes. Clipboard (a destination-class channel) offers none. */
-type ExceptionChannel = keyof typeof enforcement.exceptionsByChannel;
+/** Every real channel draws an "escape hatch" exception (its own escape option),
+ * so the Enforcement card is uniform across channels. Only the unselected ""
+ * placeholder has none. */
 function exceptionConfigFor(channel: PolicyAuthoringValues["channel"]) {
-  return channel === "removable-media" || channel === "print" || channel === "desktop-apps"
-    ? enforcement.exceptionsByChannel[channel as ExceptionChannel]
+  return channel === "clipboard" ||
+    channel === "removable-media" ||
+    channel === "print" ||
+    channel === "desktop-apps"
+    ? enforcement.exceptionsByChannel[channel]
     : undefined;
 }
 
@@ -52,7 +55,13 @@ export function PolicyEnforcementStep({ actions }: { actions: readonly PolicyCat
   // either. The EXCEPTION escape hatch stays tied to the primary action only.
   const onUnknownInterrupts = onUnknown !== "" && onUnknown !== "AuditOnly";
   const showMessage = interrupts || onUnknownInterrupts;
-  const actionDescription = actions.find((option) => option.value === action)?.description;
+
+  // The fallback reuses the action catalog, except its audit option is marked as
+  // the engine default ("Audit only - engine default") to set it apart from the
+  // primary ACTION's plain "Audit only".
+  const fallbackOptions = actions.map((option) =>
+    option.value === "AuditOnly" ? { ...option, label: enforcement.auditOnlyEngineDefault } : option,
+  );
 
   const exceptionConfig = exceptionConfigFor(channel);
   const showException = Boolean(exceptionConfig) && interrupts;
@@ -63,8 +72,6 @@ export function PolicyEnforcementStep({ actions }: { actions: readonly PolicyCat
       ]
     : [];
   const exceptionValue = exceptionOptions.some((option) => option.value === storedException) ? storedException : "none";
-  const exceptionNote =
-    exceptionValue === "none" ? exceptionConfig?.noneNote : exceptionConfig?.selectedNote;
 
   // A single live region for the whole step — several fields can be invalid at
   // once, so this summarises the current set on each change.
@@ -77,7 +84,7 @@ export function PolicyEnforcementStep({ actions }: { actions: readonly PolicyCat
     .join(" ");
 
   return (
-    <section id="policy-enforcement" aria-label={policyBuilderSteps[4].title} className="mt-8">
+    <section id="policy-enforcement" aria-label={policyBuilderSteps[4].title} className="mt-8 border-t border-hair-strong pt-8">
       <h2 className="text-section font-medium text-strong">{enforcement.title}</h2>
       <p className="mt-1 max-w-md text-meta text-dim">{enforcement.help}</p>
 
@@ -102,7 +109,6 @@ export function PolicyEnforcementStep({ actions }: { actions: readonly PolicyCat
               />
             )}
           />
-          {actionDescription ? <p className="max-w-md text-meta text-dim">{actionDescription}</p> : null}
         </EnforcementRow>
 
         {/* IF WE CAN'T TELL — required fallback */}
@@ -133,15 +139,12 @@ export function PolicyEnforcementStep({ actions }: { actions: readonly PolicyCat
                     label={enforcement.doThisInstead}
                     value={field.value}
                     onChange={field.onChange}
-                    options={actions}
+                    options={fallbackOptions}
                     placeholder={enforcement.chooseOne}
                     error={errors.enforcement?.onUnknown?.message}
                   />
                 )}
               />
-              {!answered ? (
-                <p className="max-w-md text-meta text-badge-amber-fg">{enforcement.onUnknownRequiredNote}</p>
-              ) : null}
             </div>
           </div>
         </div>
@@ -163,7 +166,6 @@ export function PolicyEnforcementStep({ actions }: { actions: readonly PolicyCat
                 />
               )}
             />
-            {exceptionNote ? <p className="max-w-md text-meta text-dim">{exceptionNote}</p> : null}
           </EnforcementRow>
         ) : null}
 

@@ -24,8 +24,9 @@ export type CollectionSelectProps = {
  * A pill-shaped multi-select (the clipboard "Paste into" targets) whose trigger
  * shows a summary ("any target" / "N targets") and whose popup is a
  * checkbox-per-row card list — each row optionally carrying a right-aligned
- * `category` tag — with a "Clear"/"Done" footer (Figma `563:10405`). Same
- * accessible multi-select pattern as `ApplicationSelect`
+ * `category` tag — with a "Clear"/"Done" footer (Figma `563:10405`). Reused by
+ * the clipboard paste targets, the removable-media registration lists, and the
+ * desktop-apps picker. The accessible multi-select pattern is standard
  * (DOM focus moves into the listbox, roving `activeIndex`, Space/Enter toggles,
  * Escape closes and restores focus); the footer buttons are pointer conveniences
  * — everything they do is reachable from the keyboard (toggle each off = Clear,
@@ -132,7 +133,7 @@ export function CollectionSelect({ value, options, onChange, summary, ariaLabel 
       {isOpen ? (
         <div
           ref={popoverRef}
-          className="absolute left-0 top-full z-10 mt-1.5 w-96 max-w-full rounded-card border border-dropdown-border bg-chrome p-2 shadow-dropdown"
+          className="absolute left-0 top-full z-10 mt-1.5 w-96 rounded-card border border-dropdown-border bg-chrome p-2 shadow-dropdown"
         >
           <ul
             ref={listRef}
@@ -168,7 +169,7 @@ export function CollectionSelect({ value, options, onChange, summary, ariaLabel 
                   <span
                     aria-hidden="true"
                     className={cn(
-                      "flex size-checkbox shrink-0 items-center justify-center rounded-app border p-0.5 transition-colors",
+                      "flex size-5 shrink-0 items-center justify-center rounded-app border p-0.5 transition-colors",
                       selected ? "border-brand-accent bg-brand-accent text-brand-fg" : "border-line-strong bg-chrome",
                     )}
                   >

@@ -33,6 +33,12 @@ export type PolicyCatalogs = {
   /** Where a paste can land — the clipboard channel's "Paste into" targets,
    * each tagged with a `category` (apps / web / session / local). */
   pasteTargets: readonly PolicyCatalogOption[];
+  /** Removable media "Device is" classes (Personal or unrecognised / Corporate
+   * … / Any Device). */
+  deviceClasses: readonly PolicyCatalogOption[];
+  /** Removable media "Transfer is" directions (copy to / read off / any). */
+  transfers: readonly PolicyCatalogOption[];
+  /** Removable media "Registered as" registration lists (the multi-select). */
   removableTargets: readonly PolicyCatalogOption[];
   printerTargets: readonly PolicyCatalogOption[];
   applications: readonly ApplicationOption[];

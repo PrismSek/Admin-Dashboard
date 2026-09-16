@@ -18,9 +18,14 @@ const CATALOGS: PolicyCatalogs = {
     { value: "Medium", label: "Medium or better" },
   ],
   pasteTargets: [{ value: "messengers", label: "Messengers", category: "apps" }],
+  deviceClasses: [{ value: "personal-or-unrecognised", label: "Personal or unrecognised" }],
+  transfers: [{ value: "copy", label: "copy to the device" }],
   removableTargets: [],
   printerTargets: [{ value: "unknown", label: "Unknown" }],
-  applications: [],
+  applications: [
+    { value: "whatsapp", label: "WhatsApp", icon: "application" },
+    { value: "signal", label: "Signal", icon: "application" },
+  ],
   actions: [],
   deployStates: [],
 };
@@ -36,8 +41,9 @@ const BASE: ReadsAsInput = {
   allOf: [],
   targetOp: "one-of",
   targetIds: [],
-  removableTarget: "",
+  deviceClass: "",
   printTarget: "",
+  appOp: "one-of",
   applicationIds: [],
   action: "AuditOnly",
   onUnknown: "AuditOnly",
@@ -59,6 +65,27 @@ describe("composeReadsAs", () => {
     expect(sentence).toBe(
       "When content containing Aadhaar number leaves through the clipboard channel to messengers, block it. If we can't tell, warn the user and require justification.",
     );
+  });
+
+  it("names the apps for a desktop-apps policy, and inverts them under 'not one of'", () => {
+    const oneOf = composeReadsAs(
+      { ...BASE, contentMode: "any", channel: "print", printTarget: "unknown" },
+      CATALOGS,
+    );
+    // (sanity: the print branch is unaffected by the new appOp field)
+    expect(oneOf).toContain("unknown printers");
+
+    const apps = composeReadsAs(
+      { ...BASE, contentMode: "any", channel: "desktop-apps", applicationIds: ["whatsapp", "signal"] },
+      CATALOGS,
+    );
+    expect(apps).toContain("to WhatsApp or Signal,");
+
+    const except = composeReadsAs(
+      { ...BASE, contentMode: "any", channel: "desktop-apps", appOp: "not-one-of", applicationIds: ["whatsapp"] },
+      CATALOGS,
+    );
+    expect(except).toContain("any app except WhatsApp");
   });
 
   it("degrades gracefully to fallbacks on a blank form", () => {

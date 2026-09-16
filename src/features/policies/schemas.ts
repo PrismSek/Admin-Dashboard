@@ -232,30 +232,45 @@ export const clipboardRuleSchema = z.object({
 });
 export type ClipboardRule = z.infer<typeof clipboardRuleSchema>;
 
-/** Removable media channel's "Registered as" field (563:4823), catalogued by
- * `removableTargets` in `data.ts`. `target` is required only when removable
- * media is the selected channel — see `clipboardRuleSchema` and the
- * `superRefine` on `policyAuthoringSchema`. */
+/**
+ * Removable media channel's "DEVICE" section (Figma `563:3248`): the device
+ * class (`Device is`), the registration match (`Registered as` — an operator +
+ * a multi-select over `removableTargets`), and the transfer direction
+ * (`Transfer is`). Like clipboard, every field has a neutral default and none
+ * is required — "any list" (empty `registrationIds`) matches on device class
+ * alone — so there is no `superRefine` gate. `exceptionIds` is the enforcement
+ * escape hatch (its editor now lives in the Enforcement step).
+ */
 export const removableMediaRuleSchema = z.object({
-  target: z.string(),
+  deviceClass: z.string(),
+  registrationOp: z.string(),
+  registrationIds: z.array(z.string()),
+  transfer: z.string(),
   exceptionIds: z.array(z.string()),
 });
 export type RemovableMediaRule = z.infer<typeof removableMediaRuleSchema>;
 
 /** Print channel's "Printer is" field (563:7670), catalogued by
- * `printerTargets` in `data.ts`. `target` is required only when print is the
- * selected channel — see the `superRefine` on `policyAuthoringSchema`. */
+ * `printerTargets` in `data.ts`. `target` always carries a value (it defaults to
+ * "Unknown"), so — like clipboard's paste target — matching any queue is a valid
+ * policy and it needs no `superRefine` gate. */
 export const printRuleSchema = z.object({
   target: z.string(),
   exceptionIds: z.array(z.string()),
 });
 export type PrintRule = z.infer<typeof printRuleSchema>;
 
-/** Desktop apps channel's app picker (563:10405), catalogued by
- * `applications` in `data.ts`. At least one app is required — see the
- * `superRefine` on `policyAuthoringSchema` below. */
+/** Desktop apps channel's APP block (563:9286): "App is" — a match operator
+ * (`appOp`, "one of" / "not one of") over an app multi-select (`applicationIds`,
+ * catalogued by `applications` in `data.ts`) — and "Fires when" (`firesWhen`).
+ * At least one app is required — see the `superRefine` on
+ * `policyAuthoringSchema` below. `exceptionIds` is the vestigial escape hatch
+ * (edited in the Enforcement step now), kept so the serialized shape stays
+ * stable across the three escape-hatch channels. */
 export const desktopAppRuleSchema = z.object({
+  appOp: z.string(),
   applicationIds: z.array(z.string()),
+  firesWhen: z.string(),
   exceptionIds: z.array(z.string()),
 });
 export type DesktopAppRule = z.infer<typeof desktopAppRuleSchema>;
@@ -354,15 +369,11 @@ export const policyAuthoringSchema = policyAuthoringBaseSchema.superRefine((valu
 
   // Each channel requires only its own destination/target. The other three
   // channels' rule objects stay blank in the form (the admin never sees them),
-  // so requiring them would block a submit on invisible fields. Clipboard has
-  // no required target — matching wherever a paste lands ("any target") is a
-  // valid policy — so it needs no gate here.
-  if (values.channel === "removable-media" && values.removableMedia.target === "") {
-    ctx.addIssue({ code: "custom", path: ["removableMedia", "target"], message: "Select a device registration." });
-  }
-  if (values.channel === "print" && values.print.target === "") {
-    ctx.addIssue({ code: "custom", path: ["print", "target"], message: "Select a printer." });
-  }
+  // so requiring them would block a submit on invisible fields. Clipboard and
+  // print have no required target — the paste-target and printer selects always
+  // carry a value (clipboard's "any target", print's "Unknown"), so any queue is
+  // a valid policy and neither needs a gate here. Desktop apps is the exception:
+  // its app picker starts empty and must name at least one app.
   if (values.channel === "desktop-apps" && values.desktopApps.applicationIds.length === 0) {
     ctx.addIssue({
       code: "custom",

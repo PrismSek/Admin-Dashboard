@@ -23,6 +23,8 @@ const POLICY_CATALOGS: PolicyCatalogs = {
     { value: "Low", label: "Any confidence" },
   ],
   pasteTargets: [{ value: "messengers", label: "Messengers", category: "apps" }],
+  deviceClasses: [{ value: "personal-or-unrecognised", label: "Personal or unrecognised" }],
+  transfers: [{ value: "copy", label: "copy to the device" }],
   removableTargets: [{ value: "it-issued-encrypted-usb", label: "IT-issued encrypted USB" }],
   printerTargets: [{ value: "unknown", label: "Unknown" }],
   applications: [{ value: "whatsapp", label: "WhatsApp", icon: "application" }],
@@ -40,15 +42,50 @@ const POLICY_CATALOGS: PolicyCatalogs = {
 };
 
 describe("PolicyFinishStep (via PolicyBuilder)", () => {
-  it("shows required errors and moves focus to the first invalid field", async () => {
+  it("keeps Create disabled until every required field is filled, then enables it", async () => {
     const user = userEvent.setup();
     render(<PolicyBuilder catalogs={POLICY_CATALOGS} />);
 
-    await user.clear(screen.getByRole("textbox", { name: "Policy name" }));
-    await user.click(screen.getByRole("button", { name: "Create" }));
+    const create = screen.getByRole("button", { name: "Create" });
+
+    // A brand-new policy is missing its name, audience, channel and the required
+    // "If we can't tell" fallback, so Create is not clickable.
+    expect(create).toBeDisabled();
+
+    // Filling the required fields one at a time never enables it early — it
+    // stays disabled until the last one is answered.
+    await user.type(screen.getByRole("textbox", { name: "Policy name" }), "Clipboard protection");
+    expect(create).toBeDisabled();
+
+    await user.click(screen.getByRole("combobox", { name: "Applies to" }));
+    await user.click(screen.getByRole("option", { name: "Finance-All Stuff" }));
+    expect(create).toBeDisabled();
+
+    await user.click(screen.getByRole("combobox", { name: "Channel" }));
+    await user.click(screen.getByRole("option", { name: "Clipboard" }));
+    expect(create).toBeDisabled();
+
+    // "Any content" clears the conditions requirement; clipboard's paste target
+    // is optional, so only the required onUnknown fallback is left.
+    await user.click(screen.getByRole("button", { name: "Any content" }));
+    expect(create).toBeDisabled();
+
+    // Answering the last required field flips Create to enabled.
+    await user.click(screen.getByRole("combobox", { name: "Do this instead" }));
+    await user.click(screen.getByRole("option", { name: "Audit only - engine default" }));
+    expect(create).toBeEnabled();
+  });
+
+  it("surfaces the friendly name-required message when the name is left blank", async () => {
+    const user = userEvent.setup();
+    render(<PolicyBuilder catalogs={POLICY_CATALOGS} />);
+
+    // `mode: "onBlur"` — touching then leaving the empty name field validates it,
+    // and the builder's resolver swaps zod's default for the friendlier copy.
+    await user.click(screen.getByRole("textbox", { name: "Policy name" }));
+    await user.tab();
 
     expect(await screen.findByText("Enter a policy name")).toBeVisible();
-    expect(screen.getByRole("textbox", { name: "Policy name" })).toHaveFocus();
   });
 
   it.each(["Draft", "Active", "Off"])("selects the %s deploy state", async (deployAs) => {
@@ -122,9 +159,11 @@ describe("PolicyFinishStep (via PolicyBuilder)", () => {
     // in the Data step needs filling.
     await user.click(screen.getByRole("button", { name: "Any content" }));
 
-    // Answer the required "If we can't tell" fallback.
+    // Answer the required "If we can't tell" fallback. In this dropdown the audit
+    // option is labelled as the engine default (distinct from the ACTION's plain
+    // "Audit only").
     await user.click(screen.getByRole("combobox", { name: "Do this instead" }));
-    await user.click(screen.getByRole("option", { name: "Audit only" }));
+    await user.click(screen.getByRole("option", { name: "Audit only - engine default" }));
 
     await user.click(screen.getByRole("button", { name: "Create" }));
 

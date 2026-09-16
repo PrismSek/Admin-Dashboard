@@ -28,7 +28,7 @@ export function PolicyConditionsSection({
   children?: ReactNode;
 }) {
   return (
-    <section className="mt-6">
+    <section>
       <h2 className="text-section font-medium text-strong">{data.conditionsTitle}</h2>
       <p className="mt-1 max-w-xl text-meta text-dim">{data.conditionsHelp}</p>
 

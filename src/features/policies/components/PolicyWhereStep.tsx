@@ -20,7 +20,7 @@ export function PolicyWhereStep({ channels }: { channels: PolicyCatalogs["channe
   } = useFormContext<PolicyAuthoringValues>();
 
   return (
-    <section id="policy-where" aria-label={policyBuilderSteps[2].title} className="mt-6">
+    <section id="policy-where" aria-label={policyBuilderSteps[2].title} className="mt-8 border-t border-hair-strong pt-8">
       {/* Label on its own line, then the dropdown + "Enforced today" badge +
           "One channel per policy" note sit inline on the row below it. */}
       <span className="text-body font-medium text-label">{policyBuilderContent.where.channelLabel}</span>

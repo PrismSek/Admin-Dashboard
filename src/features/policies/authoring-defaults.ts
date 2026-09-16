@@ -47,9 +47,15 @@ export const defaultPolicyAuthoringValues: PolicyAuthoringValues = {
     allOf: [{ findingType: "", minimumConfidence: "High" }],
   },
   clipboard: { targetOp: "one-of", targetIds: [], firesWhen: "text" },
-  removableMedia: { target: "", exceptionIds: [] },
-  print: { target: "", exceptionIds: [] },
-  desktopApps: { applicationIds: [], exceptionIds: [] },
+  removableMedia: {
+    deviceClass: "personal-or-unrecognised",
+    registrationOp: "one-of",
+    registrationIds: [],
+    transfer: "copy",
+    exceptionIds: [],
+  },
+  print: { target: "unknown", exceptionIds: [] },
+  desktopApps: { appOp: "one-of", applicationIds: [], firesWhen: "file-sent", exceptionIds: [] },
   enforcement: {
     action: "AuditOnly",
     onUnknown: "",

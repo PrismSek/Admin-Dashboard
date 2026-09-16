@@ -46,6 +46,10 @@ export type PolicySelectProps = {
    * trigger (used where the label is drawn separately, e.g. the Channel row's
    * badge sitting inline with the dropdown). */
   ariaLabel?: string;
+  /** Opens the popup above the trigger (anchored `bottom-full`) instead of
+   * dropping it below — for a select near the bottom of the page (the Finish
+   * step's "Deploy as"), where a downward popup would spill past the viewport. */
+  dropUp?: boolean;
 };
 
 /**
@@ -74,6 +78,7 @@ export function PolicySelect({
   searchable = false,
   searchPlaceholder,
   ariaLabel,
+  dropUp = false,
 }: PolicySelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -258,7 +263,8 @@ export function PolicySelect({
     <div
       ref={popupRef}
       className={cn(
-        "absolute z-10 mt-1.5 overflow-hidden border border-dropdown-border bg-chrome shadow-dropdown",
+        "absolute z-10 overflow-hidden border border-dropdown-border bg-chrome shadow-dropdown",
+        dropUp ? "bottom-full mb-1.5" : "mt-1.5",
         pill ? "w-max min-w-full max-w-xs" : "w-full",
       )}
     >

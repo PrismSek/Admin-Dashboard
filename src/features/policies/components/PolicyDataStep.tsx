@@ -24,7 +24,7 @@ export function PolicyDataStep({ catalogs }: { catalogs: PolicyCatalogs }) {
   const channel = useWatch<PolicyAuthoringValues, "channel">({ name: "channel" });
 
   return (
-    <section id="policy-data" aria-label={policyBuilderSteps[3].title} className="mt-6">
+    <section id="policy-data" aria-label={policyBuilderSteps[3].title} className="mt-8 border-t border-hair-strong pt-8">
       <PolicyDataChannelEditor channel={channel} catalogs={catalogs} />
     </section>
   );

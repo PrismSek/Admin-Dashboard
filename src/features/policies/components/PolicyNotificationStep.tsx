@@ -3,6 +3,7 @@
 import { Controller, useFormContext, useWatch } from "react-hook-form";
 
 import { AppIcon, type AppIconName } from "@/components/icons/AppIcon";
+import { BrandLogo, type BrandLogoName } from "@/components/icons/BrandLogo";
 import { RowConnector, SectionChip } from "@/features/policies/components/conditions-ui";
 import { PolicySelect } from "@/features/policies/components/PolicySelect";
 import { policyBuilderContent, policyBuilderSteps } from "@/features/policies/content";
@@ -34,7 +35,7 @@ export function PolicyNotificationStep() {
   const sentence = composeNotificationReadsAs({ remediation, channel, reasonCode: reasonCode ?? "" });
 
   return (
-    <section id="policy-notification" aria-label={policyBuilderSteps[5].title} className="mt-8">
+    <section id="policy-notification" aria-label={policyBuilderSteps[5].title} className="mt-8 border-t border-hair-strong pt-8">
       <h2 className="text-section font-medium text-strong">{notification.title}</h2>
       <p className="mt-1 max-w-md text-meta text-dim">{notification.help}</p>
 
@@ -108,7 +109,7 @@ function RemediationCard({
   icon: AppIconName;
   label: string;
   description: string;
-  badges: readonly string[];
+  badges: readonly { label: string; logo: BrandLogoName }[];
   selected: boolean;
   onSelect: () => void;
 }) {
@@ -125,7 +126,7 @@ function RemediationCard({
       <span
         aria-hidden
         className={cn(
-          "grid size-4 shrink-0 place-items-center rounded-full border peer-focus-visible:ring-2 peer-focus-visible:ring-brand-accent",
+          "flex size-4 shrink-0 items-center justify-center rounded-full border transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-brand-accent peer-focus-visible:ring-offset-2",
           selected ? "border-brand" : "border-hair-strong",
         )}
       >
@@ -146,10 +147,11 @@ function RemediationCard({
           <span className="ml-auto flex flex-wrap justify-end gap-1.5">
             {badges.map((badge) => (
               <span
-                key={badge}
-                className="inline-flex items-center rounded-app border border-hair-strong bg-chrome px-2 py-0.5 text-micro text-copy"
+                key={badge.label}
+                className="inline-flex items-center gap-1.5 rounded-app border border-hair-strong bg-chrome px-2 py-0.5 text-micro text-copy"
               >
-                {badge}
+                <BrandLogo name={badge.logo} className="size-3.5 shrink-0" />
+                {badge.label}
               </span>
             ))}
           </span>

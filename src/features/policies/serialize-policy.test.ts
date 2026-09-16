@@ -23,9 +23,15 @@ const ALL_CHANNEL_VALUES: PolicyAuthoringValues = {
     targetIds: ["messengers"],
     firesWhen: "text",
   },
-  removableMedia: { target: "it-issued-encrypted-usb", exceptionIds: ["staff-registered-drives"] },
+  removableMedia: {
+    deviceClass: "personal-or-unrecognised",
+    registrationOp: "one-of",
+    registrationIds: ["it-issued-encrypted-usb"],
+    transfer: "copy",
+    exceptionIds: ["staff-registered-drives"],
+  },
   print: { target: "unknown", exceptionIds: ["authorized"] },
-  desktopApps: { applicationIds: ["whatsapp", "signal"], exceptionIds: ["slack"] },
+  desktopApps: { appOp: "one-of", applicationIds: ["whatsapp", "signal"], firesWhen: "file-sent", exceptionIds: ["slack"] },
   enforcement: {
     action: "Block",
     onUnknown: "WarnJustify",
@@ -44,9 +50,9 @@ const VALID_CLIPBOARD_VALUES: PolicyAuthoringValues = ALL_CHANNEL_VALUES;
 
 const EXPECTED_KEYS: Record<PolicyChannel, string[]> = {
   clipboard: ["kind", "targetOp", "targetIds", "firesWhen"],
-  "removable-media": ["kind", "target", "exceptionIds"],
+  "removable-media": ["kind", "deviceClass", "registrationOp", "registrationIds", "transfer", "exceptionIds"],
   print: ["kind", "target", "exceptionIds"],
-  "desktop-apps": ["kind", "applicationIds", "exceptionIds"],
+  "desktop-apps": ["kind", "appOp", "applicationIds", "firesWhen", "exceptionIds"],
 };
 
 describe("policyAuthoringSchema", () => {
@@ -87,6 +93,15 @@ describe("policyAuthoringSchema", () => {
     expect(result.success).toBe(true);
   });
 
+  it("does not require a printer target (print defaults to Unknown; matching any queue is valid)", () => {
+    const result = policyAuthoringSchema.safeParse({
+      ...VALID_CLIPBOARD_VALUES,
+      channel: "print",
+      print: { target: "", exceptionIds: [] },
+    });
+    expect(result.success).toBe(true);
+  });
+
   it("requires at least one filled condition when content mode is specific", () => {
     const result = policyAuthoringSchema.safeParse({
       ...VALID_CLIPBOARD_VALUES,
@@ -107,7 +122,7 @@ describe("policyAuthoringSchema", () => {
     const result = policyAuthoringSchema.safeParse({
       ...VALID_CLIPBOARD_VALUES,
       channel: "desktop-apps",
-      desktopApps: { applicationIds: [], exceptionIds: [] },
+      desktopApps: { appOp: "one-of", applicationIds: [], firesWhen: "file-sent", exceptionIds: [] },
     });
     expect(result.success).toBe(false);
   });
@@ -160,7 +175,10 @@ describe("serializePolicyPreview", () => {
     const preview = serializePolicyPreview({ ...ALL_CHANNEL_VALUES, channel: "removable-media" });
     expect(preview.intent.channel).toEqual({
       kind: "removable-media",
-      target: "it-issued-encrypted-usb",
+      deviceClass: "personal-or-unrecognised",
+      registrationOp: "one-of",
+      registrationIds: ["it-issued-encrypted-usb"],
+      transfer: "copy",
       exceptionIds: ["staff-registered-drives"],
     });
   });
@@ -178,7 +196,9 @@ describe("serializePolicyPreview", () => {
     const preview = serializePolicyPreview({ ...ALL_CHANNEL_VALUES, channel: "desktop-apps" });
     expect(preview.intent.channel).toEqual({
       kind: "desktop-apps",
+      appOp: "one-of",
       applicationIds: ["whatsapp", "signal"],
+      firesWhen: "file-sent",
       exceptionIds: ["slack"],
     });
   });

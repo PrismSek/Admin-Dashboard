@@ -103,6 +103,30 @@ describe("PolicySelect", () => {
     expect(screen.queryByText("Stop it. There is no way through.")).not.toBeInTheDocument();
   });
 
+  it("opens the popup upward when dropUp is set, so a bottom-of-page select stays in view", async () => {
+    const user = userEvent.setup();
+    render(
+      <PolicySelect id="deploy-as" label="Deploy as" value="Draft" options={DEPLOY_OPTIONS} onChange={vi.fn()} dropUp />,
+    );
+    await user.click(screen.getByRole("combobox", { name: "Deploy as" }));
+
+    // The popup wraps the listbox; dropUp anchors it to the trigger's top edge
+    // (opening above) instead of dropping it below.
+    const popup = screen.getByRole("listbox").parentElement;
+    expect(popup).toHaveClass("bottom-full");
+    expect(popup).not.toHaveClass("mt-1.5");
+  });
+
+  it("opens the popup downward by default", async () => {
+    const user = userEvent.setup();
+    render(<PolicySelect id="deploy-as" label="Deploy as" value="Draft" options={DEPLOY_OPTIONS} onChange={vi.fn()} />);
+    await user.click(screen.getByRole("combobox", { name: "Deploy as" }));
+
+    const popup = screen.getByRole("listbox").parentElement;
+    expect(popup).toHaveClass("mt-1.5");
+    expect(popup).not.toHaveClass("bottom-full");
+  });
+
   it("wires the error message via aria-describedby and aria-invalid", () => {
     render(
       <PolicySelect

@@ -288,12 +288,6 @@
      fixed 280px so they don't resize to the selected value. */
   --size-policy-select: 17.5rem; /* 280px */
 
-  /* Multi-select checkbox row (collection + application pickers — Figma
-     563:10405, a checkbox-per-row popover). The indicator is a 20px square at
-     the app control radius; a selected row tints with the shared open-row
-     fill (--color-dropdown-row-active-bg) and takes a brand hairline. */
-  --size-checkbox: 1.25rem; /* 20px */
-
   /* Policy builder step rail (Figma 396:4444, Aside/Button family). Each
      step's numbered badge is a 20px filled circle (cornerRadius 10), centred
      in a 59px-tall row; the brand-coloured connector between two badges is
@@ -495,7 +489,6 @@
   --spacing-select-control: var(--size-select-control);
   --spacing-dropdown-row: var(--size-dropdown-row);
   --spacing-policy-select: var(--size-policy-select);
-  --spacing-checkbox: var(--size-checkbox);
   --spacing-step-node: var(--size-step-node);
   --spacing-step-row: var(--space-step-row);
 
