@@ -1,142 +1,199 @@
 "use client";
 
-import { useState } from "react";
+import type { ReactNode } from "react";
 import { useController, useFormContext } from "react-hook-form";
 
-import { AppIcon } from "@/components/icons/AppIcon";
 import { FieldError } from "@/components/ui/form-field";
+import {
+  AddIconButton,
+  RemoveIconButton,
+  RowConnector,
+  SectionChip,
+} from "@/features/policies/components/conditions-ui";
 import { PolicySelect } from "@/features/policies/components/PolicySelect";
 import { policyBuilderContent } from "@/features/policies/content";
 import { useKeyedList } from "@/features/policies/hooks/use-keyed-list";
-import type { PolicyAuthoringValues } from "@/features/policies/schemas";
+import type { ConditionRow, PolicyAuthoringValues } from "@/features/policies/schemas";
+import { isConditionRowFilled } from "@/features/policies/schemas";
 import type { PolicyCatalogOption } from "@/features/policies/types";
 import { cn } from "@/lib/utils";
 
 const data = policyBuilderContent.data;
 
+type ConditionCatalogs = {
+  findings: readonly PolicyCatalogOption[];
+  confidences: readonly PolicyCatalogOption[];
+};
+
 /**
- * The CONTENT section every channel's Data step shows identically —
- * "Matches conditions" / "Any content" plus the repeatable finding list
- * (Figma's `CONTENT` chip family: e.g. `512:421` clipboard, `563:3248`
- * removable media, `563:6975` print, `563:9286` desktop apps). Registers the
- * shared `content.mode` / `content.findingIds` fields — not a per-channel
- * namespace — so it is rendered once by each channel editor rather than
- * being channel-specific itself.
+ * The CONTENT block at the top of every channel's Conditions card: the "Matches
+ * conditions / Any content" toggle and a counter, then the group of condition
+ * rows (`allOf` — every row must match). Each row is a `[Finding │ detector │
+ * confidence]` pill — the leading "Finding" label is static (content tags are
+ * gone), and the detector and confidence are picked from their catalogs.
+ * Registers the shared `content.*` fields, so it is rendered once by each
+ * channel editor (via `PolicyConditionsSection`).
  */
-export function PolicyConditionFields({ findings }: { findings: readonly PolicyCatalogOption[] }) {
+export function PolicyConditionFields({ findings, confidences }: ConditionCatalogs) {
   const {
     control,
     formState: { errors },
   } = useFormContext<PolicyAuthoringValues>();
   const modeField = useController({ control, name: "content.mode" });
-  const findingsField = useController({ control, name: "content.findingIds" });
-  const { keys, append, remove } = useKeyedList(findingsField.field.value, findingsField.field.onChange);
-  const [pendingFindingId, setPendingFindingId] = useState("");
+  const allOfField = useController({ control, name: "content.allOf" });
 
-  const chosen = findingsField.field.value;
-  const available = findings.filter((option) => !chosen.includes(option.value));
-  const findingsErrorId = "policy-data-findings-error";
+  const isMatch = modeField.field.value === "specific";
+  const allOf = allOfField.field.value;
+  const filledCount = allOf.filter(isConditionRowFilled).length;
+
+  const defaultConfidence = confidences[0]?.value ?? "High";
+  const emptyRow = (): ConditionRow => ({
+    findingType: "",
+    minimumConfidence: defaultConfidence,
+  });
+
+  const allOfError = errors.content?.allOf;
+  const allOfErrorId = "policy-data-conditions-error";
+  const catalogs: ConditionCatalogs = { findings, confidences };
 
   return (
     <section>
-      <h2 className="text-section font-medium text-strong">{data.conditionsTitle}</h2>
-      <p className="mt-1 max-w-xl text-meta text-dim">{data.conditionsHelp}</p>
+      <div className="flex flex-wrap items-center gap-3">
+        <SectionChip>{data.contentChip}</SectionChip>
 
-      <div className="mt-4 flex items-center gap-3">
-        <span className="text-micro font-medium tracking-wide text-subtle">{data.contentChip}</span>
         <div
           role="group"
           aria-label={data.conditionsTitle}
-          className="inline-flex overflow-hidden rounded-app border border-hair-strong"
+          className="inline-flex items-center rounded-app border border-hair-strong bg-hair p-0.5"
         >
-          <button
-            type="button"
-            aria-pressed={modeField.field.value === "specific"}
-            onClick={() => modeField.field.onChange("specific")}
-            className={cn(
-              "px-3 py-1.5 text-meta font-medium",
-              modeField.field.value === "specific" ? "bg-active text-strong" : "bg-chrome text-dim",
-            )}
-          >
+          <ModeButton active={isMatch} onClick={() => modeField.field.onChange("specific")}>
             {data.matchesConditions}
-          </button>
-          <button
-            type="button"
-            aria-pressed={modeField.field.value === "any"}
-            onClick={() => modeField.field.onChange("any")}
-            className={cn(
-              "px-3 py-1.5 text-meta font-medium",
-              modeField.field.value === "any" ? "bg-active text-strong" : "bg-chrome text-dim",
-            )}
-          >
+          </ModeButton>
+          <ModeButton active={!isMatch} onClick={() => modeField.field.onChange("any")}>
             {data.anyContent}
-          </button>
+          </ModeButton>
         </div>
+
+        {isMatch ? <span className="text-micro text-subtle">{data.findingCounter(filledCount)}</span> : null}
       </div>
 
-      {modeField.field.value === "specific" ? (
+      {isMatch ? (
         <div
           role="group"
-          aria-label={data.findingLabel}
-          aria-describedby={errors.content?.findingIds ? findingsErrorId : undefined}
-          className="mt-3 flex flex-col gap-3"
+          aria-label={data.conditionsListLabel}
+          aria-describedby={allOfError ? allOfErrorId : undefined}
+          className="mt-3 flex flex-col gap-4"
         >
-          {chosen.length > 0 ? (
-            <ul className="flex flex-wrap gap-2">
-              {chosen.map((findingId, index) => {
-                const finding = findings.find((option) => option.value === findingId);
-                const label = finding?.label ?? findingId;
-                return (
-                  <li
-                    key={keys[index] ?? findingId}
-                    className="flex items-center gap-2 rounded-app border border-hair-strong bg-chrome px-2.5 py-1.5 text-meta text-strong"
-                  >
-                    <span className="text-micro font-medium text-subtle">{data.findingLabel}</span>
-                    <span>{label}</span>
-                    <button
-                      type="button"
-                      onClick={() => remove(index)}
-                      aria-label={`${data.removeFinding}: ${label}`}
-                      className="text-dim hover:text-strong"
-                    >
-                      <AppIcon name="close" className="size-app-icon" />
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          ) : null}
+          <ConditionGroup
+            idPrefix="policy-data-allof"
+            rows={allOf}
+            onChange={allOfField.field.onChange}
+            emptyRow={emptyRow}
+            catalogs={catalogs}
+          />
 
-          {available.length > 0 ? (
-            <div className="flex flex-wrap items-end gap-2">
-              <PolicySelect
-                id="policy-data-add-finding"
-                label={data.findingLabel}
-                value={pendingFindingId}
-                onChange={setPendingFindingId}
-                options={available}
-              />
-              <button
-                type="button"
-                disabled={!pendingFindingId}
-                onClick={() => {
-                  if (!pendingFindingId) return;
-                  append(pendingFindingId);
-                  setPendingFindingId("");
-                }}
-                className="inline-flex h-select-control items-center gap-1.5 rounded-app border border-hair-strong px-3 text-meta font-medium text-strong hover:bg-hover disabled:opacity-50"
-              >
-                <AppIcon name="plus" className="size-app-icon" />
-                {data.addFinding}
-              </button>
-            </div>
-          ) : null}
-
-          {errors.content?.findingIds ? (
-            <FieldError id={findingsErrorId}>{errors.content.findingIds.message}</FieldError>
-          ) : null}
+          {allOfError ? <FieldError id={allOfErrorId}>{allOfError.message}</FieldError> : null}
         </div>
       ) : null}
     </section>
+  );
+}
+
+/** One segment of the "Matches conditions / Any content" toggle. */
+function ModeButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={onClick}
+      className={cn(
+        "rounded-app px-3 py-1 text-meta font-medium transition-colors",
+        active ? "bg-brand text-brand-fg" : "text-dim",
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+/** The group of condition rows. Owns its own add/remove; never drops below one
+ * row (the last "×" is disabled). */
+function ConditionGroup({
+  idPrefix,
+  rows,
+  onChange,
+  emptyRow,
+  catalogs,
+}: {
+  idPrefix: string;
+  rows: readonly ConditionRow[];
+  onChange: (next: ConditionRow[]) => void;
+  emptyRow: () => ConditionRow;
+  catalogs: ConditionCatalogs;
+}) {
+  const { keys, append, remove } = useKeyedList<ConditionRow>(rows, onChange);
+
+  function setRow(index: number, patch: Partial<ConditionRow>) {
+    onChange(rows.map((row, i) => (i === index ? { ...row, ...patch } : row)));
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      {rows.map((row, index) => {
+        const isLast = index === rows.length - 1;
+        const describe = catalogs.findings.find((option) => option.value === row.findingType)?.label;
+        return (
+          <div key={keys[index] ?? index} className="flex flex-wrap items-center gap-2">
+            <RowConnector />
+            <div
+              className={cn(
+                "inline-flex h-select-control max-w-full items-center rounded-app border bg-chrome",
+                "border-hair-strong focus-within:border-brand-accent",
+              )}
+            >
+              <span className="shrink-0 pl-3 pr-2.5 text-app text-dim">{data.findingLabel}</span>
+              <span aria-hidden className="h-4 w-px shrink-0 bg-hair-strong" />
+              <PolicySelect
+                pill
+                bare
+                id={`${idPrefix}-finding-${index}`}
+                label=""
+                ariaLabel={data.findingPlaceholder}
+                value={row.findingType}
+                onChange={(next) => setRow(index, { findingType: next })}
+                options={catalogs.findings}
+                placeholder={data.findingPlaceholder}
+                searchable
+                searchPlaceholder={data.findingPlaceholder}
+              />
+              <PolicySelect
+                pill
+                bare
+                id={`${idPrefix}-confidence-${index}`}
+                label=""
+                ariaLabel={data.confidenceLabel}
+                value={row.minimumConfidence}
+                onChange={(next) => setRow(index, { minimumConfidence: next })}
+                options={catalogs.confidences}
+              />
+            </div>
+            <RemoveIconButton
+              label={`${data.removeFinding}${describe ? `: ${describe}` : ""}`}
+              onClick={() => remove(index)}
+              disabled={rows.length < 2}
+            />
+            {isLast ? <AddIconButton label={data.addFinding} onClick={() => append(emptyRow())} /> : null}
+          </div>
+        );
+      })}
+    </div>
   );
 }

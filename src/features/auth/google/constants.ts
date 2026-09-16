@@ -1,6 +1,8 @@
 export const NONCE_COOKIE = "ps_oauth_nonce";
 export const SESSION_COOKIE = "ps_session";
 export const REFRESH_COOKIE = "ps_refresh";
+/** Encrypted, non-authoritative display data (name + role) for the sidebar. */
+export const USER_COOKIE = "ps_user";
 
 export const NONCE_MAX_AGE_SECONDS = 600; // 10 min — matches the backend flow TTL
 export const ACCESS_FALLBACK_MAX_AGE_SECONDS = 3600; // used only if the JWT exp is unreadable

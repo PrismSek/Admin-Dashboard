@@ -95,9 +95,59 @@ describe("getPolicyCatalogs", () => {
 });
 
 describe("listPolicies", () => {
-  it("delegates to the server-only Figma fixture set", async () => {
-    const [viaApi, viaFixtures] = await Promise.all([listPolicies(), getPolicyFixtures()]);
-    expect(viaApi).toEqual(viaFixtures);
+  beforeEach(() => {
+    apiFetchMock.mockReset();
+  });
+
+  it("reads GET /v1/policies and maps each policy to a list row", async () => {
+    apiFetchMock.mockResolvedValue({
+      policies: [
+        apiPolicy({
+          id: "p1",
+          name: "Financial records to unmanaged cloud",
+          state: "Active",
+          intent: { response: { action: "BlockWithOverride", onUnknown: "WarnJustify" } },
+          createdBy: "R. Advani",
+          updatedAt: new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString(),
+        }),
+        apiPolicy({
+          id: "p2",
+          name: "Source code to personal Git remotes",
+          state: "Draft",
+          intent: { response: { action: "Block", onUnknown: "Block" } },
+          createdBy: "M. Okafor",
+        }),
+      ],
+    });
+
+    const rows = await listPolicies();
+
+    expect(apiFetchMock).toHaveBeenCalledWith("/v1/policies");
+    expect(rows).toHaveLength(2);
+    // Each row is valid against the list-item boundary schema.
+    expect(() => z.array(policyListItemSchema).parse(rows)).not.toThrow();
+    // Active → enforced, with the intent's action as the enforcement mode.
+    expect(rows[0]).toMatchObject({
+      id: "p1",
+      lifecycle: "enforced",
+      enforcementMode: "Block with override",
+      owner: "R. Advani",
+    });
+    expect(rows[0].lastChange).toBe("2 days ago");
+    // Health is never populated — the gateway carries no deployment telemetry.
+    expect(rows[0].health).toBeNull();
+    // A Draft carries no enforcement mode even though its intent has an action.
+    expect(rows[1]).toMatchObject({ lifecycle: "draft", enforcementMode: null });
+  });
+
+  it("falls back to a placeholder owner and last-change when the fields are absent", async () => {
+    apiFetchMock.mockResolvedValue({
+      policies: [apiPolicy({ createdBy: undefined, updatedAt: undefined })],
+    });
+
+    const [row] = await listPolicies();
+    expect(row.owner).toBe("—");
+    expect(row.lastChange).toBe("—");
   });
 });
 

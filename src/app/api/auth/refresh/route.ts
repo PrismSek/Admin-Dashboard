@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { setDisplayUserCookie } from "@/features/auth/display-user";
 import { refresh } from "@/features/auth/gateway";
 import { REFRESH_COOKIE } from "@/features/auth/google/constants";
 import { clearSessionCookies, setSessionCookies } from "@/features/auth/session";
@@ -32,5 +33,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const res = NextResponse.json({ user: session.user }, { status: 200 });
   setSessionCookies(res, session);
+  setDisplayUserCookie(res, session.user, session.token);
   return res;
 }

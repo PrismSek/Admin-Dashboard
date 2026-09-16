@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { setDisplayUserCookie } from "@/features/auth/display-user";
 import { login } from "@/features/auth/gateway";
 import { loginRequestSchema } from "@/features/auth/schemas";
 import { setSessionCookies } from "@/features/auth/session";
@@ -27,5 +28,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const res = NextResponse.json({ user: session.user }, { status: 200 });
   setSessionCookies(res, session);
+  setDisplayUserCookie(res, session.user, session.token);
   return res;
 }

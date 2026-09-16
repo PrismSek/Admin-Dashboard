@@ -27,6 +27,10 @@ export function PolicyWhoStep({ audiences }: { audiences: readonly PolicyCatalog
             onChange={field.onChange}
             options={audiences}
             error={errors.appliesTo?.message}
+            placeholder={policyBuilderContent.who.appliesToPlaceholder}
+            searchable
+            searchPlaceholder={policyBuilderContent.who.searchAudiences}
+            className="w-policy-select"
           />
         )}
       />

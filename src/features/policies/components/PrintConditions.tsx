@@ -2,7 +2,8 @@
 
 import { useController, useFormContext } from "react-hook-form";
 
-import { PolicyConditionFields } from "@/features/policies/components/PolicyConditionFields";
+import { RowConnector, SectionChip } from "@/features/policies/components/conditions-ui";
+import { PolicyConditionsSection } from "@/features/policies/components/PolicyConditionsSection";
 import { PolicyExceptionField } from "@/features/policies/components/PolicyExceptionField";
 import { PolicySelect } from "@/features/policies/components/PolicySelect";
 import { policyBuilderContent } from "@/features/policies/content";
@@ -12,10 +13,10 @@ import type { PolicyCatalogs } from "@/features/policies/types";
 const data = policyBuilderContent.data;
 
 /**
- * Print channel's PRINTER section — "Printer is" (`print.target`) — and its
- * EXCEPTION picker (`print.exceptionIds`) — Figma `563:6975`/`563:7670`/
- * `563:8722`. Registers only `print.*` (plus the shared `content.*` CONTENT
- * block).
+ * Print channel's Conditions card PRINTER block — "Printer is"
+ * (`print.target`) — plus its EXCEPTION picker (`print.exceptionIds`) below the
+ * card — Figma `563:6975` family. Registers only `print.*` (the shared
+ * `content.*` block is owned by `PolicyConditionsSection`).
  */
 export function PrintConditions({ catalogs }: { catalogs: PolicyCatalogs }) {
   const {
@@ -26,22 +27,27 @@ export function PrintConditions({ catalogs }: { catalogs: PolicyCatalogs }) {
 
   return (
     <>
-      <PolicyConditionFields findings={catalogs.findings} />
-
-      <section className="mt-6">
-        <span className="text-micro font-medium tracking-wide text-subtle">{data.printerChip}</span>
-        <div className="mt-2">
-          <PolicySelect
-            id="policy-data-print-target"
-            label={data.printerIsLabel}
-            value={targetField.field.value}
-            onChange={targetField.field.onChange}
-            options={catalogs.printerTargets}
-            error={errors.print?.target?.message}
-          />
-          <p className="mt-2 max-w-md text-meta text-dim">{data.printerHelp}</p>
+      <PolicyConditionsSection catalogs={catalogs}>
+        <div className="flex flex-col items-start gap-3">
+          <SectionChip>{data.printerChip}</SectionChip>
+          <div className="flex items-start gap-2">
+            <RowConnector />
+            <div className="flex min-w-0 flex-col gap-2">
+              <PolicySelect
+                pill
+                id="policy-data-print-target"
+                label={data.printerIsLabel}
+                value={targetField.field.value}
+                onChange={targetField.field.onChange}
+                options={catalogs.printerTargets}
+                placeholder={data.printerPlaceholder}
+                error={errors.print?.target?.message}
+              />
+              <p className="max-w-md text-meta text-dim">{data.printerHelp}</p>
+            </div>
+          </div>
         </div>
-      </section>
+      </PolicyConditionsSection>
 
       <PolicyExceptionField
         name="print.exceptionIds"

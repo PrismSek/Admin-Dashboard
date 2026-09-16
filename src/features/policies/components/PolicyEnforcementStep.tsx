@@ -1,30 +1,34 @@
 "use client";
 
-import { Controller, useFormContext } from "react-hook-form";
+import type { ComponentProps, ReactNode } from "react";
+import { Controller, useFormContext, useWatch } from "react-hook-form";
 
-import { AppInput } from "@/components/app/field";
 import { FieldError } from "@/components/ui/form-field";
+import { RowConnector, SectionChip } from "@/features/policies/components/conditions-ui";
 import { PolicySelect } from "@/features/policies/components/PolicySelect";
 import { policyBuilderContent, policyBuilderSteps } from "@/features/policies/content";
 import type { PolicyAuthoringValues } from "@/features/policies/schemas";
 import type { PolicyCatalogOption } from "@/features/policies/types";
+import { cn } from "@/lib/utils";
 
 const enforcement = policyBuilderContent.enforcement;
 
+/** The three builder channels that draw an "escape hatch" exception, and their
+ * escape option + notes. Clipboard (a destination-class channel) offers none. */
+type ExceptionChannel = keyof typeof enforcement.exceptionsByChannel;
+function exceptionConfigFor(channel: PolicyAuthoringValues["channel"]) {
+  return channel === "removable-media" || channel === "print" || channel === "desktop-apps"
+    ? enforcement.exceptionsByChannel[channel as ExceptionChannel]
+    : undefined;
+}
+
 /**
- * "Enforcement & Message" — set the action (Figma `396:4444`'s Enforcement
- * card; the "Do this instead" single select's open/hover/selected states are
- * the four named `Required-1..4` frames, `397:13609`/`397:13610`/
- * `397:13968`/`397:14326` — one `PolicySelect` reproduces all four as
- * interaction states of the same control, rather than four separate
- * controls). `action` and `onUnknown` share the same four-value action
- * catalog (`catalogs.actions`); `reasonCode`/`message` are the shared
- * MESSAGE fields ("They see").
- *
- * The Data step's per-channel EXCEPTION picker (`letItThroughIf`) is a
- * different, channel-scoped field (`removableMedia.exceptionIds` etc. — see
- * `PolicyExceptionField`) and has no counterpart here; `enforcement` has no
- * exception field in the schema, so none is rendered in this step.
+ * "Enforcement & Message" (rail step 5) — rebuilt to the artifact's single card
+ * of connector rows: ACTION (with the action's inline description), the
+ * required "IF WE CAN'T TELL" fallback (unanswered by default, Required until
+ * chosen), a channel-specific EXCEPTION escape hatch (shown when the action
+ * interrupts the person), and the MESSAGE block (shown when the action OR that
+ * fallback interrupts — anything other than "Audit only").
  */
 export function PolicyEnforcementStep({ actions }: { actions: readonly PolicyCatalogOption[] }) {
   const {
@@ -33,15 +37,38 @@ export function PolicyEnforcementStep({ actions }: { actions: readonly PolicyCat
     formState: { errors },
   } = useFormContext<PolicyAuthoringValues>();
 
-  const reasonCodeErrorId = "policy-enforcement-reasonCode-error";
-  const messageErrorId = "policy-enforcement-message-error";
+  const action = useWatch<PolicyAuthoringValues, "enforcement.action">({ control, name: "enforcement.action" });
+  const onUnknown = useWatch<PolicyAuthoringValues, "enforcement.onUnknown">({ control, name: "enforcement.onUnknown" });
+  const channel = useWatch<PolicyAuthoringValues, "channel">({ control, name: "channel" });
+  const storedException = useWatch<PolicyAuthoringValues, "enforcement.exception">({
+    control,
+    name: "enforcement.exception",
+  });
 
-  // A single live region for the whole step: the per-field `FieldError`s
-  // below already use `role="alert"`, but the step can carry several errors
-  // at once, so this summarises the current set on every change rather than
-  // relying on each alert to interrupt independently.
+  const answered = onUnknown !== "";
+  const interrupts = action !== "AuditOnly";
+  // The fallback interrupts the person too when "if we can't tell" is a
+  // warn/block — they still see a message — so the MESSAGE block is shown for
+  // either. The EXCEPTION escape hatch stays tied to the primary action only.
+  const onUnknownInterrupts = onUnknown !== "" && onUnknown !== "AuditOnly";
+  const showMessage = interrupts || onUnknownInterrupts;
+  const actionDescription = actions.find((option) => option.value === action)?.description;
+
+  const exceptionConfig = exceptionConfigFor(channel);
+  const showException = Boolean(exceptionConfig) && interrupts;
+  const exceptionOptions: PolicyCatalogOption[] = exceptionConfig
+    ? [
+        { value: "none", label: enforcement.noException },
+        { value: exceptionConfig.value, label: exceptionConfig.label },
+      ]
+    : [];
+  const exceptionValue = exceptionOptions.some((option) => option.value === storedException) ? storedException : "none";
+  const exceptionNote =
+    exceptionValue === "none" ? exceptionConfig?.noneNote : exceptionConfig?.selectedNote;
+
+  // A single live region for the whole step — several fields can be invalid at
+  // once, so this summarises the current set on each change.
   const validationSummary = [
-    errors.enforcement?.action?.message,
     errors.enforcement?.onUnknown?.message,
     errors.enforcement?.reasonCode?.message,
     errors.enforcement?.message?.message,
@@ -58,84 +85,171 @@ export function PolicyEnforcementStep({ actions }: { actions: readonly PolicyCat
         {validationSummary}
       </p>
 
-      <div className="mt-4">
-        <span className="text-micro font-medium tracking-wide text-subtle">{enforcement.actionChip}</span>
-        <div className="mt-2 max-w-xs">
+      <div className="mt-4 flex flex-col gap-5 rounded-card border border-hair-strong bg-chrome p-4">
+        {/* ACTION */}
+        <EnforcementRow chip={enforcement.actionChip}>
           <Controller
             name="enforcement.action"
             control={control}
             render={({ field }) => (
               <PolicySelect
+                pill
                 id="policy-enforcement-action"
                 label={enforcement.doThis}
                 value={field.value}
                 onChange={field.onChange}
                 options={actions}
-                error={errors.enforcement?.action?.message}
               />
             )}
           />
-        </div>
-      </div>
+          {actionDescription ? <p className="max-w-md text-meta text-dim">{actionDescription}</p> : null}
+        </EnforcementRow>
 
-      <div className="mt-6">
-        <div className="flex items-center gap-2">
-          <span className="text-micro font-medium tracking-wide text-subtle">{enforcement.ifCantTellChip}</span>
-          <span className="inline-flex items-center rounded-app border border-hair-strong px-1.5 py-0.5 text-micro font-medium text-dim">
-            {enforcement.required}
-          </span>
-        </div>
-        <div className="mt-2 max-w-xs">
-          <Controller
-            name="enforcement.onUnknown"
-            control={control}
-            render={({ field }) => (
-              <PolicySelect
-                id="policy-enforcement-onUnknown"
-                label={enforcement.doThisInstead}
-                value={field.value}
-                onChange={field.onChange}
-                options={actions}
-                error={errors.enforcement?.onUnknown?.message}
+        {/* IF WE CAN'T TELL — required fallback */}
+        <div className="flex flex-col items-start gap-3">
+          <div className="flex items-center gap-2">
+            <SectionChip>{enforcement.ifCantTellChip}</SectionChip>
+            <span
+              className={cn(
+                "inline-flex items-center rounded-app border px-1.5 py-0.5 text-micro font-medium tracking-wide",
+                answered
+                  ? "border-hair-strong text-dim"
+                  : "uppercase border-brand bg-brand-halo text-brand",
+              )}
+            >
+              {answered ? enforcement.answered : enforcement.required}
+            </span>
+          </div>
+          <div className="flex items-start gap-2">
+            <RowConnector />
+            <div className="flex min-w-0 flex-col gap-2">
+              <Controller
+                name="enforcement.onUnknown"
+                control={control}
+                render={({ field }) => (
+                  <PolicySelect
+                    pill
+                    id="policy-enforcement-onUnknown"
+                    label={enforcement.doThisInstead}
+                    value={field.value}
+                    onChange={field.onChange}
+                    options={actions}
+                    placeholder={enforcement.chooseOne}
+                    error={errors.enforcement?.onUnknown?.message}
+                  />
+                )}
               />
-            )}
-          />
-        </div>
-      </div>
-
-      <div className="mt-6 flex flex-col gap-4">
-        <span className="text-micro font-medium tracking-wide text-subtle">{enforcement.messageChip}</span>
-
-        <div className="flex flex-col gap-2">
-          <label htmlFor="policy-enforcement-reasonCode" className="text-body font-medium text-label">
-            {enforcement.reasonCode}
-          </label>
-          <AppInput
-            id="policy-enforcement-reasonCode"
-            {...register("enforcement.reasonCode")}
-            aria-invalid={Boolean(errors.enforcement?.reasonCode)}
-            aria-describedby={errors.enforcement?.reasonCode ? reasonCodeErrorId : undefined}
-          />
-          {errors.enforcement?.reasonCode ? (
-            <FieldError id={reasonCodeErrorId}>{errors.enforcement.reasonCode.message}</FieldError>
-          ) : null}
+              {!answered ? (
+                <p className="max-w-md text-meta text-badge-amber-fg">{enforcement.onUnknownRequiredNote}</p>
+              ) : null}
+            </div>
+          </div>
         </div>
 
-        <div className="flex flex-col gap-2">
-          <label htmlFor="policy-enforcement-message" className="text-body font-medium text-label">
-            {enforcement.theySee}
-          </label>
-          <AppInput
-            id="policy-enforcement-message"
-            {...register("enforcement.message")}
-            aria-invalid={Boolean(errors.enforcement?.message)}
-            aria-describedby={errors.enforcement?.message ? messageErrorId : undefined}
-          />
-          {errors.enforcement?.message ? (
-            <FieldError id={messageErrorId}>{errors.enforcement.message.message}</FieldError>
-          ) : null}
-        </div>
+        {/* EXCEPTION — channel-specific escape hatch, only when the action interrupts */}
+        {showException ? (
+          <EnforcementRow chip={enforcement.exceptionChip}>
+            <Controller
+              name="enforcement.exception"
+              control={control}
+              render={({ field }) => (
+                <PolicySelect
+                  pill
+                  id="policy-enforcement-exception"
+                  label={enforcement.letItThroughIf}
+                  value={exceptionValue}
+                  onChange={field.onChange}
+                  options={exceptionOptions}
+                />
+              )}
+            />
+            {exceptionNote ? <p className="max-w-md text-meta text-dim">{exceptionNote}</p> : null}
+          </EnforcementRow>
+        ) : null}
+
+        {/* MESSAGE — whenever the person is interrupted, by the action or the fallback */}
+        {showMessage ? (
+          <div className="flex flex-col items-start gap-3">
+            <SectionChip>{enforcement.messageChip}</SectionChip>
+            <PillTextInput
+              id="policy-enforcement-reasonCode"
+              label={enforcement.reasonCode}
+              placeholder={enforcement.reasonCodePlaceholder}
+              error={errors.enforcement?.reasonCode?.message}
+              inputProps={register("enforcement.reasonCode")}
+            />
+            <PillTextInput
+              id="policy-enforcement-message"
+              label={enforcement.theySee}
+              placeholder={enforcement.theySeePlaceholder}
+              wide
+              error={errors.enforcement?.message?.message}
+              inputProps={register("enforcement.message")}
+            />
+          </div>
+        ) : null}
       </div>
     </section>
+  );
+}
+
+/** A chip + connector + control row inside the Enforcement card. */
+function EnforcementRow({ chip, children }: { chip: string; children: ReactNode }) {
+  return (
+    <div className="flex flex-col items-start gap-3">
+      <SectionChip>{chip}</SectionChip>
+      <div className="flex items-start gap-2">
+        <RowConnector />
+        <div className="flex min-w-0 flex-col gap-2">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+/** A pill-shaped labelled text field — the MESSAGE block's `[Reason code │ … ]`
+ * / `[They see │ … ]` rows. */
+function PillTextInput({
+  id,
+  label,
+  placeholder,
+  wide,
+  error,
+  inputProps,
+}: {
+  id: string;
+  label: string;
+  placeholder?: string;
+  wide?: boolean;
+  error?: string;
+  inputProps: ComponentProps<"input">;
+}) {
+  const errorId = `${id}-error`;
+  return (
+    <div className={cn("flex items-start gap-2", wide && "w-full")}>
+      <RowConnector />
+      <div className={cn("flex min-w-0 flex-col gap-1.5", wide && "w-full")}>
+        <div
+          className={cn(
+            "inline-flex h-select-control items-center rounded-app border bg-chrome",
+            wide && "w-full",
+            error ? "border-danger" : "border-hair-strong",
+          )}
+        >
+          <label htmlFor={id} className="shrink-0 pl-3 pr-2.5 text-app text-dim">
+            {label}
+          </label>
+          <span aria-hidden className="h-4 w-px shrink-0 bg-hair-strong" />
+          <input
+            id={id}
+            placeholder={placeholder}
+            {...inputProps}
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? errorId : undefined}
+            className="min-w-0 flex-1 bg-transparent px-3 text-app text-strong outline-none placeholder:text-subtle"
+          />
+        </div>
+        {error ? <FieldError id={errorId}>{error}</FieldError> : null}
+      </div>
+    </div>
   );
 }

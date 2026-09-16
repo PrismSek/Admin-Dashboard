@@ -85,6 +85,24 @@ describe("PolicySelect", () => {
     expect(trigger).toHaveAttribute("aria-activedescendant", off.id);
   });
 
+  it("renders only the option label in the dropdown, never a description sub-line", async () => {
+    const user = userEvent.setup();
+    const OPTIONS_WITH_DESCRIPTION: readonly PolicySelectOption[] = [
+      { value: "AuditOnly", label: "Audit only", description: "Let it through and record the event." },
+      { value: "Block", label: "Block", description: "Stop it. There is no way through." },
+    ];
+    render(
+      <PolicySelect id="action" label="Do this" value="AuditOnly" options={OPTIONS_WITH_DESCRIPTION} onChange={vi.fn()} />,
+    );
+    await user.click(screen.getByRole("combobox", { name: "Do this" }));
+
+    // The label is still shown…
+    expect(screen.getByRole("option", { name: /Audit only/ })).toBeInTheDocument();
+    // …but the description sub-text is not rendered anywhere in the popup.
+    expect(screen.queryByText("Let it through and record the event.")).not.toBeInTheDocument();
+    expect(screen.queryByText("Stop it. There is no way through.")).not.toBeInTheDocument();
+  });
+
   it("wires the error message via aria-describedby and aria-invalid", () => {
     render(
       <PolicySelect

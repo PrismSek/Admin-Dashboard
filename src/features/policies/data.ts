@@ -222,26 +222,38 @@ const POLICY_CATALOGS: PolicyCatalogs = {
     { value: "desktop-apps", label: "Desktop apps", icon: "desktop-apps" },
   ],
 
-  // INCOMPLETE: the builder shows a "1/32" finding counter, but no frame in
-  // this slice opens the finding picker's full list. Only the two findings
-  // used as worked examples are real.
+  // The finding detectors offered in a CONTENT row's picker (the artifact's
+  // finding `<option>` list).
   findings: [
-    { value: "aadhaar-number", label: "Aadhaar number" },
-    { value: "customer-record", label: "Customer record" },
+    { value: "aadhaar", label: "Aadhaar number" },
+    { value: "pan", label: "PAN number" },
+    { value: "credit_card", label: "Credit card number" },
+    { value: "customer_record", label: "Customer record" },
+    { value: "passport", label: "Passport number" },
+    { value: "api_key", label: "API key or secret" },
+    { value: "source_code", label: "Source code" },
   ],
 
-  // INCOMPLETE: every Destination-class frame in this slice shows the field
-  // closed with the same example value; no open-list state was found.
-  destinationClasses: [{ value: "personal-or-foreign", label: "Personal or foreign" }],
+  // Minimum-confidence options for a finding row (the artifact's confidence
+  // `<option>` list): require high confidence, medium or better, or any.
+  confidences: [
+    { value: "High", label: "High confidence" },
+    { value: "Medium", label: "Medium or better" },
+    { value: "Low", label: "Any confidence" },
+  ],
 
-  // Collection open dropdown (397:11355 family).
-  collections: [
-    { value: "sanctioned-cloud-storage", label: "Sanctioned cloud storage" },
-    { value: "regulator-submission-portals", label: "Regulator submission portals" },
-    { value: "known-consumer-storage", label: "Known consumer storage" },
-    { value: "personal-email-providers", label: "Personal email providers" },
-    { value: "code-hosting", label: "Code hosting" },
-    { value: "unclassified-hosts", label: "Unclassified hosts" },
+  // Clipboard "Paste into" targets — the checkbox-per-row picker (563:10405
+  // family). Each target carries a `category` tag (apps / web / session /
+  // local) drawn right-aligned in its row.
+  pasteTargets: [
+    { value: "messengers", label: "Messengers", category: "apps" },
+    { value: "collaboration-apps", label: "Collaboration apps", category: "apps" },
+    { value: "personal-webmail", label: "Personal webmail", category: "web" },
+    { value: "consumer-cloud-and-notes", label: "Consumer cloud and notes", category: "web" },
+    { value: "ai-assistants", label: "AI assistants", category: "web" },
+    { value: "remote-and-virtual-desktops", label: "Remote and virtual desktops", category: "session" },
+    { value: "terminals-and-shells", label: "Terminals and shells", category: "session" },
+    { value: "local-files-and-editors", label: "Local files and editors", category: "local" },
   ],
 
   // Removable media "Registered as" open dropdown (563:4823).
@@ -279,10 +291,14 @@ const POLICY_CATALOGS: PolicyCatalogs = {
   // generic top-level "Applies to" mockup family; this uses the
   // channel-specific, already-tested casing.
   actions: [
-    { value: "AuditOnly", label: "Audit only" },
-    { value: "WarnJustify", label: "Warn & justify" },
-    { value: "BlockWithOverride", label: "Block with override" },
-    { value: "Block", label: "Block" },
+    { value: "AuditOnly", label: "Audit only", description: "Let it through and record the event. The person sees nothing." },
+    { value: "WarnJustify", label: "Warn & justify", description: "Interrupt, ask for a written reason, then allow." },
+    {
+      value: "BlockWithOverride",
+      label: "Block with override",
+      description: "Stop it, but allow an audited override with a typed reason.",
+    },
+    { value: "Block", label: "Block", description: "Stop it. There is no way through." },
   ],
 
   // "Deploy as" open menu (Draft-1/2/3: 397:15047, 397:15048, 397:15406) —

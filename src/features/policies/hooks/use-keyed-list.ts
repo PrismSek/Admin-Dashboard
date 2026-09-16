@@ -8,20 +8,21 @@ export type KeyedListController<T> = {
 };
 
 /**
- * Stable, non-index React keys for a repeatable catalog-id / free-text array
- * field (`content.findingIds`, `clipboard.collectionIds`,
- * `removableMedia.exceptionIds`, `print.exceptionIds`,
- * `desktopApps.exceptionIds` — all `string[]` in `schemas.ts`).
+ * Stable, non-index React keys for a repeatable array field — the `string[]`
+ * catalog-id lists (`clipboard.targetIds`, `removableMedia.exceptionIds`,
+ * `print.exceptionIds`, `desktopApps.exceptionIds`) and the CONTENT condition
+ * rows (`content.allOf`) in `schemas.ts`.
  *
  * The coding standard for repeatable rule groups is `useFieldArray` with
  * stable `field.id` keys, never the array index. `react-hook-form`'s
  * `useFieldArray` cannot be used here, though: its `ArrayPath` type (see
  * `react-hook-form/dist/types/path/eager.d.ts`) only resolves for arrays of
  * *objects* — for a path pointing at `string[]` it resolves to `never`, so
- * `useFieldArray({ control, name: "content.findingIds" })` fails to compile
+ * `useFieldArray({ control, name: "clipboard.targetIds" })` fails to compile
  * (verified directly with `tsc`: assigning the literal path name to `never`
  * errors) unless the call is forced past the type system with `as`, which
- * `docs/CODING_STANDARDS.md` §5 forbids.
+ * `docs/CODING_STANDARDS.md` §5 forbids. Using the one hook for both the
+ * `string[]` lists and the object-array condition rows keeps them consistent.
  *
  * This hook reproduces the same guarantee — a row's identity survives an
  * append or a removal from the middle — without needing that cast: `append`

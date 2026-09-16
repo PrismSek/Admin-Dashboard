@@ -35,7 +35,7 @@ export function AppShell({ user, children }: { user: CurrentUser; children: Reac
   return (
     <div className="app-shell-grid grid h-dvh bg-canvas max-lg:grid-cols-1">
       <SideNav user={user} isOpen={isNavOpen} onClose={() => setIsNavOpen(false)} id={navId} />
-      <div className="flex min-w-0 flex-col" inert={isNavOpen || undefined}>
+      <div className="flex min-h-0 min-w-0 flex-col" inert={isNavOpen || undefined}>
         <ContentHeader
           onOpenNavigation={() => setIsNavOpen(true)}
           isNavOpen={isNavOpen}

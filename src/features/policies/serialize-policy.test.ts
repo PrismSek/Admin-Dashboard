@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { policyAuthoringSchema, type PolicyAuthoringValues } from "@/features/policies/schemas";
+import { policyAuthoringSchema, type PolicyAuthoringValues, type PolicyChannel } from "@/features/policies/schemas";
 import { serializePolicyPreview } from "@/features/policies/serialize-policy";
 
 /**
@@ -14,29 +14,36 @@ const ALL_CHANNEL_VALUES: PolicyAuthoringValues = {
   description: "Blocks Aadhaar numbers leaving to personal or foreign destinations.",
   appliesTo: "finance-all-stuff",
   channel: "clipboard",
-  content: { mode: "specific", findingIds: ["aadhaar-number"] },
-  clipboard: { destinationClass: "personal-or-foreign", collectionIds: ["sanctioned-cloud-storage"] },
+  content: {
+    mode: "specific",
+    allOf: [{ findingType: "aadhaar-number", minimumConfidence: "High" }],
+  },
+  clipboard: {
+    targetOp: "one-of",
+    targetIds: ["messengers"],
+    firesWhen: "text",
+  },
   removableMedia: { target: "it-issued-encrypted-usb", exceptionIds: ["staff-registered-drives"] },
   print: { target: "unknown", exceptionIds: ["authorized"] },
   desktopApps: { applicationIds: ["whatsapp", "signal"], exceptionIds: ["slack"] },
   enforcement: {
     action: "Block",
     onUnknown: "WarnJustify",
+    exception: "none",
     reasonCode: "DLP-PII-EGRESS",
     message: "Aadhaar information cannot be uploaded to this destination.",
   },
   notification: {
-    enabled: true,
-    title: "Remove public link",
-    message: "Public links on the related resources are revoked automatically, and the owner is told.",
+    channel: "slack",
+    remediation: "remove-public-link",
   },
   deployAs: "Draft",
 };
 
 const VALID_CLIPBOARD_VALUES: PolicyAuthoringValues = ALL_CHANNEL_VALUES;
 
-const EXPECTED_KEYS: Record<PolicyAuthoringValues["channel"], string[]> = {
-  clipboard: ["kind", "destinationClass", "collectionIds"],
+const EXPECTED_KEYS: Record<PolicyChannel, string[]> = {
+  clipboard: ["kind", "targetOp", "targetIds", "firesWhen"],
   "removable-media": ["kind", "target", "exceptionIds"],
   print: ["kind", "target", "exceptionIds"],
   "desktop-apps": ["kind", "applicationIds", "exceptionIds"],
@@ -52,18 +59,46 @@ describe("policyAuthoringSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("requires at least one finding when content mode is specific", () => {
+  it("requires the message fields when the onUnknown fallback interrupts, even under Audit only", () => {
     const result = policyAuthoringSchema.safeParse({
       ...VALID_CLIPBOARD_VALUES,
-      content: { mode: "specific", findingIds: [] },
+      enforcement: {
+        action: "AuditOnly",
+        onUnknown: "Block",
+        exception: "none",
+        reasonCode: "",
+        message: "",
+      },
     });
     expect(result.success).toBe(false);
   });
 
-  it("allows zero findings when content mode is any", () => {
+  it("does not require the message fields when both action and onUnknown are Audit only", () => {
     const result = policyAuthoringSchema.safeParse({
       ...VALID_CLIPBOARD_VALUES,
-      content: { mode: "any", findingIds: [] },
+      enforcement: {
+        action: "AuditOnly",
+        onUnknown: "AuditOnly",
+        exception: "none",
+        reasonCode: "",
+        message: "",
+      },
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("requires at least one filled condition when content mode is specific", () => {
+    const result = policyAuthoringSchema.safeParse({
+      ...VALID_CLIPBOARD_VALUES,
+      content: { mode: "specific", allOf: [] },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("allows zero conditions when content mode is any", () => {
+    const result = policyAuthoringSchema.safeParse({
+      ...VALID_CLIPBOARD_VALUES,
+      content: { mode: "any", allOf: [] },
     });
     expect(result.success).toBe(true);
   });
@@ -77,18 +112,18 @@ describe("policyAuthoringSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("requires notification title and message only when notification is enabled", () => {
-    const disabled = policyAuthoringSchema.safeParse({
+  it("accepts the notification channel + remediation shape, including the 'none' default", () => {
+    const off = policyAuthoringSchema.safeParse({
       ...VALID_CLIPBOARD_VALUES,
-      notification: { enabled: false, title: "", message: "" },
+      notification: { channel: "none", remediation: "none" },
     });
-    expect(disabled.success).toBe(true);
+    expect(off.success).toBe(true);
 
-    const enabledButEmpty = policyAuthoringSchema.safeParse({
+    const engaged = policyAuthoringSchema.safeParse({
       ...VALID_CLIPBOARD_VALUES,
-      notification: { enabled: true, title: "", message: "" },
+      notification: { channel: "slack", remediation: "engage-assignee" },
     });
-    expect(enabledButEmpty.success).toBe(false);
+    expect(engaged.success).toBe(true);
   });
 });
 
@@ -115,8 +150,9 @@ describe("serializePolicyPreview", () => {
     const preview = serializePolicyPreview({ ...ALL_CHANNEL_VALUES, channel: "clipboard" });
     expect(preview.intent.channel).toEqual({
       kind: "clipboard",
-      destinationClass: "personal-or-foreign",
-      collectionIds: ["sanctioned-cloud-storage"],
+      targetOp: "one-of",
+      targetIds: ["messengers"],
+      firesWhen: "text",
     });
   });
 

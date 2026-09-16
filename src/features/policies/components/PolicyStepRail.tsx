@@ -42,8 +42,6 @@ export function PolicyStepRail() {
           );
         })}
       </ol>
-
-      <p className="mt-6 max-w-60 text-micro text-brand">{policyBuilderContent.stepRailNote}</p>
     </nav>
   );
 }

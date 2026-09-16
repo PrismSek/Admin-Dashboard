@@ -5,6 +5,7 @@ import {
   REFRESH_COOKIE,
   REFRESH_MAX_AGE_SECONDS,
   SESSION_COOKIE,
+  USER_COOKIE,
 } from "@/features/auth/google/constants";
 import { accessTokenMaxAgeSeconds } from "@/features/auth/google/jwt";
 
@@ -43,9 +44,13 @@ export function setSessionCookies(
   });
 }
 
-/** Expire both session cookies immediately (sign-out, or a refresh token the gateway rejected). */
+/**
+ * Expire the session cookies immediately (sign-out, or a refresh token the
+ * gateway rejected). Includes the display cookie so no stale identity outlives
+ * the session it described.
+ */
 export function clearSessionCookies(res: NextResponse): void {
-  for (const name of [SESSION_COOKIE, REFRESH_COOKIE]) {
+  for (const name of [SESSION_COOKIE, REFRESH_COOKIE, USER_COOKIE]) {
     res.cookies.set(name, "", {
       httpOnly: true,
       secure: secure(),

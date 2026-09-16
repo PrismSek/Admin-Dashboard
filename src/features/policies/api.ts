@@ -1,10 +1,11 @@
 import "server-only";
 
-import { getPolicyFixtures } from "@/features/policies/data";
-import type { PolicyListItem } from "@/features/policies/labels";
+import { RELATIVE_TIME_PLACEHOLDER, formatRelativeTime } from "@/features/policies/relative-time";
+import { actionLabels, lifecycleForState, type PolicyListItem } from "@/features/policies/labels";
 import {
   type Policy,
   type PolicyVersion,
+  listPoliciesResponseSchema,
   listPolicyVersionsResponseSchema,
   policyChannelsResponseSchema,
   policySchema,
@@ -12,15 +13,38 @@ import {
 import { apiErrorStatus, apiFetch, apiFetchWithEtag } from "@/lib/api-client";
 
 /**
- * Server-only reads for the Policy surface. The list is Figma-fixture data for
- * this frontend-only phase (no admin-policy list/create contract exists yet);
- * the detail/version-history/channel-registry reads below still talk to the
- * gateway and are retained for the designed surfaces that will need them.
+ * Server-only reads for the Policy surface. Every response is re-parsed with
+ * the `schemas.ts` zod contracts at the boundary (§6) so a backend shape
+ * change fails loudly here rather than as `undefined` in the UI.
  */
 
-/** The Figma reference list (see data.ts), in Figma order. */
+/**
+ * Project one gateway `Policy` onto the list row the table renders. Three of
+ * the six Figma columns have no gateway field (see the integration note):
+ * `health` is always `null` (rendered "—") because the admin-policy API
+ * carries no deployment telemetry; `owner` is the policy's `createdBy`; and
+ * `enforcementMode` is only meaningful for an enforced policy with a published
+ * intent (the Figma "Simulation" values have no Phase 1 equivalent).
+ */
+export function toPolicyListItem(policy: Policy): PolicyListItem {
+  const lifecycle = lifecycleForState(policy.state);
+  const action = policy.intent?.response?.action;
+  return {
+    id: policy.id,
+    name: policy.name,
+    lifecycle,
+    enforcementMode: lifecycle === "enforced" && action ? actionLabels[action] : null,
+    health: null,
+    owner: policy.createdBy ?? RELATIVE_TIME_PLACEHOLDER,
+    lastChange: formatRelativeTime(policy.updatedAt),
+  };
+}
+
+/** The tenant's policies (`GET /v1/policies`), mapped to the list row shape. */
 export async function listPolicies(): Promise<readonly PolicyListItem[]> {
-  return getPolicyFixtures();
+  const body = await apiFetch("/v1/policies");
+  const { policies } = listPoliciesResponseSchema.parse(body);
+  return policies.map(toPolicyListItem);
 }
 
 export type PolicyDetail = {

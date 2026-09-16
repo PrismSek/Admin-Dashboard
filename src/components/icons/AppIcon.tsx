@@ -26,16 +26,32 @@ export function AppIcon({ name, label, ...props }: AppIconProps) {
       aria-hidden={label ? undefined : true}
       {...props}
     >
-      {definition.body.map((shape, index) =>
-        shape.kind === "path" ? (
-          <path
-            key={`${name}-path-${index}`}
-            d={shape.d}
-            fill={shape.fill ?? "currentColor"}
-            fillRule={shape.fillRule}
-            clipRule={shape.clipRule}
-          />
-        ) : (
+      {definition.body.map((shape, index) => {
+        if (shape.kind === "stroke") {
+          return (
+            <path
+              key={`${name}-stroke-${index}`}
+              d={shape.d}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          );
+        }
+        if (shape.kind === "path") {
+          return (
+            <path
+              key={`${name}-path-${index}`}
+              d={shape.d}
+              fill={shape.fill ?? "currentColor"}
+              fillRule={shape.fillRule}
+              clipRule={shape.clipRule}
+            />
+          );
+        }
+        return (
           <circle
             key={`${name}-circle-${index}`}
             cx={shape.cx}
@@ -43,8 +59,8 @@ export function AppIcon({ name, label, ...props }: AppIconProps) {
             r={shape.r}
             fill={shape.fill ?? "currentColor"}
           />
-        ),
-      )}
+        );
+      })}
     </svg>
   );
 }

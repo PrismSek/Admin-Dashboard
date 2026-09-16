@@ -1,4 +1,4 @@
-import { policyAuthoringSchema, type PolicyAuthoringValues } from "@/features/policies/schemas";
+import { isConditionRowFilled, policyAuthoringSchema, type PolicyAuthoringValues } from "@/features/policies/schemas";
 
 /**
  * The four-member discriminated union `serializeSelectedChannel` produces.
@@ -7,7 +7,7 @@ import { policyAuthoringSchema, type PolicyAuthoringValues } from "@/features/po
  * validated `PolicyAuthoringValues` input always carries all four.
  */
 export type SerializedPolicyChannel =
-  | { kind: "clipboard"; destinationClass: string; collectionIds: string[] }
+  | { kind: "clipboard"; targetOp: string; targetIds: string[]; firesWhen: string }
   | { kind: "removable-media"; target: string; exceptionIds: string[] }
   | { kind: "print"; target: string; exceptionIds: string[] }
   | { kind: "desktop-apps"; applicationIds: string[]; exceptionIds: string[] };
@@ -42,8 +42,9 @@ function serializeSelectedChannel(values: PolicyAuthoringValues): SerializedPoli
     case "clipboard":
       return {
         kind: "clipboard",
-        destinationClass: values.clipboard.destinationClass,
-        collectionIds: values.clipboard.collectionIds,
+        targetOp: values.clipboard.targetOp,
+        targetIds: values.clipboard.targetIds,
+        firesWhen: values.clipboard.firesWhen,
       };
     case "removable-media":
       return {
@@ -63,6 +64,13 @@ function serializeSelectedChannel(values: PolicyAuthoringValues): SerializedPoli
         applicationIds: values.desktopApps.applicationIds,
         exceptionIds: values.desktopApps.exceptionIds,
       };
+    case "":
+      // No channel chosen yet. `serializePolicyPreview` only reaches here for a
+      // still-invalid form (a validated policy always has a real channel — see
+      // `policyAuthoringSchema`'s `superRefine`), so this throws; the one caller
+      // that serializes mid-edit, `PolicyJsonPreview`, catches it and shows an
+      // empty preview rather than crashing.
+      throw new Error("Cannot serialize a policy with no channel selected");
     default:
       return unreachableChannel(values.channel);
   }
@@ -83,7 +91,11 @@ export function serializePolicyPreview(input: PolicyAuthoringValues): PolicyPrev
     state: values.deployAs,
     intent: {
       who: { appliesTo: values.appliesTo },
-      content: values.content,
+      // Drop any placeholder row the admin added but never filled in.
+      content: {
+        mode: values.content.mode,
+        allOf: values.content.allOf.filter(isConditionRowFilled),
+      },
       channel: serializeSelectedChannel(values),
       response: values.enforcement,
       notification: values.notification,

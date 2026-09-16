@@ -2,7 +2,8 @@
 
 import { useController, useFormContext } from "react-hook-form";
 
-import { PolicyConditionFields } from "@/features/policies/components/PolicyConditionFields";
+import { RowConnector, SectionChip } from "@/features/policies/components/conditions-ui";
+import { PolicyConditionsSection } from "@/features/policies/components/PolicyConditionsSection";
 import { PolicyExceptionField } from "@/features/policies/components/PolicyExceptionField";
 import { PolicySelect } from "@/features/policies/components/PolicySelect";
 import { policyBuilderContent } from "@/features/policies/content";
@@ -12,11 +13,11 @@ import type { PolicyCatalogs } from "@/features/policies/types";
 const data = policyBuilderContent.data;
 
 /**
- * Removable media channel's DEVICE section — "Registered as"
- * (`removableMedia.target`) — and its EXCEPTION picker
- * (`removableMedia.exceptionIds`) — Figma `563:3248`/`563:4039`/`563:4421`/
- * `563:4823`/`563:5257`/`563:6411`. Registers only `removableMedia.*` (plus
- * the shared `content.*` CONTENT block).
+ * Removable media channel's Conditions card DEVICE block — "Registered as"
+ * (`removableMedia.target`) — plus its EXCEPTION picker
+ * (`removableMedia.exceptionIds`) below the card — Figma `563:3248` family.
+ * Registers only `removableMedia.*` (the shared `content.*` block is owned by
+ * `PolicyConditionsSection`).
  */
 export function RemovableMediaConditions({ catalogs }: { catalogs: PolicyCatalogs }) {
   const {
@@ -27,22 +28,27 @@ export function RemovableMediaConditions({ catalogs }: { catalogs: PolicyCatalog
 
   return (
     <>
-      <PolicyConditionFields findings={catalogs.findings} />
-
-      <section className="mt-6">
-        <span className="text-micro font-medium tracking-wide text-subtle">{data.deviceChip}</span>
-        <div className="mt-2">
-          <PolicySelect
-            id="policy-data-removable-target"
-            label={data.registeredAsLabel}
-            value={targetField.field.value}
-            onChange={targetField.field.onChange}
-            options={catalogs.removableTargets}
-            error={errors.removableMedia?.target?.message}
-          />
-          <p className="mt-2 max-w-md text-meta text-dim">{data.registeredAsHelp}</p>
+      <PolicyConditionsSection catalogs={catalogs}>
+        <div className="flex flex-col items-start gap-3">
+          <SectionChip>{data.deviceChip}</SectionChip>
+          <div className="flex items-start gap-2">
+            <RowConnector />
+            <div className="flex min-w-0 flex-col gap-2">
+              <PolicySelect
+                pill
+                id="policy-data-removable-target"
+                label={data.registeredAsLabel}
+                value={targetField.field.value}
+                onChange={targetField.field.onChange}
+                options={catalogs.removableTargets}
+                placeholder={data.registeredAsPlaceholder}
+                error={errors.removableMedia?.target?.message}
+              />
+              <p className="max-w-md text-meta text-dim">{data.registeredAsHelp}</p>
+            </div>
+          </div>
         </div>
-      </section>
+      </PolicyConditionsSection>
 
       <PolicyExceptionField
         name="removableMedia.exceptionIds"

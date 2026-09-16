@@ -7,6 +7,10 @@ import { z } from "zod";
  */
 const serverEnvSchema = z.object({
   GATEWAY_ORIGIN: z.string().url(),
+  // Secret used to encrypt/authenticate the short-lived `ps_user` display cookie
+  // (the sidebar's name + role). Display data only — never consulted for
+  // authorization, which always rides on the verified `ps_session` JWT.
+  USER_COOKIE_SECRET: z.string().min(32),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;

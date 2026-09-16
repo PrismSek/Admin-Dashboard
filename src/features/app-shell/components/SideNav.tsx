@@ -100,7 +100,7 @@ export function SideNav({
     >
       <CurrentUserSummary user={user} />
 
-      <ul className="flex-1 overflow-y-auto">
+      <ul className="flex-1">
         {appNavigation.map((item, index) => {
           if (item.kind === "leaf") {
             const active = isWithin(item.href, pathname);

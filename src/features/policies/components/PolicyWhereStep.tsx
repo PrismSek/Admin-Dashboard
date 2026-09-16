@@ -21,7 +21,11 @@ export function PolicyWhereStep({ channels }: { channels: PolicyCatalogs["channe
 
   return (
     <section id="policy-where" aria-label={policyBuilderSteps[2].title} className="mt-6">
-      <div className="flex flex-wrap items-center gap-3">
+      {/* Label on its own line, then the dropdown + "Enforced today" badge +
+          "One channel per policy" note sit inline on the row below it. */}
+      <span className="text-body font-medium text-label">{policyBuilderContent.where.channelLabel}</span>
+
+      <div className="mt-2 flex flex-wrap items-center gap-3">
         <Controller
           name="channel"
           control={control}
@@ -29,10 +33,15 @@ export function PolicyWhereStep({ channels }: { channels: PolicyCatalogs["channe
             <PolicySelect
               id="policy-where-channel"
               label={policyBuilderContent.where.channelLabel}
+              ariaLabel={policyBuilderContent.where.channelLabel}
               value={field.value}
               onChange={field.onChange}
               options={channels}
               error={errors.channel?.message}
+              placeholder={policyBuilderContent.where.channelPlaceholder}
+              searchable
+              searchPlaceholder={policyBuilderContent.where.searchChannels}
+              className="w-policy-select"
             />
           )}
         />

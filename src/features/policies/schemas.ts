@@ -13,6 +13,17 @@ export type PolicyState = z.infer<typeof policyStateSchema>;
 export const policyActionSchema = z.enum(["AuditOnly", "WarnJustify", "BlockWithOverride", "Block"]);
 export type PolicyAction = z.infer<typeof policyActionSchema>;
 
+/**
+ * The builder's "If we can't tell" fallback action, which — matching the
+ * artifact — starts *unanswered* (`""`, the "Choose one…" state) and must be
+ * answered before submit. Its requiredness is enforced in
+ * `policyAuthoringSchema`'s `superRefine`, not here, so a blank draft still
+ * validates structurally. `""` is the only non-`PolicyAction` member; the
+ * serializer only ever sees a validated (answered) value.
+ */
+export const authoringActionSchema = z.union([policyActionSchema, z.literal("")]);
+export type AuthoringAction = z.infer<typeof authoringActionSchema>;
+
 export const policyChannelIdSchema = z.enum([
   "USB",
   "Clipboard",
@@ -113,6 +124,19 @@ export const policyChannelsResponseSchema = z.object({
  * rows (15; see data.ts); `labels.ts` derives its `PolicyListItem` type from
  * this schema so the fixture data and the UI cannot drift apart.
  */
+/**
+ * Deployment health, as drawn in the Figma list capture (398:16105). The
+ * admin-policy gateway carries no deployment telemetry, so a live-API row has
+ * no health value — see `policyListItemSchema.health`, which is nullable.
+ */
+export const healthValueSchema = z.enum([
+  "Healthy",
+  "Degraded",
+  "Approval pending",
+  "Stale",
+  "Not deployed",
+]);
+
 export const policyListItemSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -120,8 +144,10 @@ export const policyListItemSchema = z.object({
   lifecycle: z.enum(["enforced", "draft", "off"]),
   /** Enforcement mode label for an active policy; null (rendered "—") otherwise. */
   enforcementMode: z.string().nullable(),
-  /** Deployment health, as drawn in the Figma list capture (398:16105). */
-  health: z.enum(["Healthy", "Degraded", "Approval pending", "Stale", "Not deployed"]),
+  /** Deployment health. `null` (rendered "—") for a live-API row, since the
+   * gateway carries no deployment telemetry (`GET /v1/policies`'s `Policy` has
+   * no health field). The Figma fixture rows still carry a real value. */
+  health: healthValueSchema.nullable(),
   owner: z.string(),
   lastChange: z.string(),
 });
@@ -148,31 +174,79 @@ export const policyListItemSchema = z.object({
 export const policyChannelSchema = z.enum(["clipboard", "removable-media", "print", "desktop-apps"]);
 export type PolicyChannel = z.infer<typeof policyChannelSchema>;
 
+/**
+ * The builder's `channel` field, which starts *unselected* on a brand-new
+ * policy (the "Select channel" placeholder state — `channel: ""`). A real
+ * channel is required to submit, enforced in `policyAuthoringSchema`'s
+ * `superRefine` rather than here, so an empty draft validates structurally and
+ * the requiredness surfaces as a friendly field error on submit. `""` is the
+ * only non-`PolicyChannel` member; the four channel editors and the serializer
+ * treat it as "no channel chosen yet".
+ */
+export const authoringChannelSchema = z.union([policyChannelSchema, z.literal("")]);
+export type AuthoringChannel = z.infer<typeof authoringChannelSchema>;
+
 /** The builder's "Deploy as" menu (397:15047/397:15048/397:15406) — identical
  * vocabulary to `policyStateSchema`, kept as its own export because it names
  * a builder *field*, not the gateway lifecycle itself. */
 export const deployAsSchema = policyStateSchema;
 
-/** Clipboard channel's "DESTINATION" section (`Class is` / `Collection is`),
- * catalogued by `destinationClasses` / `collections` in `data.ts`. */
+/**
+ * One row of the CONTENT block (the artifact's `Finding │ <name> │ <confidence>`
+ * pill). A row names a finding — free text the admin types — plus the
+ * `minimumConfidence` it must hit. Both are plain strings; an empty
+ * `findingType` means "not filled in yet", and the "at least one real
+ * condition" rule lives in `superRefine`.
+ */
+export const conditionRowSchema = z.object({
+  findingType: z.string(),
+  minimumConfidence: z.string(),
+});
+export type ConditionRow = z.infer<typeof conditionRowSchema>;
+
+/** Whether a condition row carries a real pick (so empty placeholder rows can
+ * be dropped before serializing / counting / reading-as). */
+export function isConditionRowFilled(row: ConditionRow): boolean {
+  return row.findingType.trim() !== "";
+}
+
+/**
+ * Clipboard channel's "PASTE TARGET" section, catalogued by `pasteTargets` in
+ * `data.ts`. The admin names where a paste may land (`Paste into`) and what
+ * kind of paste fires the rule (`Fires when`).
+ *
+ * All three are plain strings/arrays with neutral defaults ("any target" =
+ * empty `targetIds`, `firesWhen: "text"`), so an unedited draft — clipboard
+ * selected or not — always validates: matching wherever a paste lands is a
+ * valid policy, so there is no required field here (unlike the other channels'
+ * "target" gate in `superRefine`).
+ */
 export const clipboardRuleSchema = z.object({
-  destinationClass: z.string().min(1),
-  collectionIds: z.array(z.string()),
+  /** The "Paste into" match operator — "one-of" (only these targets) or
+   * "not-one-of" (everywhere except them). Only meaningful once `targetIds` is
+   * non-empty. */
+  targetOp: z.string(),
+  targetIds: z.array(z.string()),
+  /** What kind of paste fires the rule — "text" / "file-or-image" / "anything". */
+  firesWhen: z.string(),
 });
 export type ClipboardRule = z.infer<typeof clipboardRuleSchema>;
 
 /** Removable media channel's "Registered as" field (563:4823), catalogued by
- * `removableTargets` in `data.ts`. */
+ * `removableTargets` in `data.ts`. `target` is required only when removable
+ * media is the selected channel — see `clipboardRuleSchema` and the
+ * `superRefine` on `policyAuthoringSchema`. */
 export const removableMediaRuleSchema = z.object({
-  target: z.string().min(1),
+  target: z.string(),
   exceptionIds: z.array(z.string()),
 });
 export type RemovableMediaRule = z.infer<typeof removableMediaRuleSchema>;
 
 /** Print channel's "Printer is" field (563:7670), catalogued by
- * `printerTargets` in `data.ts`. */
+ * `printerTargets` in `data.ts`. `target` is required only when print is the
+ * selected channel — see the `superRefine` on `policyAuthoringSchema`. */
 export const printRuleSchema = z.object({
-  target: z.string().min(1),
+  target: z.string(),
   exceptionIds: z.array(z.string()),
 });
 export type PrintRule = z.infer<typeof printRuleSchema>;
@@ -194,15 +268,20 @@ const policyAuthoringBaseSchema = z.object({
    * UI, not the field's presence in the form values. */
   description: z.string().trim().max(500),
   /** "Applies to" (Who step) — an audience catalog id (`data.ts`'s
-   * `audiences`). Membership itself is resolved by the backend (see
-   * `policyBuilderContent.who.scopeHelp`), so this is just the selected id. */
+   * `audiences`). Starts unselected (`""`, the "Select audience" placeholder);
+   * required on submit via `.min(1)` — the Who step is always visible, so the
+   * error attaches to a control the admin can see (unlike the hidden channel
+   * targets, which are gated in `superRefine`). */
   appliesTo: z.string().min(1),
-  /** "Channel" (Where step) — exactly one channel per policy. */
-  channel: policyChannelSchema,
-  /** "Conditions" (Data step) — "Matches conditions" vs. "Any content". */
+  /** "Channel" (Where step) — exactly one channel per policy, starting
+   * unselected (`""`). Required on submit via `superRefine`, not here. */
+  channel: authoringChannelSchema,
+  /** "Conditions" (Data step) — "Matches conditions" vs. "Any content", plus the
+   * `allOf` group of condition rows (every row must match). Each row names a
+   * finding. */
   content: z.object({
     mode: z.enum(["specific", "any"]),
-    findingIds: z.array(z.string()),
+    allOf: z.array(conditionRowSchema),
   }),
   /** All four channel sub-objects are always present, independent of the
    * selected `channel` — the hidden three stay populated with the admin's
@@ -213,32 +292,77 @@ const policyAuthoringBaseSchema = z.object({
   removableMedia: removableMediaRuleSchema,
   print: printRuleSchema,
   desktopApps: desktopAppRuleSchema,
-  /** Enforcement & Message step. */
+  /**
+   * Enforcement & Message step, matching the artifact's card:
+   *   - `action` — what happens on a match (the four-value action catalog).
+   *   - `onUnknown` — the required "If we can't tell" fallback, starting
+   *     unanswered (`""`); required on submit via `superRefine`.
+   *   - `exception` — the "Let it through if" escape hatch. A catalog id
+   *     (`"none"` by default); only meaningful for the channels that draw one
+   *     (removable media / print / desktop apps) and only when `action` isn't
+   *     `AuditOnly`. Stored as a plain string; validity is a display concern,
+   *     not a schema one.
+   *   - `reasonCode` / `message` — the MESSAGE block, shown and required only
+   *     when `action` isn't `AuditOnly` (Audit only shows nothing to the
+   *     person). Gated in `superRefine`, so they can stay empty under
+   *     `AuditOnly`.
+   */
   enforcement: z.object({
     action: policyActionSchema,
-    onUnknown: policyActionSchema,
-    reasonCode: z.string().trim().min(1).max(64),
-    message: z.string().trim().min(1).max(500),
-  }),
-  /** End-user Notification step. */
-  notification: z.object({
-    enabled: z.boolean(),
-    title: z.string().max(120),
+    onUnknown: authoringActionSchema,
+    exception: z.string(),
+    reasonCode: z.string().max(64),
     message: z.string().max(500),
+  }),
+  /**
+   * End-user Notification step. Matches the artifact's design: a delivery
+   * `channel` ("Tell the team via" — none / slack / teams / email / endpoint)
+   * and one automated `remediation` ("When issue is detected" — none /
+   * engage-assignee / remove-public-link / apply-label). Both are catalog ids
+   * (see `notificationChannels` / `remediations` in `content.ts`); a fresh
+   * policy starts at "none" / "none" (no one told, nothing automated), which is
+   * always valid, so no `superRefine` gate is needed.
+   */
+  notification: z.object({
+    channel: z.string(),
+    remediation: z.string(),
   }),
   /** Finish step's "Deploy as:" menu. */
   deployAs: deployAsSchema,
 });
 
 export const policyAuthoringSchema = policyAuthoringBaseSchema.superRefine((values, ctx) => {
-  if (values.content.mode === "specific" && values.content.findingIds.length === 0) {
+  // A channel must be chosen before any channel-scoped rule below can apply.
+  if (values.channel === "") {
+    ctx.addIssue({ code: "custom", path: ["channel"], message: "Select a channel." });
+  }
+
+  // The CONTENT block lives inside each channel's Data editor, so its
+  // conditions-required rule only applies once a channel is on screen. At least
+  // one filled row in the required `allOf` group (a named finding).
+  if (
+    values.channel !== "" &&
+    values.content.mode === "specific" &&
+    !values.content.allOf.some(isConditionRowFilled)
+  ) {
     ctx.addIssue({
       code: "custom",
-      path: ["content", "findingIds"],
-      message: "Add at least one finding, or switch to Any content.",
+      path: ["content", "allOf"],
+      message: "Add at least one condition, or switch to Any content.",
     });
   }
 
+  // Each channel requires only its own destination/target. The other three
+  // channels' rule objects stay blank in the form (the admin never sees them),
+  // so requiring them would block a submit on invisible fields. Clipboard has
+  // no required target — matching wherever a paste lands ("any target") is a
+  // valid policy — so it needs no gate here.
+  if (values.channel === "removable-media" && values.removableMedia.target === "") {
+    ctx.addIssue({ code: "custom", path: ["removableMedia", "target"], message: "Select a device registration." });
+  }
+  if (values.channel === "print" && values.print.target === "") {
+    ctx.addIssue({ code: "custom", path: ["print", "target"], message: "Select a printer." });
+  }
   if (values.channel === "desktop-apps" && values.desktopApps.applicationIds.length === 0) {
     ctx.addIssue({
       code: "custom",
@@ -247,19 +371,33 @@ export const policyAuthoringSchema = policyAuthoringBaseSchema.superRefine((valu
     });
   }
 
-  if (values.notification.enabled) {
-    if (values.notification.title.trim().length === 0) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["notification", "title"],
-        message: "Add a notification title, or turn the notification off.",
-      });
+  // "If we can't tell" is mandatory — left unset the engine would silently
+  // audit, so the admin must say it on purpose (the artifact's Required badge
+  // and disabled Create button).
+  if (values.enforcement.onUnknown === "") {
+    ctx.addIssue({
+      code: "custom",
+      path: ["enforcement", "onUnknown"],
+      message: "Choose what happens when we can't tell.",
+    });
+  }
+
+  // The MESSAGE block (reason code + what the person sees) exists whenever the
+  // person is interrupted — by the action, OR by the "if we can't tell" fallback
+  // when it warns/blocks — since either shows them a message. "Audit only" shows
+  // nothing. Kept in lockstep with the component's visibility so a shown field
+  // is always required and a hidden one never is.
+  const onUnknownInterrupts =
+    values.enforcement.onUnknown !== "" && values.enforcement.onUnknown !== "AuditOnly";
+  if (values.enforcement.action !== "AuditOnly" || onUnknownInterrupts) {
+    if (values.enforcement.reasonCode.trim().length === 0) {
+      ctx.addIssue({ code: "custom", path: ["enforcement", "reasonCode"], message: "Add a reason code." });
     }
-    if (values.notification.message.trim().length === 0) {
+    if (values.enforcement.message.trim().length === 0) {
       ctx.addIssue({
         code: "custom",
-        path: ["notification", "message"],
-        message: "Add a notification message, or turn the notification off.",
+        path: ["enforcement", "message"],
+        message: "Add the message the end user sees.",
       });
     }
   }

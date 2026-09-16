@@ -26,27 +26,27 @@ test.describe("Policy builder — channel-specific Data step", () => {
     const dataSection = page.getByRole("region", { name: "Data" });
 
     // Default channel is Clipboard (authoring-defaults.ts).
-    await expect(dataSection.getByRole("combobox", { name: "Class is" })).toBeVisible();
-    await expect(dataSection.getByRole("group", { name: "Collection is" })).toBeVisible();
+    await expect(dataSection.getByRole("combobox", { name: "Paste into" })).toBeVisible();
+    await expect(dataSection.getByRole("combobox", { name: "Fires when" })).toBeVisible();
     await expect(dataSection.getByRole("combobox", { name: "Registered as" })).toHaveCount(0);
     await expect(dataSection.getByRole("combobox", { name: "Printer is" })).toHaveCount(0);
     await expect(dataSection.getByRole("button", { name: "Choose applications" })).toHaveCount(0);
 
     await chooseFromPolicySelect(page, "policy-where-channel", "Removable media");
     await expect(dataSection.getByRole("combobox", { name: "Registered as" })).toBeVisible();
-    await expect(dataSection.getByRole("combobox", { name: "Class is" })).toHaveCount(0);
+    await expect(dataSection.getByRole("combobox", { name: "Paste into" })).toHaveCount(0);
     await expect(dataSection.getByRole("combobox", { name: "Printer is" })).toHaveCount(0);
     await expect(dataSection.getByRole("button", { name: "Choose applications" })).toHaveCount(0);
 
     await chooseFromPolicySelect(page, "policy-where-channel", "Print");
     await expect(dataSection.getByRole("combobox", { name: "Printer is" })).toBeVisible();
-    await expect(dataSection.getByRole("combobox", { name: "Class is" })).toHaveCount(0);
+    await expect(dataSection.getByRole("combobox", { name: "Paste into" })).toHaveCount(0);
     await expect(dataSection.getByRole("combobox", { name: "Registered as" })).toHaveCount(0);
     await expect(dataSection.getByRole("button", { name: "Choose applications" })).toHaveCount(0);
 
     await chooseFromPolicySelect(page, "policy-where-channel", "Desktop apps");
     await expect(dataSection.getByRole("button", { name: "Choose applications" })).toBeVisible();
-    await expect(dataSection.getByRole("combobox", { name: "Class is" })).toHaveCount(0);
+    await expect(dataSection.getByRole("combobox", { name: "Paste into" })).toHaveCount(0);
     await expect(dataSection.getByRole("combobox", { name: "Registered as" })).toHaveCount(0);
     await expect(dataSection.getByRole("combobox", { name: "Printer is" })).toHaveCount(0);
   });
@@ -67,16 +67,20 @@ test.describe("Policy builder — field families", () => {
     await chooseFromPolicySelect(page, "policy-enforcement-onUnknown", "Audit only");
     await expect(page.locator("#policy-enforcement-onUnknown")).toHaveText(/Audit only/);
 
-    // Clipboard Destination class + adding a Collection (Data step; channel
-    // is still the default "clipboard"). "any collection" also appears
-    // inside the help sentence below ('Left on "any collection" the rule
-    // matches…'), so this is scoped to the exact status paragraph.
-    await chooseFromPolicySelect(page, "policy-data-clipboard-destination-class", "Personal or foreign");
-    await expect(page.getByText(policyBuilderContent.data.anyCollection, { exact: true })).toBeVisible();
-    await chooseFromPolicySelect(page, "policy-data-clipboard-add-collection", "Sanctioned cloud storage");
-    await page.getByRole("button", { name: policyBuilderContent.data.addCollection }).click();
-    await expect(page.getByText("Sanctioned cloud storage")).toBeVisible();
-    await expect(page.getByText(policyBuilderContent.data.oneOf, { exact: true })).toBeVisible();
+    // Clipboard PASTE TARGET row (Data step; channel is still the default
+    // "clipboard"): the "Paste into" operator pill ("one of") next to a
+    // category-tagged targets multi-select summarising as "any target".
+    await expect(page.locator("#policy-data-clipboard-target-op")).toHaveText(/one of/);
+    const targetSelect = page.getByRole("button", { name: policyBuilderContent.data.targetSelectLabel });
+    await expect(targetSelect).toContainText(policyBuilderContent.data.anyTarget);
+    // Open the multi-select and pick one target; the trigger then summarises it.
+    await targetSelect.click();
+    await page
+      .getByRole("listbox", { name: policyBuilderContent.data.targetSelectLabel })
+      .getByRole("option", { name: /Messengers/ })
+      .click();
+    await page.keyboard.press("Escape");
+    await expect(targetSelect).toContainText("Messengers");
 
     // Desktop apps' multi-select (switch channel, then add one more app).
     await chooseFromPolicySelect(page, "policy-where-channel", "Desktop apps");

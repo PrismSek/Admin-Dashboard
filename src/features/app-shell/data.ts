@@ -1,5 +1,8 @@
 import "server-only";
 
+import { readDisplayUser } from "@/features/auth/display-user";
+import { roleLabels } from "@/features/settings/roles";
+
 /**
  * Tenant- and session-level data for the app shell.
  *
@@ -30,7 +33,36 @@ export type Organization = {
   language: string;
 };
 
+/** Up to two initials from a display name, e.g. "Jae Sanders" → "JS". */
+function initialsOf(name: string): string {
+  const letters = name
+    .trim()
+    .split(/\s+/)
+    .map((part) => part[0])
+    .filter(Boolean);
+  return (letters[0] ?? "") + (letters[letters.length - 1] ?? "");
+}
+
+/**
+ * The signed-in user for the app shell, from the `ps_user` display cookie the
+ * login/refresh routes mint from the gateway's session response.
+ *
+ * Falls back to a fixture when the cookie is absent — an unauthenticated render,
+ * a Google session (whose callback carries only tokens, not a user object), or
+ * local dev without a gateway — so the shell still renders. Never used for
+ * authorization: that always rides on the verified `ps_session` JWT.
+ */
 export async function getCurrentUser(): Promise<CurrentUser> {
+  const display = await readDisplayUser();
+  if (display) {
+    return {
+      name: display.name,
+      email: display.email,
+      initials: initialsOf(display.name).toUpperCase(),
+      role: roleLabels[display.role],
+    };
+  }
+
   return {
     name: "Jae Sanders",
     email: "jae.sanders@northwind.example",

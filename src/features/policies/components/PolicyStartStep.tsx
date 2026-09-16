@@ -36,6 +36,7 @@ export function PolicyStartStep() {
         <AppInput
           id={NAME_ID}
           {...register("name")}
+          placeholder={policyBuilderContent.start.namePlaceholder}
           aria-invalid={Boolean(errors.name)}
           aria-describedby={errors.name ? NAME_ERROR_ID : undefined}
         />

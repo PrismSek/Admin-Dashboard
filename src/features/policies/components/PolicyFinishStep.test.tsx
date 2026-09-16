@@ -18,8 +18,11 @@ const POLICY_CATALOGS: PolicyCatalogs = {
   audiences: [{ value: "finance-all-stuff", label: "Finance-All Stuff" }],
   channels: [{ value: "clipboard", label: "Clipboard", icon: "clipboard" }],
   findings: [{ value: "aadhaar-number", label: "Aadhaar number" }],
-  destinationClasses: [{ value: "personal-or-foreign", label: "Personal or foreign" }],
-  collections: [{ value: "sanctioned-cloud-storage", label: "Sanctioned cloud storage" }],
+  confidences: [
+    { value: "High", label: "High confidence" },
+    { value: "Low", label: "Any confidence" },
+  ],
+  pasteTargets: [{ value: "messengers", label: "Messengers", category: "apps" }],
   removableTargets: [{ value: "it-issued-encrypted-usb", label: "IT-issued encrypted USB" }],
   printerTargets: [{ value: "unknown", label: "Unknown" }],
   applications: [{ value: "whatsapp", label: "WhatsApp", icon: "application" }],
@@ -99,6 +102,29 @@ describe("PolicyFinishStep (via PolicyBuilder)", () => {
   it("submits a valid form and shows the local-only outcome instead of the button row", async () => {
     const user = userEvent.setup();
     render(<PolicyBuilder catalogs={POLICY_CATALOGS} />);
+
+    // The form opens blank, so a valid submit means filling the required
+    // fields first: identity, audience, a channel (which reveals its
+    // Conditions card), that channel's destination, and the required
+    // "If we can't tell" fallback. The default "Audit only" action shows the
+    // person nothing, so the MESSAGE block (reason code / they see) is hidden
+    // and not required.
+    await user.type(screen.getByRole("textbox", { name: "Policy name" }), "Clipboard protection");
+
+    await user.click(screen.getByRole("combobox", { name: "Applies to" }));
+    await user.click(screen.getByRole("option", { name: "Finance-All Stuff" }));
+
+    await user.click(screen.getByRole("combobox", { name: "Channel" }));
+    await user.click(screen.getByRole("option", { name: "Clipboard" }));
+
+    // Switch conditions to "Any content" so no finding is required. Clipboard's
+    // PASTE TARGET defaults to "any target" (no required field), so nothing else
+    // in the Data step needs filling.
+    await user.click(screen.getByRole("button", { name: "Any content" }));
+
+    // Answer the required "If we can't tell" fallback.
+    await user.click(screen.getByRole("combobox", { name: "Do this instead" }));
+    await user.click(screen.getByRole("option", { name: "Audit only" }));
 
     await user.click(screen.getByRole("button", { name: "Create" }));
 

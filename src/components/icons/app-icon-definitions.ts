@@ -19,12 +19,17 @@ export const APP_ICON_NAMES = [
   "close",
   "check",
   "minus",
+  "warning",
   "info",
   "clipboard",
   "removable-media",
   "print",
   "desktop-apps",
   "application",
+  "dash",
+  "mail",
+  "link-off",
+  "tag",
 ] as const;
 
 export type AppIconName = (typeof APP_ICON_NAMES)[number];
@@ -37,7 +42,12 @@ export type AppIconShape =
       fillRule?: "evenodd";
       clipRule?: "evenodd";
     }
-  | { kind: "circle"; cx: number; cy: number; r: number; fill?: string };
+  | { kind: "circle"; cx: number; cy: number; r: number; fill?: string }
+  /** An outline (stroke, not fill) path — the lucide-style glyphs used by the
+   * End-user notification remediation cards. Drawn `fill="none"` with a rounded
+   * 2px stroke in `currentColor`; each icon that uses these sets its own 24-unit
+   * `viewBox` (the app's Carbon icons are 32-unit and filled). */
+  | { kind: "stroke"; d: string };
 
 export type AppIconDefinition = {
   viewBox: string;
@@ -113,6 +123,22 @@ export const APP_ICON_DEFINITIONS: Record<AppIconName, AppIconDefinition> = {
   close: { viewBox, body: [{ kind: "path", d: "M17.414 16L24 9.414L22.586 8L16 14.586L9.414 8L8 9.414L14.586 16L8 22.586L9.414 24L16 17.414L22.586 24L24 22.586z" }] },
   check: { viewBox, body: [{ kind: "path", d: "m13 24l-9-9l1.414-1.414L13 21.171L26.586 7.586L28 9z" }] },
   minus: { viewBox, body: [{ kind: "path", d: "M8 15h16v2H8z" }] },
+  // Filled warning triangle for the "Degraded" deployment-health value (Figma
+  // list capture 398:16105 — an exclamation knocked out of a filled triangle,
+  // matching the same warning glyph the outline `issues` mark uses). Drawn as
+  // one evenodd path so the bar and dot read as the page ground, letting the
+  // cell tint the whole mark with a single health-state colour token.
+  warning: {
+    viewBox,
+    body: [
+      {
+        kind: "path",
+        fillRule: "evenodd",
+        clipRule: "evenodd",
+        d: "M16.887 3.522a1 1 0 0 0-1.774 0l-13 25A1 1 0 0 0 3 30h26a1 1 0 0 0 .887-1.478zM15 12h2v9h-2zm1 11.5a1.5 1.5 0 1 1-1.5 1.5a1.5 1.5 0 0 1 1.5-1.5z",
+      },
+    ],
+  },
   info: {
     viewBox,
     body: [
@@ -155,6 +181,34 @@ export const APP_ICON_DEFINITIONS: Record<AppIconName, AppIconDefinition> = {
     viewBox,
     body: [
       { kind: "path", d: "M4 4h10v10H4zM18 4h10v10H18zM4 18h10v10H4zM18 18h10v10H18z" },
+    ],
+  },
+
+  // End-user notification remediation glyphs (24-unit lucide outlines) — the
+  // exact paths drawn on the artifact's remediation cards (None / Engage
+  // assignee / Remove public link / Apply label).
+  dash: { viewBox: "0 0 24 24", body: [{ kind: "stroke", d: "M5 12h14" }] },
+  mail: {
+    viewBox: "0 0 24 24",
+    body: [
+      { kind: "stroke", d: "M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z" },
+      { kind: "stroke", d: "m3 7 9 6 9-6" },
+    ],
+  },
+  "link-off": {
+    viewBox: "0 0 24 24",
+    body: [
+      { kind: "stroke", d: "M9 17H7A5 5 0 0 1 7 7h2" },
+      { kind: "stroke", d: "M15 7h2a5 5 0 0 1 3.9 8.1" },
+      { kind: "stroke", d: "M8 12h4" },
+      { kind: "stroke", d: "m2 2 20 20" },
+    ],
+  },
+  tag: {
+    viewBox: "0 0 24 24",
+    body: [
+      { kind: "stroke", d: "M20.6 13.4 12.4 5.2A2 2 0 0 0 11 4.6H5a1 1 0 0 0-1 1v6a2 2 0 0 0 .6 1.4l8.2 8.2a2 2 0 0 0 2.8 0l5-5a2 2 0 0 0 0-2.8z" },
+      { kind: "stroke", d: "M7.5 8.5h.01" },
     ],
   },
 };

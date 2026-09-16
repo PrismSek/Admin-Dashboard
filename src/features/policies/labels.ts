@@ -4,6 +4,7 @@ import type {
   PolicyAction,
   PolicyChannelId,
   PolicyState,
+  healthValueSchema,
   policyListItemSchema,
 } from "@/features/policies/schemas";
 
@@ -21,8 +22,9 @@ export type PolicyListItem = z.infer<typeof policyListItemSchema>;
 export type Lifecycle = PolicyListItem["lifecycle"];
 
 /** Deployment health, as drawn in the Figma list capture — separate telemetry
- * the admin-policy gateway itself does not carry. */
-export type Health = PolicyListItem["health"];
+ * the admin-policy gateway itself does not carry, so a live-API row's health is
+ * `null` (see `PolicyListItem["health"]`). This is the non-null value set. */
+export type Health = z.infer<typeof healthValueSchema>;
 
 export const lifecycleLabel: Record<Lifecycle, string> = {
   enforced: "Enforced",
