@@ -1,5 +1,5 @@
 import { policyBuilderContent } from "@/features/policies/content";
-import type { AuthoringAction, AuthoringChannel, PolicyAction } from "@/features/policies/schemas";
+import type { AuthoringAction, AuthoringChannel } from "@/features/policies/schemas";
 import type { PolicyCatalogOption, PolicyCatalogs } from "@/features/policies/types";
 
 const readsAs = policyBuilderContent.data.readsAs;
@@ -29,6 +29,10 @@ export function composeNotificationReadsAs(input: NotificationReadsAsInput): str
       return notification.readsAs.removeLink;
     case "apply-label":
       return notification.readsAs.applyLabel;
+    case "":
+      // Nothing chosen yet — nothing is pre-selected, so say so rather than
+      // implying "none" was picked.
+      return notification.readsAs.notDecided;
     case "none":
     default:
       return notification.readsAs.none;
@@ -56,7 +60,8 @@ export type ReadsAsInput = {
   /** Desktop apps "App is": the match operator + the chosen apps. */
   appOp: string;
   applicationIds: readonly string[];
-  action: PolicyAction;
+  /** The ACTION; `""` (unanswered) reads as "the action is not decided yet". */
+  action: AuthoringAction;
   /** The "If we can't tell" fallback; `""` (unanswered) reads as "not decided yet". */
   onUnknown: AuthoringAction;
 };
@@ -134,12 +139,7 @@ function destinationPhrase(input: ReadsAsInput, catalogs: PolicyCatalogs): strin
 export function composeReadsAs(input: ReadsAsInput, catalogs: PolicyCatalogs): string {
   const channelName = labelOf(catalogs.channels, input.channel);
   const channelLabel = channelName ? readsAs.channelName(channelName.toLowerCase()) : readsAs.channelFallback;
+  const action = input.action === "" ? readsAs.actionNotDecided : readsAs.actions[input.action];
   const fallback = input.onUnknown === "" ? readsAs.notDecided : readsAs.actions[input.onUnknown];
-  return readsAs.compose(
-    contentPhrase(input, catalogs),
-    channelLabel,
-    destinationPhrase(input, catalogs),
-    readsAs.actions[input.action],
-    fallback,
-  );
+  return readsAs.compose(contentPhrase(input, catalogs), channelLabel, destinationPhrase(input, catalogs), action, fallback);
 }

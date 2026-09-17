@@ -59,6 +59,8 @@ export function DesktopAppConditions({ catalogs }: { catalogs: PolicyCatalogs })
                 value={appOpField.field.value}
                 onChange={appOpField.field.onChange}
                 options={data.targetOperators}
+                placeholder={policyBuilderContent.chooseOne}
+                error={errors.desktopApps?.appOp?.message}
               />
               <CollectionSelect
                 value={chosen}
@@ -90,6 +92,8 @@ export function DesktopAppConditions({ catalogs }: { catalogs: PolicyCatalogs })
               value={firesWhenField.field.value}
               onChange={firesWhenField.field.onChange}
               options={data.appFiresWhenOptions}
+              placeholder={policyBuilderContent.chooseOne}
+              error={errors.desktopApps?.firesWhen?.message}
             />
             {firesWhenNote ? <p className="max-w-md text-meta text-dim">{firesWhenNote}</p> : null}
           </div>

@@ -46,11 +46,9 @@ export function PolicyConditionFields({ findings, confidences }: ConditionCatalo
   const allOf = allOfField.field.value;
   const filledCount = allOf.filter(isConditionRowFilled).length;
 
-  const defaultConfidence = confidences[0]?.value ?? "High";
-  const emptyRow = (): ConditionRow => ({
-    findingType: "",
-    minimumConfidence: defaultConfidence,
-  });
+  // A new row opens fully unanswered — nothing is pre-selected, so its
+  // confidence is picked alongside its finding.
+  const emptyRow = (): ConditionRow => ({ findingType: "", minimumConfidence: "" });
 
   const allOfError = errors.content?.allOf;
   const allOfErrorId = "policy-data-conditions-error";
@@ -183,6 +181,7 @@ function ConditionGroup({
                 value={row.minimumConfidence}
                 onChange={(next) => setRow(index, { minimumConfidence: next })}
                 options={catalogs.confidences}
+                placeholder={policyBuilderContent.chooseOne}
               />
             </div>
             <RemoveIconButton

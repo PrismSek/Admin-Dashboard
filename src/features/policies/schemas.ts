@@ -191,6 +191,12 @@ export type AuthoringChannel = z.infer<typeof authoringChannelSchema>;
  * a builder *field*, not the gateway lifecycle itself. */
 export const deployAsSchema = policyStateSchema;
 
+/** The builder's `deployAs` field — `deployAsSchema`'s vocabulary plus `""`,
+ * the unanswered "Choose one…" state a new policy opens on (nothing in the
+ * builder is pre-selected). Required on submit via `superRefine`. */
+export const authoringDeployAsSchema = z.union([deployAsSchema, z.literal("")]);
+export type AuthoringDeployAs = z.infer<typeof authoringDeployAsSchema>;
+
 /**
  * One row of the CONTENT block (the artifact's `Finding │ <name> │ <confidence>`
  * pill). A row names a finding — free text the admin types — plus the
@@ -215,11 +221,10 @@ export function isConditionRowFilled(row: ConditionRow): boolean {
  * `data.ts`. The admin names where a paste may land (`Paste into`) and what
  * kind of paste fires the rule (`Fires when`).
  *
- * All three are plain strings/arrays with neutral defaults ("any target" =
- * empty `targetIds`, `firesWhen: "text"`), so an unedited draft — clipboard
- * selected or not — always validates: matching wherever a paste lands is a
- * valid policy, so there is no required field here (unlike the other channels'
- * "target" gate in `superRefine`).
+ * The two dropdowns (`targetOp`, `firesWhen`) open unanswered (`""`) and are
+ * required — but only while clipboard is the selected channel (see
+ * `superRefine`). `targetIds` stays optional: an empty list means "any target",
+ * a valid policy.
  */
 export const clipboardRuleSchema = z.object({
   /** The "Paste into" match operator — "one-of" (only these targets) or
@@ -236,10 +241,11 @@ export type ClipboardRule = z.infer<typeof clipboardRuleSchema>;
  * Removable media channel's "DEVICE" section (Figma `563:3248`): the device
  * class (`Device is`), the registration match (`Registered as` — an operator +
  * a multi-select over `removableTargets`), and the transfer direction
- * (`Transfer is`). Like clipboard, every field has a neutral default and none
- * is required — "any list" (empty `registrationIds`) matches on device class
- * alone — so there is no `superRefine` gate. `exceptionIds` is the enforcement
- * escape hatch (its editor now lives in the Enforcement step).
+ * (`Transfer is`). The three dropdowns open unanswered (`""`) and are required
+ * while removable media is the selected channel (see `superRefine`); "any list"
+ * (empty `registrationIds`) stays valid and matches on device class alone.
+ * `exceptionIds` is the enforcement escape hatch (its editor now lives in the
+ * Enforcement step).
  */
 export const removableMediaRuleSchema = z.object({
   deviceClass: z.string(),
@@ -251,9 +257,8 @@ export const removableMediaRuleSchema = z.object({
 export type RemovableMediaRule = z.infer<typeof removableMediaRuleSchema>;
 
 /** Print channel's "Printer is" field (563:7670), catalogued by
- * `printerTargets` in `data.ts`. `target` always carries a value (it defaults to
- * "Unknown"), so — like clipboard's paste target — matching any queue is a valid
- * policy and it needs no `superRefine` gate. */
+ * `printerTargets` in `data.ts`. `target` opens unanswered (`""`) and is
+ * required while print is the selected channel (see `superRefine`). */
 export const printRuleSchema = z.object({
   target: z.string(),
   exceptionIds: z.array(z.string()),
@@ -308,22 +313,23 @@ const policyAuthoringBaseSchema = z.object({
   print: printRuleSchema,
   desktopApps: desktopAppRuleSchema,
   /**
-   * Enforcement & Message step, matching the artifact's card:
-   *   - `action` — what happens on a match (the four-value action catalog).
+   * Enforcement & Message step, matching the artifact's card. Nothing here is
+   * pre-selected:
+   *   - `action` — what happens on a match (the four-value action catalog),
+   *     starting unanswered (`""`); required on submit via `superRefine`.
    *   - `onUnknown` — the required "If we can't tell" fallback, starting
    *     unanswered (`""`); required on submit via `superRefine`.
-   *   - `exception` — the "Let it through if" escape hatch. A catalog id
-   *     (`"none"` by default); only meaningful for the channels that draw one
-   *     (removable media / print / desktop apps) and only when `action` isn't
-   *     `AuditOnly`. Stored as a plain string; validity is a display concern,
-   *     not a schema one.
+   *   - `exception` — the "Let it through if" escape hatch, a catalog id
+   *     starting unanswered (`""`). Drawn only once a real channel is chosen
+   *     and `action` interrupts the person, and required exactly then (see
+   *     `superRefine`).
    *   - `reasonCode` / `message` — the MESSAGE block, shown and required only
-   *     when `action` isn't `AuditOnly` (Audit only shows nothing to the
-   *     person). Gated in `superRefine`, so they can stay empty under
+   *     when the action (or the fallback) interrupts (Audit only shows nothing
+   *     to the person). Gated in `superRefine`, so they can stay empty under
    *     `AuditOnly`.
    */
   enforcement: z.object({
-    action: policyActionSchema,
+    action: authoringActionSchema,
     onUnknown: authoringActionSchema,
     exception: z.string(),
     reasonCode: z.string().max(64),
@@ -334,63 +340,82 @@ const policyAuthoringBaseSchema = z.object({
    * `channel` ("Tell the team via" — none / slack / teams / email / endpoint)
    * and one automated `remediation` ("When issue is detected" — none /
    * engage-assignee / remove-public-link / apply-label). Both are catalog ids
-   * (see `notificationChannels` / `remediations` in `content.ts`); a fresh
-   * policy starts at "none" / "none" (no one told, nothing automated), which is
-   * always valid, so no `superRefine` gate is needed.
+   * (see `notificationChannels` / `remediations` in `content.ts`). Both open
+   * unanswered (`""`) — "None" is an explicit choice, not a default — and are
+   * required on submit via `superRefine`.
    */
   notification: z.object({
     channel: z.string(),
     remediation: z.string(),
   }),
-  /** Finish step's "Deploy as:" menu. */
-  deployAs: deployAsSchema,
+  /** Finish step's "Deploy as:" menu — opens unanswered; required via `superRefine`. */
+  deployAs: authoringDeployAsSchema,
 });
 
 export const policyAuthoringSchema = policyAuthoringBaseSchema.superRefine((values, ctx) => {
+  const missing = (path: (string | number)[], message: string) =>
+    ctx.addIssue({ code: "custom", path, message });
+
   // A channel must be chosen before any channel-scoped rule below can apply.
-  if (values.channel === "") {
-    ctx.addIssue({ code: "custom", path: ["channel"], message: "Select a channel." });
-  }
+  if (values.channel === "") missing(["channel"], "Select a channel.");
 
-  // The CONTENT block lives inside each channel's Data editor, so its
-  // conditions-required rule only applies once a channel is on screen. At least
-  // one filled row in the required `allOf` group (a named finding).
-  if (
-    values.channel !== "" &&
-    values.content.mode === "specific" &&
-    !values.content.allOf.some(isConditionRowFilled)
-  ) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["content", "allOf"],
-      message: "Add at least one condition, or switch to Any content.",
+  // The CONTENT block lives inside each channel's Data editor, so its rules only
+  // apply once a channel is on screen: at least one filled row in the required
+  // `allOf` group (a named finding), and every named finding needs its minimum
+  // confidence — a still-empty placeholder row asks for neither.
+  if (values.channel !== "" && values.content.mode === "specific") {
+    if (!values.content.allOf.some(isConditionRowFilled)) {
+      missing(["content", "allOf"], "Add at least one condition, or switch to Any content.");
+    }
+    values.content.allOf.forEach((row, index) => {
+      if (isConditionRowFilled(row) && row.minimumConfidence === "") {
+        missing(["content", "allOf", index, "minimumConfidence"], "Choose a minimum confidence.");
+      }
     });
   }
 
-  // Each channel requires only its own destination/target. The other three
-  // channels' rule objects stay blank in the form (the admin never sees them),
-  // so requiring them would block a submit on invisible fields. Clipboard and
-  // print have no required target — the paste-target and printer selects always
-  // carry a value (clipboard's "any target", print's "Unknown"), so any queue is
-  // a valid policy and neither needs a gate here. Desktop apps is the exception:
-  // its app picker starts empty and must name at least one app.
-  if (values.channel === "desktop-apps" && values.desktopApps.applicationIds.length === 0) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["desktopApps", "applicationIds"],
-      message: "Choose at least one app.",
-    });
+  // Nothing opens pre-selected, so each channel's own dropdowns are required —
+  // but only the *selected* channel's. The other three channels' rule objects
+  // stay blank in the form (the admin never sees them), so requiring them would
+  // block a submit on invisible fields. The multi-selects are not gated here: an
+  // empty paste-target / registration list means "any" (a valid policy); only
+  // desktop apps must name at least one app, since it watches named apps.
+  switch (values.channel) {
+    case "clipboard":
+      if (values.clipboard.targetOp === "") missing(["clipboard", "targetOp"], "Choose how paste targets match.");
+      if (values.clipboard.firesWhen === "") missing(["clipboard", "firesWhen"], "Choose what kind of paste fires the rule.");
+      break;
+    case "removable-media":
+      if (values.removableMedia.deviceClass === "") missing(["removableMedia", "deviceClass"], "Choose a device class.");
+      if (values.removableMedia.registrationOp === "") {
+        missing(["removableMedia", "registrationOp"], "Choose how registration lists match.");
+      }
+      if (values.removableMedia.transfer === "") missing(["removableMedia", "transfer"], "Choose a transfer direction.");
+      break;
+    case "print":
+      if (values.print.target === "") missing(["print", "target"], "Choose which printers match.");
+      break;
+    case "desktop-apps":
+      if (values.desktopApps.appOp === "") missing(["desktopApps", "appOp"], "Choose how apps match.");
+      if (values.desktopApps.applicationIds.length === 0) missing(["desktopApps", "applicationIds"], "Choose at least one app.");
+      if (values.desktopApps.firesWhen === "") missing(["desktopApps", "firesWhen"], "Choose what fires the rule.");
+      break;
+    case "":
+      break;
   }
 
-  // "If we can't tell" is mandatory — left unset the engine would silently
-  // audit, so the admin must say it on purpose (the artifact's Required badge
-  // and disabled Create button).
-  if (values.enforcement.onUnknown === "") {
-    ctx.addIssue({
-      code: "custom",
-      path: ["enforcement", "onUnknown"],
-      message: "Choose what happens when we can't tell.",
-    });
+  // ACTION opens unanswered and is required; so is "If we can't tell" — left
+  // unset the engine would silently audit, so the admin must say it on purpose
+  // (the artifact's Required badge and disabled Create button).
+  if (values.enforcement.action === "") missing(["enforcement", "action"], "Choose what happens on a match.");
+  if (values.enforcement.onUnknown === "") missing(["enforcement", "onUnknown"], "Choose what happens when we can't tell.");
+
+  // An unanswered action doesn't interrupt anything yet — only a chosen
+  // warn/block does. The EXCEPTION escape hatch is drawn exactly when a real
+  // channel is chosen AND the action interrupts, so that is when it is required.
+  const actionInterrupts = values.enforcement.action !== "" && values.enforcement.action !== "AuditOnly";
+  if (values.channel !== "" && actionInterrupts && values.enforcement.exception === "") {
+    missing(["enforcement", "exception"], "Choose whether anything is let through.");
   }
 
   // The MESSAGE block (reason code + what the person sees) exists whenever the
@@ -400,18 +425,19 @@ export const policyAuthoringSchema = policyAuthoringBaseSchema.superRefine((valu
   // is always required and a hidden one never is.
   const onUnknownInterrupts =
     values.enforcement.onUnknown !== "" && values.enforcement.onUnknown !== "AuditOnly";
-  if (values.enforcement.action !== "AuditOnly" || onUnknownInterrupts) {
-    if (values.enforcement.reasonCode.trim().length === 0) {
-      ctx.addIssue({ code: "custom", path: ["enforcement", "reasonCode"], message: "Add a reason code." });
-    }
+  if (actionInterrupts || onUnknownInterrupts) {
+    if (values.enforcement.reasonCode.trim().length === 0) missing(["enforcement", "reasonCode"], "Add a reason code.");
     if (values.enforcement.message.trim().length === 0) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["enforcement", "message"],
-        message: "Add the message the end user sees.",
-      });
+      missing(["enforcement", "message"], "Add the message the end user sees.");
     }
   }
+
+  // The End-user notification choices and the deploy state open unanswered too.
+  if (values.notification.channel === "") missing(["notification", "channel"], "Choose how the team is told.");
+  if (values.notification.remediation === "") {
+    missing(["notification", "remediation"], "Choose what runs when an issue is detected.");
+  }
+  if (values.deployAs === "") missing(["deployAs"], "Choose a deploy state.");
 });
 
 export type PolicyAuthoringValues = z.infer<typeof policyAuthoringSchema>;

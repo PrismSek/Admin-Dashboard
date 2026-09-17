@@ -13,14 +13,17 @@ const data = policyBuilderContent.data;
 
 /**
  * Print channel's Conditions card PRINTER block — "Printer is"
- * (`print.target`) — Figma `563:6975` family. The select defaults to "Unknown"
- * and is never empty, so no placeholder or required error is wired. Registers
- * only `print.*` (the shared `content.*` block is owned by
+ * (`print.target`) — Figma `563:6975` family. Nothing is pre-selected: the
+ * select opens on "Choose one…" and is required while print is the channel.
+ * Registers only `print.*` (the shared `content.*` block is owned by
  * `PolicyConditionsSection`); the enforcement escape hatch (`exceptionIds`) is
  * edited in the Enforcement step.
  */
 export function PrintConditions({ catalogs }: { catalogs: PolicyCatalogs }) {
-  const { control } = useFormContext<PolicyAuthoringValues>();
+  const {
+    control,
+    formState: { errors },
+  } = useFormContext<PolicyAuthoringValues>();
   const targetField = useController({ control, name: "print.target" });
 
   return (
@@ -37,6 +40,8 @@ export function PrintConditions({ catalogs }: { catalogs: PolicyCatalogs }) {
               value={targetField.field.value}
               onChange={targetField.field.onChange}
               options={catalogs.printerTargets}
+              placeholder={policyBuilderContent.chooseOne}
+              error={errors.print?.target?.message}
             />
             <p className="max-w-md text-meta text-dim">{data.printerHelp}</p>
           </div>

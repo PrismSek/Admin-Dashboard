@@ -101,6 +101,16 @@ describe("composeReadsAs", () => {
     );
   });
 
+  it("reads 'the action is not decided yet' while the action is unanswered", () => {
+    const sentence = composeReadsAs(
+      { ...BASE, contentMode: "any", channel: "print", printTarget: "unknown", action: "" },
+      CATALOGS,
+    );
+    expect(sentence).toBe(
+      "When any content leaves through the print channel to unknown printers, the action is not decided yet. If we can't tell, audit it.",
+    );
+  });
+
   it("reads 'not decided yet' when the fallback is unanswered", () => {
     const sentence = composeReadsAs({ ...BASE, channel: "print", printTarget: "unknown", onUnknown: "" }, CATALOGS);
     expect(sentence).toContain("If we can't tell, not decided yet.");
@@ -122,6 +132,12 @@ describe("composeReadsAs", () => {
 });
 
 describe("composeNotificationReadsAs", () => {
+  it("says nothing is decided yet while no remediation has been chosen", () => {
+    expect(composeNotificationReadsAs({ remediation: "", channel: "", reasonCode: "" })).toBe(
+      "Nothing is decided yet — choose what runs when an issue is detected.",
+    );
+  });
+
   it("states that nothing runs automatically when the remediation is none", () => {
     expect(composeNotificationReadsAs({ remediation: "none", channel: "slack", reasonCode: "DLP-X" })).toBe(
       "No automated remediation runs; the issue is recorded and left for a person to pick up.",

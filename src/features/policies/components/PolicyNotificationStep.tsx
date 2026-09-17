@@ -4,6 +4,7 @@ import { Controller, useFormContext, useWatch } from "react-hook-form";
 
 import { AppIcon, type AppIconName } from "@/components/icons/AppIcon";
 import { BrandLogo, type BrandLogoName } from "@/components/icons/BrandLogo";
+import { FieldError } from "@/components/ui/form-field";
 import { RowConnector, SectionChip } from "@/features/policies/components/conditions-ui";
 import { PolicySelect } from "@/features/policies/components/PolicySelect";
 import { policyBuilderContent, policyBuilderSteps } from "@/features/policies/content";
@@ -20,9 +21,16 @@ const notification = policyBuilderContent.notification;
  * (None / Engage assignee / Remove public link / Apply label), each card
  * carrying the integrations it touches. A live "Reads as —" line restates the
  * choice. Backed by the schema's `notification: { channel, remediation }`.
+ * Nothing is pre-selected: the pill opens on "Choose one…" and no radio is
+ * checked until the admin picks ("None" is an explicit choice).
  */
 export function PolicyNotificationStep() {
-  const { control } = useFormContext<PolicyAuthoringValues>();
+  const {
+    control,
+    formState: { errors },
+  } = useFormContext<PolicyAuthoringValues>();
+  const remediationError = errors.notification?.remediation?.message;
+  const remediationErrorId = "policy-notification-remediation-error";
 
   const channel = useWatch<PolicyAuthoringValues, "notification.channel">({ control, name: "notification.channel" });
   const remediation = useWatch<PolicyAuthoringValues, "notification.remediation">({
@@ -56,6 +64,8 @@ export function PolicyNotificationStep() {
                     value={field.value}
                     onChange={field.onChange}
                     options={notification.channels}
+                    placeholder={policyBuilderContent.chooseOne}
+                    error={errors.notification?.channel?.message}
                   />
                 )}
               />
@@ -70,18 +80,26 @@ export function PolicyNotificationStep() {
             name="notification.remediation"
             control={control}
             render={({ field }) => (
-              <div role="radiogroup" aria-label={notification.remediationGroupLabel} className="flex w-full flex-col gap-2">
-                {notification.remediations.map((option) => (
-                  <RemediationCard
-                    key={option.value}
-                    icon={option.icon}
-                    label={option.label}
-                    description={option.description}
-                    badges={option.badges}
-                    selected={field.value === option.value}
-                    onSelect={() => field.onChange(option.value)}
-                  />
-                ))}
+              <div className="flex w-full flex-col gap-2">
+                <div
+                  role="radiogroup"
+                  aria-label={notification.remediationGroupLabel}
+                  aria-describedby={remediationError ? remediationErrorId : undefined}
+                  className="flex w-full flex-col gap-2"
+                >
+                  {notification.remediations.map((option) => (
+                    <RemediationCard
+                      key={option.value}
+                      icon={option.icon}
+                      label={option.label}
+                      description={option.description}
+                      badges={option.badges}
+                      selected={field.value === option.value}
+                      onSelect={() => field.onChange(option.value)}
+                    />
+                  ))}
+                </div>
+                {remediationError ? <FieldError id={remediationErrorId}>{remediationError}</FieldError> : null}
               </div>
             )}
           />

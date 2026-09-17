@@ -41,6 +41,45 @@ const POLICY_CATALOGS: PolicyCatalogs = {
   ],
 };
 
+/**
+ * Answers every required choice so the form satisfies `policyAuthoringSchema`:
+ * identity, audience, a channel and its own dropdowns, the conditions, the
+ * action and its required "If we can't tell" fallback, the notification
+ * choices, and the deploy state. "Audit only" shows the person nothing, so the
+ * MESSAGE block stays hidden and isn't required. Both Create and View JSON gate
+ * on this same completeness, so tests that need either enabled fill the form
+ * with this helper first.
+ */
+async function completeValidPolicy(user: ReturnType<typeof userEvent.setup>) {
+  await user.type(screen.getByRole("textbox", { name: "Policy name" }), "Clipboard protection");
+
+  await user.click(screen.getByRole("combobox", { name: "Applies to" }));
+  await user.click(screen.getByRole("option", { name: "Finance-All Stuff" }));
+
+  await user.click(screen.getByRole("combobox", { name: "Channel" }));
+  await user.click(screen.getByRole("option", { name: "Clipboard" }));
+
+  await user.click(screen.getByRole("combobox", { name: "Paste into" }));
+  await user.click(screen.getByRole("option", { name: "one of" }));
+  await user.click(screen.getByRole("combobox", { name: "Fires when" }));
+  await user.click(screen.getByRole("option", { name: "text is pasted" }));
+  await user.click(screen.getByRole("button", { name: "Any content" }));
+
+  await user.click(screen.getByRole("combobox", { name: "Do this" }));
+  await user.click(screen.getByRole("option", { name: "Audit only" }));
+  // In this dropdown the audit option is labelled as the engine default
+  // (distinct from the ACTION's plain "Audit only").
+  await user.click(screen.getByRole("combobox", { name: "Do this instead" }));
+  await user.click(screen.getByRole("option", { name: "Audit only - engine default" }));
+
+  await user.click(screen.getByRole("combobox", { name: "Tell the team via" }));
+  await user.click(screen.getByRole("option", { name: "None" }));
+  await user.click(screen.getByRole("radio", { name: "None" }));
+
+  await user.click(screen.getByRole("combobox", { name: "Deploy as:" }));
+  await user.click(screen.getByRole("option", { name: "Draft" }));
+}
+
 describe("PolicyFinishStep (via PolicyBuilder)", () => {
   it("keeps Create disabled until every required field is filled, then enables it", async () => {
     const user = userEvent.setup();
@@ -65,14 +104,31 @@ describe("PolicyFinishStep (via PolicyBuilder)", () => {
     await user.click(screen.getByRole("option", { name: "Clipboard" }));
     expect(create).toBeDisabled();
 
-    // "Any content" clears the conditions requirement; clipboard's paste target
-    // is optional, so only the required onUnknown fallback is left.
+    // Nothing is pre-selected, so the clipboard channel's own dropdowns need
+    // answering too; "Any content" clears the conditions requirement.
+    await user.click(screen.getByRole("combobox", { name: "Paste into" }));
+    await user.click(screen.getByRole("option", { name: "one of" }));
+    await user.click(screen.getByRole("combobox", { name: "Fires when" }));
+    await user.click(screen.getByRole("option", { name: "text is pasted" }));
     await user.click(screen.getByRole("button", { name: "Any content" }));
     expect(create).toBeDisabled();
 
-    // Answering the last required field flips Create to enabled.
+    // Enforcement: the action and the required fallback.
+    await user.click(screen.getByRole("combobox", { name: "Do this" }));
+    await user.click(screen.getByRole("option", { name: "Audit only" }));
     await user.click(screen.getByRole("combobox", { name: "Do this instead" }));
     await user.click(screen.getByRole("option", { name: "Audit only - engine default" }));
+    expect(create).toBeDisabled();
+
+    // Notification: delivery channel and remediation.
+    await user.click(screen.getByRole("combobox", { name: "Tell the team via" }));
+    await user.click(screen.getByRole("option", { name: "None" }));
+    await user.click(screen.getByRole("radio", { name: "None" }));
+    expect(create).toBeDisabled();
+
+    // Answering the last required field — the deploy state — flips Create to enabled.
+    await user.click(screen.getByRole("combobox", { name: "Deploy as:" }));
+    await user.click(screen.getByRole("option", { name: "Draft" }));
     expect(create).toBeEnabled();
   });
 
@@ -98,9 +154,26 @@ describe("PolicyFinishStep (via PolicyBuilder)", () => {
     expect(screen.getByRole("combobox", { name: "Deploy as:" })).toHaveTextContent(deployAs);
   });
 
+  it("keeps View JSON disabled until every required field is filled, then enables it", async () => {
+    const user = userEvent.setup();
+    render(<PolicyBuilder catalogs={POLICY_CATALOGS} />);
+
+    // View JSON shares Create's completeness gate, so a brand-new policy — which
+    // would serialize to a half-filled, non-parseable object — cannot open the
+    // preview until the form is valid.
+    expect(screen.getByRole("button", { name: "View JSON" })).toBeDisabled();
+
+    await completeValidPolicy(user);
+
+    expect(screen.getByRole("button", { name: "View JSON" })).toBeEnabled();
+  });
+
   it("opens sanitized JSON and restores focus on close", async () => {
     const user = userEvent.setup();
     const { container } = render(<PolicyBuilder catalogs={POLICY_CATALOGS} />);
+
+    // View JSON only opens once the form is complete (it shares Create's gate).
+    await completeValidPolicy(user);
 
     const trigger = screen.getByRole("button", { name: "View JSON" });
     await user.click(trigger);
@@ -140,30 +213,7 @@ describe("PolicyFinishStep (via PolicyBuilder)", () => {
     const user = userEvent.setup();
     render(<PolicyBuilder catalogs={POLICY_CATALOGS} />);
 
-    // The form opens blank, so a valid submit means filling the required
-    // fields first: identity, audience, a channel (which reveals its
-    // Conditions card), that channel's destination, and the required
-    // "If we can't tell" fallback. The default "Audit only" action shows the
-    // person nothing, so the MESSAGE block (reason code / they see) is hidden
-    // and not required.
-    await user.type(screen.getByRole("textbox", { name: "Policy name" }), "Clipboard protection");
-
-    await user.click(screen.getByRole("combobox", { name: "Applies to" }));
-    await user.click(screen.getByRole("option", { name: "Finance-All Stuff" }));
-
-    await user.click(screen.getByRole("combobox", { name: "Channel" }));
-    await user.click(screen.getByRole("option", { name: "Clipboard" }));
-
-    // Switch conditions to "Any content" so no finding is required. Clipboard's
-    // PASTE TARGET defaults to "any target" (no required field), so nothing else
-    // in the Data step needs filling.
-    await user.click(screen.getByRole("button", { name: "Any content" }));
-
-    // Answer the required "If we can't tell" fallback. In this dropdown the audit
-    // option is labelled as the engine default (distinct from the ACTION's plain
-    // "Audit only").
-    await user.click(screen.getByRole("combobox", { name: "Do this instead" }));
-    await user.click(screen.getByRole("option", { name: "Audit only - engine default" }));
+    await completeValidPolicy(user);
 
     await user.click(screen.getByRole("button", { name: "Create" }));
 

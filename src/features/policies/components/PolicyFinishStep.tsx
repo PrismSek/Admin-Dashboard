@@ -39,10 +39,12 @@ export function PolicyFinishStep({
   } = useFormContext<PolicyAuthoringValues>();
   const [isJsonOpen, setIsJsonOpen] = useState(false);
 
-  // Create is clickable only once the whole form satisfies
+  // Create and View JSON are clickable only once the whole form satisfies
   // `policyAuthoringSchema` — name, audience, channel, that channel's
   // conditions/target, the required "If we can't tell" fallback, and the
-  // message block when the action interrupts. Re-parsing the watched values
+  // message block when the action interrupts. Both actions share this one
+  // gate, so the JSON preview never shows a half-filled, non-parseable policy.
+  // Re-parsing the watched values
   // (rather than reading `formState.isValid`, which the form's `mode: "onBlur"`
   // leaves stale until a blur) tracks completeness live on every change, while
   // leaving the on-blur error display untouched — this gate never shows an error.
@@ -75,6 +77,7 @@ export function PolicyFinishStep({
                 value={field.value}
                 onChange={field.onChange}
                 options={deployStates}
+                placeholder={policyBuilderContent.chooseOne}
                 error={errors.deployAs?.message}
               />
             )}
@@ -91,6 +94,7 @@ export function PolicyFinishStep({
               size="app"
               width="auto"
               onClick={() => setIsJsonOpen(true)}
+              disabled={!isComplete}
             >
               {finish.viewJson}
             </Button>

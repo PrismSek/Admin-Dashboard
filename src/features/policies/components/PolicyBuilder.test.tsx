@@ -108,9 +108,12 @@ describe("PolicyBuilder", () => {
     expect(screen.queryByRole("textbox", { name: "Reason code" })).not.toBeInTheDocument();
     expect(screen.queryByRole("textbox", { name: "They see" })).not.toBeInTheDocument();
 
-    // The notification starts with no automated remediation and no channel.
-    expect(screen.getByRole("radio", { name: "None" })).toBeChecked();
-    expect(screen.getByRole("combobox", { name: "Tell the team via" })).toHaveTextContent("None");
+    // Nothing is pre-selected: every choice dropdown opens on its placeholder and
+    // no remediation radio is checked.
+    expect(screen.getByRole("combobox", { name: "Do this" })).toHaveTextContent("Choose one…");
+    expect(screen.getByRole("combobox", { name: "Tell the team via" })).toHaveTextContent("Choose one…");
+    expect(screen.getByRole("combobox", { name: "Deploy as:" })).toHaveTextContent("Choose one…");
+    for (const radio of screen.getAllByRole("radio")) expect(radio).not.toBeChecked();
 
     // None of the transcribed example strings survive anywhere on the form.
     expect(screen.queryByDisplayValue(/Block Aadhaar to personal cloud/i)).not.toBeInTheDocument();
@@ -132,16 +135,15 @@ describe("PolicyBuilder", () => {
     expect(screen.queryByText("Class is")).not.toBeInTheDocument();
   });
 
-  it("shows the print PRINTER control defaulting to Unknown, offering Authorized, and no exception field", async () => {
+  it("shows the print PRINTER control opening unanswered, offering Unknown and Authorized, and no exception field", async () => {
     const user = userEvent.setup();
     render(<PolicyBuilder catalogs={POLICY_CATALOGS} />);
 
     await user.click(screen.getByRole("combobox", { name: "Channel" }));
     await user.click(screen.getByRole("option", { name: "Print" }));
 
-    // "Printer is" opens on Unknown (a real default value, not a "Select
-    // printer" placeholder), matching the base-state artifact.
-    expect(screen.getByRole("combobox", { name: "Printer is" })).toHaveTextContent("Unknown");
+    // "Printer is" opens on its placeholder — nothing is pre-selected.
+    expect(screen.getByRole("combobox", { name: "Printer is" })).toHaveTextContent("Choose one…");
 
     // Both printer targets from the artifact's dropdown are offered.
     await user.click(screen.getByRole("combobox", { name: "Printer is" }));
@@ -204,8 +206,8 @@ describe("PolicyBuilder", () => {
     await user.click(screen.getByRole("combobox", { name: "Channel" }));
     await user.click(screen.getByRole("option", { name: "Desktop apps" }));
 
-    // "App is" — the match operator defaults to "one of" and offers "not one of".
-    expect(screen.getByRole("combobox", { name: "App is" })).toHaveTextContent("one of");
+    // "App is" — the match operator opens unanswered and offers both operators.
+    expect(screen.getByRole("combobox", { name: "App is" })).toHaveTextContent("Choose one…");
     await user.click(screen.getByRole("combobox", { name: "App is" }));
     expect(screen.getByRole("option", { name: "one of" })).toBeVisible();
     expect(screen.getByRole("option", { name: "not one of" })).toBeVisible();
@@ -217,8 +219,8 @@ describe("PolicyBuilder", () => {
     expect(screen.getByRole("option", { name: "Google Chrome" })).toBeVisible();
     await user.click(screen.getByRole("button", { name: "Done" }));
 
-    // "Fires when" — defaults to "a file is sent" and offers the other triggers.
-    expect(screen.getByRole("combobox", { name: "Fires when" })).toHaveTextContent("a file is sent");
+    // "Fires when" — opens unanswered and offers every trigger.
+    expect(screen.getByRole("combobox", { name: "Fires when" })).toHaveTextContent("Choose one…");
     await user.click(screen.getByRole("combobox", { name: "Fires when" }));
     expect(screen.getByRole("option", { name: "text is pasted" })).toBeVisible();
     expect(screen.getByRole("option", { name: "anything moves" })).toBeVisible();
@@ -336,11 +338,11 @@ describe("PolicyBuilder", () => {
     const user = userEvent.setup();
     render(<PolicyBuilder catalogs={POLICY_CATALOGS} />);
 
-    // Starts with no automated remediation…
-    expect(screen.getByRole("radio", { name: "None" })).toBeChecked();
+    // Starts with no remediation chosen at all…
+    expect(screen.getByRole("radio", { name: "None" })).not.toBeChecked();
     expect(screen.getByRole("radio", { name: "Remove public link" })).not.toBeChecked();
 
-    // …choosing one moves the selection, and the "Reads as —" line follows.
+    // …choosing one selects it, and the "Reads as —" line follows.
     await user.click(screen.getByRole("radio", { name: "Remove public link" }));
     expect(screen.getByRole("radio", { name: "Remove public link" })).toBeChecked();
     expect(screen.getByRole("radio", { name: "None" })).not.toBeChecked();

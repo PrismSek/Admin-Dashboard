@@ -3,37 +3,29 @@ import type { PolicyAuthoringValues } from "@/features/policies/schemas";
 /**
  * The blank starting state for a brand-new policy in the seven-step builder.
  *
- * Every field an admin fills in starts empty — the form no longer opens
- * pre-seeded with a worked "Create policy" example. Free-text boxes start `""`
- * (the "Policy name" box shows `policyBuilderContent.start.namePlaceholder` as
- * its hint), and the catalog-backed pickers — audience, channel, class, target
- * — start unselected (`""` / `[]`), each showing its own "Select …"
- * placeholder. The end-user notification starts off so its title/message stay
- * empty and disabled.
+ * Nothing is pre-selected. Every free-text box starts `""` (the "Policy name"
+ * box shows `policyBuilderContent.start.namePlaceholder` as its hint), every
+ * single-choice dropdown and radio starts unanswered (`""`, drawn as the
+ * "Choose one…" / "Select …" placeholder), and every multi-select starts empty
+ * (`[]`). The step rail greys each stage until its choices are made, and Create
+ * stays disabled until the whole form validates (`policyAuthoringSchema`).
  *
  * `channel: ""` is the unselected "Select channel" state: no channel editor
  * renders in the Data step until the admin picks one (`PolicyDataStep` and the
- * serializer both handle `""`), and only the selected channel's target is
- * required on submit (`policyAuthoringSchema`'s `superRefine`).
+ * serializer both handle `""`), and only the selected channel's own dropdowns
+ * are required on submit (`policyAuthoringSchema`'s `superRefine`).
  *
- * The three remaining single-choice controls have no placeholder state in the
- * design, so they keep a neutral, least-committal default rather than an
- * example value:
- *   - `content.mode: "specific"` with a single empty condition row — the
- *     "Matches conditions" tab, waiting for the admin to pick a finding or tag
- *     (or switch to "Any content").
- *   - `enforcement.action: "AuditOnly"` — the least-restrictive action, first
- *     in the catalog. `onUnknown: ""` starts *unanswered* (the required
- *     "Choose one…" state), and `exception: "none"` is the no-escape default.
- *   - `notification.channel` / `remediation: "none"` — no one is told
- *     automatically and nothing runs on its own (the "off" default; both are
- *     always-valid catalog ids).
- *   - `deployAs: "Draft"` — a new policy is a draft until deployed.
+ * The two exceptions, which are modes rather than choices:
+ *   - `content.mode: "specific"` — the "Matches conditions" tab is active (one
+ *     side of the toggle is always on); the single finding row inside it is
+ *     still empty (no finding, no confidence).
+ *   - The multi-selects (`clipboard.targetIds`, `removableMedia.registrationIds`)
+ *     — an empty list means "any", a valid policy, so they are never required.
+ *     `desktopApps.applicationIds` is the exception and must name at least one
+ *     app.
  *
- * Validation still fires on submit for the empty required fields (`name`,
- * `appliesTo`, `channel`, the selected channel's target, and the enforcement
- * `onUnknown` fallback — plus `reasonCode` / `message` once the action is
- * anything other than "Audit only").
+ * Validation fires on submit for every unanswered required field (see the
+ * `superRefine` on `policyAuthoringSchema`).
  */
 export const defaultPolicyAuthoringValues: PolicyAuthoringValues = {
   name: "",
@@ -44,28 +36,28 @@ export const defaultPolicyAuthoringValues: PolicyAuthoringValues = {
     mode: "specific",
     // One empty finding row so the CONTENT block always shows a ready-to-fill
     // pill (the group is never empty).
-    allOf: [{ findingType: "", minimumConfidence: "High" }],
+    allOf: [{ findingType: "", minimumConfidence: "" }],
   },
-  clipboard: { targetOp: "one-of", targetIds: [], firesWhen: "text" },
+  clipboard: { targetOp: "", targetIds: [], firesWhen: "" },
   removableMedia: {
-    deviceClass: "personal-or-unrecognised",
-    registrationOp: "one-of",
+    deviceClass: "",
+    registrationOp: "",
     registrationIds: [],
-    transfer: "copy",
+    transfer: "",
     exceptionIds: [],
   },
-  print: { target: "unknown", exceptionIds: [] },
-  desktopApps: { appOp: "one-of", applicationIds: [], firesWhen: "file-sent", exceptionIds: [] },
+  print: { target: "", exceptionIds: [] },
+  desktopApps: { appOp: "", applicationIds: [], firesWhen: "", exceptionIds: [] },
   enforcement: {
-    action: "AuditOnly",
+    action: "",
     onUnknown: "",
-    exception: "none",
+    exception: "",
     reasonCode: "",
     message: "",
   },
   notification: {
-    channel: "none",
-    remediation: "none",
+    channel: "",
+    remediation: "",
   },
-  deployAs: "Draft",
+  deployAs: "",
 };

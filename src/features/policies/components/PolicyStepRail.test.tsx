@@ -36,15 +36,17 @@ function stageItem(title: string): HTMLElement {
 }
 
 describe("PolicyStepRail", () => {
-  it("greys every stage with unfilled required fields on a blank policy", () => {
+  it("greys every stage on a blank policy — nothing is pre-selected, so nothing is done", () => {
     render(<Harness />);
 
-    expect(stageItem("Start")).toHaveAttribute("data-complete", "false");
-    expect(stageItem("Who")).toHaveAttribute("data-complete", "false");
-    expect(stageItem("Where")).toHaveAttribute("data-complete", "false");
-    expect(stageItem("Data")).toHaveAttribute("data-complete", "false");
-    expect(stageItem("Enforcement")).toHaveAttribute("data-complete", "false");
-    // Notification and Finish require nothing, so they read done from the start.
+    for (const step of policyBuilderSteps) {
+      expect(stageItem(step.title)).toHaveAttribute("data-complete", "false");
+    }
+  });
+
+  it("colours Notification and Finish only once their choices are made", () => {
+    render(<Harness overrides={{ notification: { channel: "none", remediation: "none" }, deployAs: "Draft" }} />);
+
     expect(stageItem("End user Notification")).toHaveAttribute("data-complete", "true");
     expect(stageItem("Finish")).toHaveAttribute("data-complete", "true");
   });

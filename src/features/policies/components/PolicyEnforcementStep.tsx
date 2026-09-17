@@ -27,11 +27,13 @@ function exceptionConfigFor(channel: PolicyAuthoringValues["channel"]) {
 
 /**
  * "Enforcement & Message" (rail step 5) — rebuilt to the artifact's single card
- * of connector rows: ACTION (with the action's inline description), the
- * required "IF WE CAN'T TELL" fallback (unanswered by default, Required until
- * chosen), a channel-specific EXCEPTION escape hatch (shown when the action
- * interrupts the person), and the MESSAGE block (shown when the action OR that
- * fallback interrupts — anything other than "Audit only").
+ * of connector rows: ACTION, the required "IF WE CAN'T TELL" fallback (Required
+ * until chosen), a channel-specific EXCEPTION escape hatch (shown once the
+ * action interrupts the person), and the MESSAGE block (shown when the action
+ * OR that fallback interrupts — anything other than "Audit only"). Nothing is
+ * pre-selected: every pill opens on "Choose one…", and an unanswered action
+ * interrupts nothing yet, so neither the escape hatch nor the message block
+ * appears until a warn/block is actually chosen.
  */
 export function PolicyEnforcementStep({ actions }: { actions: readonly PolicyCatalogOption[] }) {
   const {
@@ -49,7 +51,7 @@ export function PolicyEnforcementStep({ actions }: { actions: readonly PolicyCat
   });
 
   const answered = onUnknown !== "";
-  const interrupts = action !== "AuditOnly";
+  const interrupts = action !== "" && action !== "AuditOnly";
   // The fallback interrupts the person too when "if we can't tell" is a
   // warn/block — they still see a message — so the MESSAGE block is shown for
   // either. The EXCEPTION escape hatch stays tied to the primary action only.
@@ -71,12 +73,16 @@ export function PolicyEnforcementStep({ actions }: { actions: readonly PolicyCat
         { value: exceptionConfig.value, label: exceptionConfig.label },
       ]
     : [];
-  const exceptionValue = exceptionOptions.some((option) => option.value === storedException) ? storedException : "none";
+  // A stored value from another channel's option set shows as unanswered rather
+  // than silently reading as a different escape hatch.
+  const exceptionValue = exceptionOptions.some((option) => option.value === storedException) ? storedException : "";
 
   // A single live region for the whole step — several fields can be invalid at
   // once, so this summarises the current set on each change.
   const validationSummary = [
+    errors.enforcement?.action?.message,
     errors.enforcement?.onUnknown?.message,
+    errors.enforcement?.exception?.message,
     errors.enforcement?.reasonCode?.message,
     errors.enforcement?.message?.message,
   ]
@@ -106,6 +112,8 @@ export function PolicyEnforcementStep({ actions }: { actions: readonly PolicyCat
                 value={field.value}
                 onChange={field.onChange}
                 options={actions}
+                placeholder={enforcement.chooseOne}
+                error={errors.enforcement?.action?.message}
               />
             )}
           />
@@ -163,6 +171,8 @@ export function PolicyEnforcementStep({ actions }: { actions: readonly PolicyCat
                   value={exceptionValue}
                   onChange={field.onChange}
                   options={exceptionOptions}
+                  placeholder={enforcement.chooseOne}
+                  error={errors.enforcement?.exception?.message}
                 />
               )}
             />

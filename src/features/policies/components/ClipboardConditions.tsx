@@ -23,7 +23,10 @@ const data = policyBuilderContent.data;
  * `content.*` block is owned by `PolicyConditionFields`).
  */
 export function ClipboardConditions({ catalogs }: { catalogs: PolicyCatalogs }) {
-  const { control } = useFormContext<PolicyAuthoringValues>();
+  const {
+    control,
+    formState: { errors },
+  } = useFormContext<PolicyAuthoringValues>();
   const targetOpField = useController({ control, name: "clipboard.targetOp" });
   const targetIdsField = useController({ control, name: "clipboard.targetIds" });
   const firesWhenField = useController({ control, name: "clipboard.firesWhen" });
@@ -60,6 +63,8 @@ export function ClipboardConditions({ catalogs }: { catalogs: PolicyCatalogs }) 
                 value={targetOpField.field.value}
                 onChange={targetOpField.field.onChange}
                 options={data.targetOperators}
+                placeholder={policyBuilderContent.chooseOne}
+                error={errors.clipboard?.targetOp?.message}
               />
               <CollectionSelect
                 value={chosen}
@@ -87,6 +92,8 @@ export function ClipboardConditions({ catalogs }: { catalogs: PolicyCatalogs }) 
               value={firesWhenField.field.value}
               onChange={firesWhenField.field.onChange}
               options={data.firesWhenOptions}
+              placeholder={policyBuilderContent.chooseOne}
+              error={errors.clipboard?.firesWhen?.message}
             />
             {firesWhenNote ? <p className="max-w-md text-meta text-dim">{firesWhenNote}</p> : null}
           </div>

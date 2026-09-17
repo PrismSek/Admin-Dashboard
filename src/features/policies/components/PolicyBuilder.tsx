@@ -4,7 +4,6 @@ import { useState } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import { Button } from "@/components/ui/button";
 import { defaultPolicyAuthoringValues } from "@/features/policies/authoring-defaults";
 import { PolicyDataStep } from "@/features/policies/components/PolicyDataStep";
 import { PolicyEnforcementStep } from "@/features/policies/components/PolicyEnforcementStep";
@@ -88,14 +87,9 @@ export function PolicyBuilder({ catalogs }: { catalogs: PolicyCatalogs }) {
 
         <div className="min-w-0 flex-1 px-8 py-10 xl:px-14">
           <div className="mx-auto max-w-3xl">
-            <div className="flex items-start justify-between gap-6">
-              <div>
-                <h1 className="text-page-title font-normal text-strong">{policyBuilderContent.pageTitle}</h1>
-                <p className="mt-2 max-w-xl text-meta text-dim">{policyBuilderContent.scopeNote}</p>
-              </div>
-              <Button variant="appSecondary" size="app" width="auto" type="button">
-                {policyBuilderContent.bundleJson}
-              </Button>
+            <div>
+              <h1 className="text-page-title font-normal text-strong">{policyBuilderContent.pageTitle}</h1>
+              <p className="mt-2 max-w-xl text-meta text-dim">{policyBuilderContent.scopeNote}</p>
             </div>
 
             <PolicyStartStep />

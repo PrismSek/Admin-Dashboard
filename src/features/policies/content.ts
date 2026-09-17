@@ -66,10 +66,15 @@ export const policyBuilderSteps = [
   { id: "finish", title: "Finish", detail: "Deploy and save" },
 ] as const;
 
+/** Placeholder shown in every pill select that opens unanswered — nothing in
+ * the builder is pre-selected, so each dropdown reads "Choose one…" until the
+ * admin picks (and is required before Create enables). */
+const chooseOne = "Choose one…";
+
 export const policyBuilderContent = {
   pageTitle: "Create a policy",
+  chooseOne,
   scopeNote: "Applies to every device in the compiled scope — who it covers is decided upstream.",
-  bundleJson: "Bundle JSON",
   /** Accessible name for the step rail's `<nav>` landmark — not drawn as
    * visible text in Figma, so it isn't shown on screen. */
   stepRailLabel: "Policy builder steps",
@@ -226,6 +231,8 @@ export const policyBuilderContent = {
       },
       /** Fallback phrase when "If we can't tell" has not been answered yet. */
       notDecided: "not decided yet",
+      /** Fallback clause while the ACTION itself is still unanswered. */
+      actionNotDecided: "the action is not decided yet",
       compose: (content: string, channel: string, destination: string, action: string, fallback: string) =>
         `When ${content} leaves through ${channel} to ${destination}, ${action}. If we can't tell, ${fallback}.`,
     },
@@ -323,7 +330,7 @@ export const policyBuilderContent = {
     required: "Required",
     answered: "Answered",
     doThisInstead: "Do this instead",
-    chooseOne: "Choose one…",
+    chooseOne,
     /** The fallback's audit option is labelled as the engine default, to set it
      * apart from the primary ACTION's plain "Audit only" (its options otherwise
      * reuse the `actions` catalog). */
@@ -388,6 +395,8 @@ export const policyBuilderContent = {
      * `notifySentence`). `engage` names the delivery channel and, when set, the
      * enforcement reason code. */
     readsAs: {
+      /** Shown while no remediation has been chosen yet (nothing is pre-selected). */
+      notDecided: "Nothing is decided yet — choose what runs when an issue is detected.",
       none: "No automated remediation runs; the issue is recorded and left for a person to pick up.",
       engage: (channel: string, reasonCode: string) =>
         reasonCode

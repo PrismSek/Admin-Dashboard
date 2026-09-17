@@ -22,7 +22,10 @@ const data = policyBuilderContent.data;
  * hatch (`exceptionIds`) is edited in the Enforcement step.
  */
 export function RemovableMediaConditions({ catalogs }: { catalogs: PolicyCatalogs }) {
-  const { control } = useFormContext<PolicyAuthoringValues>();
+  const {
+    control,
+    formState: { errors },
+  } = useFormContext<PolicyAuthoringValues>();
   const deviceClassField = useController({ control, name: "removableMedia.deviceClass" });
   const registrationOpField = useController({ control, name: "removableMedia.registrationOp" });
   const registrationIdsField = useController({ control, name: "removableMedia.registrationIds" });
@@ -59,6 +62,8 @@ export function RemovableMediaConditions({ catalogs }: { catalogs: PolicyCatalog
               value={deviceClassField.field.value}
               onChange={deviceClassField.field.onChange}
               options={catalogs.deviceClasses}
+              placeholder={policyBuilderContent.chooseOne}
+              error={errors.removableMedia?.deviceClass?.message}
             />
             {deviceClassNote ? <p className="max-w-md text-meta text-dim">{deviceClassNote}</p> : null}
           </div>
@@ -76,6 +81,8 @@ export function RemovableMediaConditions({ catalogs }: { catalogs: PolicyCatalog
                 value={registrationOpField.field.value}
                 onChange={registrationOpField.field.onChange}
                 options={data.targetOperators}
+                placeholder={policyBuilderContent.chooseOne}
+                error={errors.removableMedia?.registrationOp?.message}
               />
               <CollectionSelect
                 value={chosen}
@@ -103,6 +110,8 @@ export function RemovableMediaConditions({ catalogs }: { catalogs: PolicyCatalog
               value={transferField.field.value}
               onChange={transferField.field.onChange}
               options={catalogs.transfers}
+              placeholder={policyBuilderContent.chooseOne}
+              error={errors.removableMedia?.transfer?.message}
             />
           </div>
         </div>

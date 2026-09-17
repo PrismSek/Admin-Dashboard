@@ -93,10 +93,19 @@ describe("policyAuthoringSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("does not require a printer target (print defaults to Unknown; matching any queue is valid)", () => {
+  it("requires the print channel's own 'Printer is' choice", () => {
     const result = policyAuthoringSchema.safeParse({
       ...VALID_CLIPBOARD_VALUES,
       channel: "print",
+      print: { target: "", exceptionIds: [] },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("never requires a hidden channel's dropdowns", () => {
+    // Clipboard is selected, so print's blank target must not block the submit.
+    const result = policyAuthoringSchema.safeParse({
+      ...VALID_CLIPBOARD_VALUES,
       print: { target: "", exceptionIds: [] },
     });
     expect(result.success).toBe(true);
@@ -127,7 +136,77 @@ describe("policyAuthoringSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("accepts the notification channel + remediation shape, including the 'none' default", () => {
+  it("requires every dropdown the form opens blank: action, deploy state, notification, and the selected channel's own picks", () => {
+    const accepts = (patch: Partial<PolicyAuthoringValues>) =>
+      policyAuthoringSchema.safeParse({ ...VALID_CLIPBOARD_VALUES, ...patch }).success;
+
+    expect(accepts({ enforcement: { ...VALID_CLIPBOARD_VALUES.enforcement, action: "" } })).toBe(false);
+    expect(accepts({ deployAs: "" })).toBe(false);
+    expect(accepts({ notification: { channel: "", remediation: "remove-public-link" } })).toBe(false);
+    expect(accepts({ notification: { channel: "slack", remediation: "" } })).toBe(false);
+    expect(accepts({ clipboard: { ...VALID_CLIPBOARD_VALUES.clipboard, targetOp: "" } })).toBe(false);
+    expect(accepts({ clipboard: { ...VALID_CLIPBOARD_VALUES.clipboard, firesWhen: "" } })).toBe(false);
+
+    const removable = VALID_CLIPBOARD_VALUES.removableMedia;
+    expect(accepts({ channel: "removable-media", removableMedia: { ...removable, deviceClass: "" } })).toBe(false);
+    expect(accepts({ channel: "removable-media", removableMedia: { ...removable, registrationOp: "" } })).toBe(false);
+    expect(accepts({ channel: "removable-media", removableMedia: { ...removable, transfer: "" } })).toBe(false);
+
+    const desktop = VALID_CLIPBOARD_VALUES.desktopApps;
+    expect(accepts({ channel: "desktop-apps", desktopApps: { ...desktop, appOp: "" } })).toBe(false);
+    expect(accepts({ channel: "desktop-apps", desktopApps: { ...desktop, firesWhen: "" } })).toBe(false);
+  });
+
+  it("requires a confidence on every finding that has been picked", () => {
+    const unanswered = policyAuthoringSchema.safeParse({
+      ...VALID_CLIPBOARD_VALUES,
+      content: { mode: "specific", allOf: [{ findingType: "aadhaar-number", minimumConfidence: "" }] },
+    });
+    expect(unanswered.success).toBe(false);
+
+    // An untouched placeholder row (no finding yet) doesn't demand a confidence.
+    const placeholderRow = policyAuthoringSchema.safeParse({
+      ...VALID_CLIPBOARD_VALUES,
+      content: {
+        mode: "specific",
+        allOf: [
+          { findingType: "aadhaar-number", minimumConfidence: "High" },
+          { findingType: "", minimumConfidence: "" },
+        ],
+      },
+    });
+    expect(placeholderRow.success).toBe(true);
+  });
+
+  it("requires the exception choice once the action interrupts, and not before", () => {
+    const interrupting = policyAuthoringSchema.safeParse({
+      ...VALID_CLIPBOARD_VALUES,
+      enforcement: { ...VALID_CLIPBOARD_VALUES.enforcement, action: "Block", exception: "" },
+    });
+    expect(interrupting.success).toBe(false);
+
+    // Under "Audit only" the escape hatch isn't shown, so it isn't required.
+    const auditOnly = policyAuthoringSchema.safeParse({
+      ...VALID_CLIPBOARD_VALUES,
+      enforcement: { action: "AuditOnly", onUnknown: "AuditOnly", exception: "", reasonCode: "", message: "" },
+    });
+    expect(auditOnly.success).toBe(true);
+  });
+
+  it("treats an unanswered action as not yet interrupting — it asks for the action, not the message", () => {
+    const result = policyAuthoringSchema.safeParse({
+      ...VALID_CLIPBOARD_VALUES,
+      enforcement: { action: "", onUnknown: "AuditOnly", exception: "", reasonCode: "", message: "" },
+    });
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    const paths = result.error.issues.map((issue) => issue.path.join("."));
+    expect(paths).toContain("enforcement.action");
+    expect(paths).not.toContain("enforcement.reasonCode");
+    expect(paths).not.toContain("enforcement.message");
+  });
+
+  it("accepts the notification channel + remediation shape, including an explicit 'None' choice", () => {
     const off = policyAuthoringSchema.safeParse({
       ...VALID_CLIPBOARD_VALUES,
       notification: { channel: "none", remediation: "none" },
