@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { NextRequest } from "next/server";
 
 import { POST } from "@/app/api/auth/login/route";
-import { SESSION_COOKIE } from "@/features/auth/google/constants";
+import { SESSION_COOKIE, USER_COOKIE } from "@/features/auth/google/constants";
 
 const b64url = (s: string) => Buffer.from(s).toString("base64url");
 const jwt = (exp: number) => `${b64url("{}")}.${b64url(JSON.stringify({ exp }))}.sig`;
@@ -44,6 +44,8 @@ describe("POST /api/auth/login", () => {
     const res = await POST(req({ email: "demo@prismsek.com", password: "pw" }));
     expect(res.status).toBe(200);
     expect(res.cookies.get(SESSION_COOKIE)?.value).toBe(SESSION.token);
+    // The display cookie is written but is opaque (encrypted) and never carries authz.
+    expect(res.cookies.get(USER_COOKIE)?.value).toBeTruthy();
     expect((await res.json()).user.role).toBe("org_owner");
   });
 

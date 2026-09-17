@@ -1,108 +1,180 @@
 "use client";
 
-import { useFormContext, useWatch } from "react-hook-form";
+import { Controller, useFormContext, useWatch } from "react-hook-form";
 
-import { AppInput } from "@/components/app/field";
-import { Checkbox } from "@/components/ui/checkbox";
+import { AppIcon, type AppIconName } from "@/components/icons/AppIcon";
+import { BrandLogo, type BrandLogoName } from "@/components/icons/BrandLogo";
 import { FieldError } from "@/components/ui/form-field";
+import { RowConnector, SectionChip } from "@/features/policies/components/conditions-ui";
+import { PolicySelect } from "@/features/policies/components/PolicySelect";
 import { policyBuilderContent, policyBuilderSteps } from "@/features/policies/content";
+import { composeNotificationReadsAs } from "@/features/policies/reads-as";
 import type { PolicyAuthoringValues } from "@/features/policies/schemas";
 import { cn } from "@/lib/utils";
 
 const notification = policyBuilderContent.notification;
 
 /**
- * "End user Notification" — handle the unknown case (rail step 6).
- *
- * ⚠️ PLAN-vs-FIGMA FLAG (task 10 brief): the real Figma frame for this step
- * (the `notification.channelChip`/`channelLabel`/`triggerChip`/`remediations`
- * copy above) draws a NOTIFICATION-CHANNEL picker ("Tell the team via" → a
- * channel like Slack) plus a WHEN-ISSUE-IS-DETECTED remediation radio group
- * (none / engage-assignee / remove-public-link / apply-label) — not the
- * enabled/title/message trio this component renders. The *approved*
- * `policyAuthoringSchema.notification` field is `{enabled, title, message}`
- * (schemas.ts), and `serializePolicyPreview`'s output shape depends on it, so
- * this step is built against that schema rather than the channel/remediation
- * UI actually drawn in Figma — a plan-mandated stopgap. Reconcile at Task 12:
- * either the schema gains a channel/remediation shape and this step is
- * rebuilt against it, or the plan is amended to match the shipped design.
- * See `.superpowers/sdd/task-10-report.md` for the full note.
- *
- * `enabled` gates `title`/`message` via the native `disabled` attribute set
- * directly on the JSX element (not through `register`'s own `disabled`
- * option) — `register(name, { disabled: true })` would make react-hook-form
- * drop the field from its tracked values, and `shouldUnregister: false` on
- * the builder's form exists specifically so hidden/disabled fields keep
- * their last-typed value. Plain HTML `disabled` only blocks user edits; the
- * DOM node (and its value) stays registered and readable.
+ * "End-user notification" (rail step 6) — rebuilt to the artifact's design and
+ * logic: a delivery-channel pill ("Tell the team via" → none / Slack / Teams /
+ * Email / Endpoint) and a "When issue is detected" remediation radio group
+ * (None / Engage assignee / Remove public link / Apply label), each card
+ * carrying the integrations it touches. A live "Reads as —" line restates the
+ * choice. Backed by the schema's `notification: { channel, remediation }`.
+ * Nothing is pre-selected: the pill opens on "Choose one…" and no radio is
+ * checked until the admin picks ("None" is an explicit choice).
  */
 export function PolicyNotificationStep() {
   const {
-    register,
     control,
     formState: { errors },
   } = useFormContext<PolicyAuthoringValues>();
-  const enabled = useWatch<PolicyAuthoringValues, "notification.enabled">({
-    control,
-    name: "notification.enabled",
-  });
+  const remediationError = errors.notification?.remediation?.message;
+  const remediationErrorId = "policy-notification-remediation-error";
 
-  const titleErrorId = "policy-notification-title-error";
-  const messageErrorId = "policy-notification-message-error";
+  const channel = useWatch<PolicyAuthoringValues, "notification.channel">({ control, name: "notification.channel" });
+  const remediation = useWatch<PolicyAuthoringValues, "notification.remediation">({
+    control,
+    name: "notification.remediation",
+  });
+  const reasonCode = useWatch<PolicyAuthoringValues, "enforcement.reasonCode">({ control, name: "enforcement.reasonCode" });
+
+  const channelNote = notification.channels.find((option) => option.value === channel)?.note ?? "";
+  const sentence = composeNotificationReadsAs({ remediation, channel, reasonCode: reasonCode ?? "" });
 
   return (
-    <section id="policy-notification" aria-label={policyBuilderSteps[5].title} className="mt-8">
+    <section id="policy-notification" aria-label={policyBuilderSteps[5].title} className="mt-8 border-t border-hair-strong pt-8">
       <h2 className="text-section font-medium text-strong">{notification.title}</h2>
       <p className="mt-1 max-w-md text-meta text-dim">{notification.help}</p>
 
-      <label className="mt-4 flex items-center gap-2.5">
-        <Checkbox {...register("notification.enabled")} />
-        <span className="text-body font-medium text-label">{notification.enabledLabel}</span>
-      </label>
+      <div className="mt-4 flex flex-col gap-5 rounded-card border border-hair-strong bg-chrome p-4">
+        <div className="flex flex-col items-start gap-3">
+          <SectionChip>{notification.channelChip}</SectionChip>
+          <div className="flex items-start gap-2">
+            <RowConnector />
+            <div className="flex min-w-0 flex-col gap-2">
+              <Controller
+                name="notification.channel"
+                control={control}
+                render={({ field }) => (
+                  <PolicySelect
+                    pill
+                    id="policy-notification-channel"
+                    label={notification.channelLabel}
+                    value={field.value}
+                    onChange={field.onChange}
+                    options={notification.channels}
+                    placeholder={policyBuilderContent.chooseOne}
+                    error={errors.notification?.channel?.message}
+                  />
+                )}
+              />
+              <p className="max-w-md text-meta text-dim">{channelNote}</p>
+            </div>
+          </div>
+        </div>
 
-      <div className="mt-4 flex flex-col gap-2">
-        <label
-          htmlFor="policy-notification-title"
-          className={cn("text-body font-medium text-label", !enabled && "text-subtle")}
-        >
-          {notification.titleLabel}
-        </label>
-        <AppInput
-          id="policy-notification-title"
-          {...register("notification.title")}
-          disabled={!enabled}
-          aria-invalid={Boolean(errors.notification?.title)}
-          aria-describedby={errors.notification?.title ? titleErrorId : undefined}
-          className={cn(!enabled && "opacity-50")}
-        />
-        {errors.notification?.title ? (
-          <FieldError id={titleErrorId}>{errors.notification.title.message}</FieldError>
-        ) : null}
+        <div className="flex flex-col items-start gap-3">
+          <SectionChip>{notification.triggerChip}</SectionChip>
+          <Controller
+            name="notification.remediation"
+            control={control}
+            render={({ field }) => (
+              <div className="flex w-full flex-col gap-2">
+                <div
+                  role="radiogroup"
+                  aria-label={notification.remediationGroupLabel}
+                  aria-describedby={remediationError ? remediationErrorId : undefined}
+                  className="flex w-full flex-col gap-2"
+                >
+                  {notification.remediations.map((option) => (
+                    <RemediationCard
+                      key={option.value}
+                      icon={option.icon}
+                      label={option.label}
+                      description={option.description}
+                      badges={option.badges}
+                      selected={field.value === option.value}
+                      onSelect={() => field.onChange(option.value)}
+                    />
+                  ))}
+                </div>
+                {remediationError ? <FieldError id={remediationErrorId}>{remediationError}</FieldError> : null}
+              </div>
+            )}
+          />
+        </div>
       </div>
 
-      <div className="mt-4 flex flex-col gap-2">
-        <label
-          htmlFor="policy-notification-message"
-          className={cn("text-body font-medium text-label", !enabled && "text-subtle")}
-        >
-          {notification.messageLabel}
-        </label>
-        <textarea
-          id="policy-notification-message"
-          rows={3}
-          {...register("notification.message")}
-          disabled={!enabled}
-          aria-invalid={Boolean(errors.notification?.message)}
-          aria-describedby={errors.notification?.message ? messageErrorId : undefined}
-          className={cn(
-            "w-full rounded-app border border-hair-strong bg-chrome px-3.5 py-2.5 text-app text-strong outline-none placeholder:text-subtle focus:border-brand-accent",
-            !enabled && "opacity-50",
-          )}
-        />
-        {errors.notification?.message ? (
-          <FieldError id={messageErrorId}>{errors.notification.message.message}</FieldError>
-        ) : null}
-      </div>
+      <p className="mt-3 max-w-2xl text-meta text-dim">
+        <span className="text-subtle">{notification.readsAsPrefix}</span> {sentence}
+      </p>
     </section>
+  );
+}
+
+/** One "When issue is detected" remediation choice: a radio, then a bordered
+ * card (brand outline when selected) holding the glyph, label + description, and
+ * the integrations it touches. */
+function RemediationCard({
+  icon,
+  label,
+  description,
+  badges,
+  selected,
+  onSelect,
+}: {
+  icon: AppIconName;
+  label: string;
+  description: string;
+  badges: readonly { label: string; logo: BrandLogoName }[];
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <label className="flex cursor-pointer items-center gap-3">
+      <input
+        type="radio"
+        name="policy-notification-remediation"
+        aria-label={label}
+        checked={selected}
+        onChange={onSelect}
+        className="peer sr-only"
+      />
+      <span
+        aria-hidden
+        className={cn(
+          "flex size-4 shrink-0 items-center justify-center rounded-full border transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-brand-accent peer-focus-visible:ring-offset-2",
+          selected ? "border-brand" : "border-hair-strong",
+        )}
+      >
+        {selected ? <span className="size-2 rounded-full bg-brand" /> : null}
+      </span>
+      <span
+        className={cn(
+          "flex flex-1 items-center gap-3.5 rounded-card border bg-chrome px-3.5 py-3",
+          selected ? "border-brand" : "border-hair-strong",
+        )}
+      >
+        <AppIcon name={icon} className={cn("size-5 shrink-0", selected ? "text-brand" : "text-dim")} />
+        <span className="flex min-w-0 flex-col">
+          <span className="text-app text-strong">{label}</span>
+          <span className="text-meta text-dim">{description}</span>
+        </span>
+        {badges.length > 0 ? (
+          <span className="ml-auto flex flex-wrap justify-end gap-1.5">
+            {badges.map((badge) => (
+              <span
+                key={badge.label}
+                className="inline-flex items-center gap-1.5 rounded-app border border-hair-strong bg-chrome px-2 py-0.5 text-micro text-copy"
+              >
+                <BrandLogo name={badge.logo} className="size-3.5 shrink-0" />
+                {badge.label}
+              </span>
+            ))}
+          </span>
+        ) : null}
+      </span>
+    </label>
   );
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { policyAuthoringSchema, type PolicyAuthoringValues } from "@/features/policies/schemas";
+import { policyAuthoringSchema, type PolicyAuthoringValues, type PolicyChannel } from "@/features/policies/schemas";
 import { serializePolicyPreview } from "@/features/policies/serialize-policy";
 
 /**
@@ -14,32 +14,45 @@ const ALL_CHANNEL_VALUES: PolicyAuthoringValues = {
   description: "Blocks Aadhaar numbers leaving to personal or foreign destinations.",
   appliesTo: "finance-all-stuff",
   channel: "clipboard",
-  content: { mode: "specific", findingIds: ["aadhaar-number"] },
-  clipboard: { destinationClass: "personal-or-foreign", collectionIds: ["sanctioned-cloud-storage"] },
-  removableMedia: { target: "it-issued-encrypted-usb", exceptionIds: ["staff-registered-drives"] },
+  content: {
+    mode: "specific",
+    allOf: [{ findingType: "aadhaar-number", minimumConfidence: "High" }],
+  },
+  clipboard: {
+    targetOp: "one-of",
+    targetIds: ["messengers"],
+    firesWhen: "text",
+  },
+  removableMedia: {
+    deviceClass: "personal-or-unrecognised",
+    registrationOp: "one-of",
+    registrationIds: ["it-issued-encrypted-usb"],
+    transfer: "copy",
+    exceptionIds: ["staff-registered-drives"],
+  },
   print: { target: "unknown", exceptionIds: ["authorized"] },
-  desktopApps: { applicationIds: ["whatsapp", "signal"], exceptionIds: ["slack"] },
+  desktopApps: { appOp: "one-of", applicationIds: ["whatsapp", "signal"], firesWhen: "file-sent", exceptionIds: ["slack"] },
   enforcement: {
     action: "Block",
     onUnknown: "WarnJustify",
+    exception: "none",
     reasonCode: "DLP-PII-EGRESS",
     message: "Aadhaar information cannot be uploaded to this destination.",
   },
   notification: {
-    enabled: true,
-    title: "Remove public link",
-    message: "Public links on the related resources are revoked automatically, and the owner is told.",
+    channel: "slack",
+    remediation: "remove-public-link",
   },
   deployAs: "Draft",
 };
 
 const VALID_CLIPBOARD_VALUES: PolicyAuthoringValues = ALL_CHANNEL_VALUES;
 
-const EXPECTED_KEYS: Record<PolicyAuthoringValues["channel"], string[]> = {
-  clipboard: ["kind", "destinationClass", "collectionIds"],
-  "removable-media": ["kind", "target", "exceptionIds"],
+const EXPECTED_KEYS: Record<PolicyChannel, string[]> = {
+  clipboard: ["kind", "targetOp", "targetIds", "firesWhen"],
+  "removable-media": ["kind", "deviceClass", "registrationOp", "registrationIds", "transfer", "exceptionIds"],
   print: ["kind", "target", "exceptionIds"],
-  "desktop-apps": ["kind", "applicationIds", "exceptionIds"],
+  "desktop-apps": ["kind", "appOp", "applicationIds", "firesWhen", "exceptionIds"],
 };
 
 describe("policyAuthoringSchema", () => {
@@ -52,18 +65,64 @@ describe("policyAuthoringSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("requires at least one finding when content mode is specific", () => {
+  it("requires the message fields when the onUnknown fallback interrupts, even under Audit only", () => {
     const result = policyAuthoringSchema.safeParse({
       ...VALID_CLIPBOARD_VALUES,
-      content: { mode: "specific", findingIds: [] },
+      enforcement: {
+        action: "AuditOnly",
+        onUnknown: "Block",
+        exception: "none",
+        reasonCode: "",
+        message: "",
+      },
     });
     expect(result.success).toBe(false);
   });
 
-  it("allows zero findings when content mode is any", () => {
+  it("does not require the message fields when both action and onUnknown are Audit only", () => {
     const result = policyAuthoringSchema.safeParse({
       ...VALID_CLIPBOARD_VALUES,
-      content: { mode: "any", findingIds: [] },
+      enforcement: {
+        action: "AuditOnly",
+        onUnknown: "AuditOnly",
+        exception: "none",
+        reasonCode: "",
+        message: "",
+      },
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("requires the print channel's own 'Printer is' choice", () => {
+    const result = policyAuthoringSchema.safeParse({
+      ...VALID_CLIPBOARD_VALUES,
+      channel: "print",
+      print: { target: "", exceptionIds: [] },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("never requires a hidden channel's dropdowns", () => {
+    // Clipboard is selected, so print's blank target must not block the submit.
+    const result = policyAuthoringSchema.safeParse({
+      ...VALID_CLIPBOARD_VALUES,
+      print: { target: "", exceptionIds: [] },
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("requires at least one filled condition when content mode is specific", () => {
+    const result = policyAuthoringSchema.safeParse({
+      ...VALID_CLIPBOARD_VALUES,
+      content: { mode: "specific", allOf: [] },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("allows zero conditions when content mode is any", () => {
+    const result = policyAuthoringSchema.safeParse({
+      ...VALID_CLIPBOARD_VALUES,
+      content: { mode: "any", allOf: [] },
     });
     expect(result.success).toBe(true);
   });
@@ -72,23 +131,93 @@ describe("policyAuthoringSchema", () => {
     const result = policyAuthoringSchema.safeParse({
       ...VALID_CLIPBOARD_VALUES,
       channel: "desktop-apps",
-      desktopApps: { applicationIds: [], exceptionIds: [] },
+      desktopApps: { appOp: "one-of", applicationIds: [], firesWhen: "file-sent", exceptionIds: [] },
     });
     expect(result.success).toBe(false);
   });
 
-  it("requires notification title and message only when notification is enabled", () => {
-    const disabled = policyAuthoringSchema.safeParse({
-      ...VALID_CLIPBOARD_VALUES,
-      notification: { enabled: false, title: "", message: "" },
-    });
-    expect(disabled.success).toBe(true);
+  it("requires every dropdown the form opens blank: action, deploy state, notification, and the selected channel's own picks", () => {
+    const accepts = (patch: Partial<PolicyAuthoringValues>) =>
+      policyAuthoringSchema.safeParse({ ...VALID_CLIPBOARD_VALUES, ...patch }).success;
 
-    const enabledButEmpty = policyAuthoringSchema.safeParse({
+    expect(accepts({ enforcement: { ...VALID_CLIPBOARD_VALUES.enforcement, action: "" } })).toBe(false);
+    expect(accepts({ deployAs: "" })).toBe(false);
+    expect(accepts({ notification: { channel: "", remediation: "remove-public-link" } })).toBe(false);
+    expect(accepts({ notification: { channel: "slack", remediation: "" } })).toBe(false);
+    expect(accepts({ clipboard: { ...VALID_CLIPBOARD_VALUES.clipboard, targetOp: "" } })).toBe(false);
+    expect(accepts({ clipboard: { ...VALID_CLIPBOARD_VALUES.clipboard, firesWhen: "" } })).toBe(false);
+
+    const removable = VALID_CLIPBOARD_VALUES.removableMedia;
+    expect(accepts({ channel: "removable-media", removableMedia: { ...removable, deviceClass: "" } })).toBe(false);
+    expect(accepts({ channel: "removable-media", removableMedia: { ...removable, registrationOp: "" } })).toBe(false);
+    expect(accepts({ channel: "removable-media", removableMedia: { ...removable, transfer: "" } })).toBe(false);
+
+    const desktop = VALID_CLIPBOARD_VALUES.desktopApps;
+    expect(accepts({ channel: "desktop-apps", desktopApps: { ...desktop, appOp: "" } })).toBe(false);
+    expect(accepts({ channel: "desktop-apps", desktopApps: { ...desktop, firesWhen: "" } })).toBe(false);
+  });
+
+  it("requires a confidence on every finding that has been picked", () => {
+    const unanswered = policyAuthoringSchema.safeParse({
       ...VALID_CLIPBOARD_VALUES,
-      notification: { enabled: true, title: "", message: "" },
+      content: { mode: "specific", allOf: [{ findingType: "aadhaar-number", minimumConfidence: "" }] },
     });
-    expect(enabledButEmpty.success).toBe(false);
+    expect(unanswered.success).toBe(false);
+
+    // An untouched placeholder row (no finding yet) doesn't demand a confidence.
+    const placeholderRow = policyAuthoringSchema.safeParse({
+      ...VALID_CLIPBOARD_VALUES,
+      content: {
+        mode: "specific",
+        allOf: [
+          { findingType: "aadhaar-number", minimumConfidence: "High" },
+          { findingType: "", minimumConfidence: "" },
+        ],
+      },
+    });
+    expect(placeholderRow.success).toBe(true);
+  });
+
+  it("requires the exception choice once the action interrupts, and not before", () => {
+    const interrupting = policyAuthoringSchema.safeParse({
+      ...VALID_CLIPBOARD_VALUES,
+      enforcement: { ...VALID_CLIPBOARD_VALUES.enforcement, action: "Block", exception: "" },
+    });
+    expect(interrupting.success).toBe(false);
+
+    // Under "Audit only" the escape hatch isn't shown, so it isn't required.
+    const auditOnly = policyAuthoringSchema.safeParse({
+      ...VALID_CLIPBOARD_VALUES,
+      enforcement: { action: "AuditOnly", onUnknown: "AuditOnly", exception: "", reasonCode: "", message: "" },
+    });
+    expect(auditOnly.success).toBe(true);
+  });
+
+  it("treats an unanswered action as not yet interrupting — it asks for the action, not the message", () => {
+    const result = policyAuthoringSchema.safeParse({
+      ...VALID_CLIPBOARD_VALUES,
+      enforcement: { action: "", onUnknown: "AuditOnly", exception: "", reasonCode: "", message: "" },
+    });
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    const paths = result.error.issues.map((issue) => issue.path.join("."));
+    expect(paths).toContain("enforcement.action");
+    expect(paths).not.toContain("enforcement.reasonCode");
+    expect(paths).not.toContain("enforcement.message");
+  });
+
+  it("accepts the notification channel + remediation shape, including an explicit 'None' choice", () => {
+    const off = policyAuthoringSchema.safeParse({
+      ...VALID_CLIPBOARD_VALUES,
+      notification: { channel: "none", remediation: "none" },
+    });
+    expect(off.success).toBe(true);
+
+    const engaged = policyAuthoringSchema.safeParse({
+      ...VALID_CLIPBOARD_VALUES,
+      notification: { channel: "slack", remediation: "engage-assignee" },
+    });
+    expect(engaged.success).toBe(true);
   });
 });
 
@@ -115,8 +244,9 @@ describe("serializePolicyPreview", () => {
     const preview = serializePolicyPreview({ ...ALL_CHANNEL_VALUES, channel: "clipboard" });
     expect(preview.intent.channel).toEqual({
       kind: "clipboard",
-      destinationClass: "personal-or-foreign",
-      collectionIds: ["sanctioned-cloud-storage"],
+      targetOp: "one-of",
+      targetIds: ["messengers"],
+      firesWhen: "text",
     });
   });
 
@@ -124,7 +254,10 @@ describe("serializePolicyPreview", () => {
     const preview = serializePolicyPreview({ ...ALL_CHANNEL_VALUES, channel: "removable-media" });
     expect(preview.intent.channel).toEqual({
       kind: "removable-media",
-      target: "it-issued-encrypted-usb",
+      deviceClass: "personal-or-unrecognised",
+      registrationOp: "one-of",
+      registrationIds: ["it-issued-encrypted-usb"],
+      transfer: "copy",
       exceptionIds: ["staff-registered-drives"],
     });
   });
@@ -142,7 +275,9 @@ describe("serializePolicyPreview", () => {
     const preview = serializePolicyPreview({ ...ALL_CHANNEL_VALUES, channel: "desktop-apps" });
     expect(preview.intent.channel).toEqual({
       kind: "desktop-apps",
+      appOp: "one-of",
       applicationIds: ["whatsapp", "signal"],
+      firesWhen: "file-sent",
       exceptionIds: ["slack"],
     });
   });

@@ -15,7 +15,7 @@ export function PolicyWhoStep({ audiences }: { audiences: readonly PolicyCatalog
   } = useFormContext<PolicyAuthoringValues>();
 
   return (
-    <section id="policy-who" aria-label={policyBuilderSteps[1].title} className="mt-6">
+    <section id="policy-who" aria-label={policyBuilderSteps[1].title} className="mt-8 border-t border-hair-strong pt-8">
       <Controller
         name="appliesTo"
         control={control}
@@ -27,6 +27,10 @@ export function PolicyWhoStep({ audiences }: { audiences: readonly PolicyCatalog
             onChange={field.onChange}
             options={audiences}
             error={errors.appliesTo?.message}
+            placeholder={policyBuilderContent.who.appliesToPlaceholder}
+            searchable
+            searchPlaceholder={policyBuilderContent.who.searchAudiences}
+            className="w-policy-select"
           />
         )}
       />

@@ -284,6 +284,9 @@
      Figma 470:6822 (trigger, 32px) and 397:15025 (option row, 34px). */
   --size-select-control: 2rem; /* 32px */
   --size-dropdown-row: 2.125rem; /* 34px */
+  /* "Applies to" (396:4806) and "Channel" (396:4816) triggers are drawn at a
+     fixed 280px so they don't resize to the selected value. */
+  --size-policy-select: 17.5rem; /* 280px */
 
   /* Policy builder step rail (Figma 396:4444, Aside/Button family). Each
      step's numbered badge is a 20px filled circle (cornerRadius 10), centred
@@ -485,6 +488,7 @@
   --spacing-policy-content-block: var(--space-policy-content-block);
   --spacing-select-control: var(--size-select-control);
   --spacing-dropdown-row: var(--size-dropdown-row);
+  --spacing-policy-select: var(--size-policy-select);
   --spacing-step-node: var(--size-step-node);
   --spacing-step-row: var(--space-step-row);
 
@@ -525,6 +529,10 @@
 
 @utility app-shell-grid {
   grid-template-columns: var(--size-app-sidebar) minmax(0, 1fr);
+  /* Pin the single row to the viewport so a tall page (e.g. Create a policy)
+     can't stretch the row and, with it, the `lg:h-full` sidebar — the content
+     column scrolls internally instead, keeping the nav footer on screen. */
+  grid-template-rows: minmax(0, 1fr);
 }
 
 /* Active sidebar row — the near-transparent white fill plus the rose radial

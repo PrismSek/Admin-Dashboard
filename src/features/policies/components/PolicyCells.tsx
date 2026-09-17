@@ -1,4 +1,4 @@
-import { AppIcon } from "@/components/icons/AppIcon";
+import { AppIcon, type AppIconName } from "@/components/icons/AppIcon";
 import { healthLabel, lifecycleLabel, type Health, type Lifecycle } from "@/features/policies/labels";
 import { cn } from "@/lib/utils";
 
@@ -30,15 +30,33 @@ export function LifecyclePill({ value }: { value: Lifecycle }) {
 }
 
 /**
- * Deployment-health indicator: a leading glyph plus one of the five Figma
- * health labels (Healthy / Degraded / Approval pending / Stale / Not
- * deployed). The glyph is decorative — the label text carries the meaning,
- * per the coding standards' "never colour alone" rule.
+ * Per-health glyph + colour token (Figma list capture 398:16105): Healthy is a
+ * green check, Degraded a warning triangle in the warn tint. The glyph is
+ * decorative — the label text carries the meaning, per the coding standards'
+ * "never colour alone" rule. States with no distinct Figma mark yet fall back
+ * to the neutral dash below; a live-API row has no health at all (the gateway
+ * carries no deployment telemetry), so `null` renders the same "—" placeholder
+ * the enforcement-mode column uses.
  */
-export function HealthCell({ value }: { value: Health }) {
+const healthStyles: Partial<Record<Health, { icon: AppIconName; className: string }>> = {
+  Healthy: { icon: "check", className: "text-state-ok" },
+  Degraded: { icon: "warning", className: "text-pill-warn-fg" },
+};
+
+const healthNeutral = { icon: "minus", className: "text-subtle-alt" } as const;
+
+export function HealthCell({ value }: { value: Health | null }) {
+  if (value === null) {
+    return (
+      <span className="inline-flex text-subtle-alt">
+        <AppIcon name="minus" className="size-app-icon" />
+      </span>
+    );
+  }
+  const style = healthStyles[value] ?? healthNeutral;
   return (
-    <span className="inline-flex items-center gap-2 text-policy-table-body text-subtle-alt">
-      <AppIcon name="minus" className="size-app-icon shrink-0" />
+    <span className={cn("inline-flex items-center gap-2 text-policy-table-body", style.className)}>
+      <AppIcon name={style.icon} className="size-app-icon shrink-0" />
       {healthLabel[value]}
     </span>
   );

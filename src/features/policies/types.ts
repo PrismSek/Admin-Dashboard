@@ -13,6 +13,9 @@ export type PolicyCatalogOption = {
   value: string;
   label: string;
   description?: string;
+  /** A short right-aligned category tag shown in multi-select rows (e.g. the
+   * paste-target picker's "apps" / "web" / "session" / "local"). */
+  category?: string;
 };
 
 /** An application entry in the Desktop channel's app picker, with its mark. */
@@ -22,9 +25,20 @@ export type ApplicationOption = PolicyCatalogOption & { icon: AppIconName };
 export type PolicyCatalogs = {
   audiences: readonly PolicyCatalogOption[];
   channels: readonly (PolicyCatalogOption & { icon: AppIconName })[];
+  /** The finding detectors a CONTENT row can match on. */
   findings: readonly PolicyCatalogOption[];
-  destinationClasses: readonly PolicyCatalogOption[];
-  collections: readonly PolicyCatalogOption[];
+  /** Minimum-confidence options for a finding row ("High confidence" /
+   * "Medium or better" / "Any confidence"). */
+  confidences: readonly PolicyCatalogOption[];
+  /** Where a paste can land — the clipboard channel's "Paste into" targets,
+   * each tagged with a `category` (apps / web / session / local). */
+  pasteTargets: readonly PolicyCatalogOption[];
+  /** Removable media "Device is" classes (Personal or unrecognised / Corporate
+   * … / Any Device). */
+  deviceClasses: readonly PolicyCatalogOption[];
+  /** Removable media "Transfer is" directions (copy to / read off / any). */
+  transfers: readonly PolicyCatalogOption[];
+  /** Removable media "Registered as" registration lists (the multi-select). */
   removableTargets: readonly PolicyCatalogOption[];
   printerTargets: readonly PolicyCatalogOption[];
   applications: readonly ApplicationOption[];

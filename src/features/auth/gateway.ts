@@ -22,12 +22,15 @@ export function gatewayOrigin(): string {
   return serverEnv().GATEWAY_ORIGIN.replace(/\/+$/, "");
 }
 
+export const adminUserRoleSchema = z.enum(["org_owner", "policy_admin", "analyst", "auditor"]);
+export type AdminUserRole = z.infer<typeof adminUserRoleSchema>;
+
 export const adminUserSchema = z.object({
   id: z.string(),
   tenantId: z.string(),
   email: z.string(),
   name: z.string(),
-  role: z.enum(["org_owner", "policy_admin", "analyst", "auditor"]),
+  role: adminUserRoleSchema,
   status: z.enum(["pending", "active", "suspended", "deactivated"]),
 });
 

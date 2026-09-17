@@ -35,14 +35,19 @@ export function AppShell({ user, children }: { user: CurrentUser; children: Reac
   return (
     <div className="app-shell-grid grid h-dvh bg-canvas max-lg:grid-cols-1">
       <SideNav user={user} isOpen={isNavOpen} onClose={() => setIsNavOpen(false)} id={navId} />
-      <div className="flex min-w-0 flex-col" inert={isNavOpen || undefined}>
+      <div className="flex min-h-0 min-w-0 flex-col" inert={isNavOpen || undefined}>
         <ContentHeader
           onOpenNavigation={() => setIsNavOpen(true)}
           isNavOpen={isNavOpen}
           menuButtonRef={menuButtonRef}
           navId={navId}
         />
-        <main className="min-h-0 flex-1 overflow-y-auto">{children}</main>
+        {/* `relative` makes this scroll container the containing block for its
+            absolutely-positioned descendants (e.g. `sr-only` live regions and
+            the `peer sr-only` radio inputs). Without it their offset parent is
+            <body>, so they sit at their deep layout position and stretch the
+            document past the viewport — a phantom scroll below the content. */}
+        <main className="relative min-h-0 flex-1 overflow-y-auto">{children}</main>
       </div>
     </div>
   );

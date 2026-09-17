@@ -1,48 +1,63 @@
-import { policyBuilderContent } from "@/features/policies/content";
 import type { PolicyAuthoringValues } from "@/features/policies/schemas";
 
 /**
- * A complete, schema-valid set of builder form values for a brand-new,
- * unedited policy. All four channel sub-objects are populated — not just the
- * `clipboard` one implied by `channel: "clipboard"` — so that switching the
- * channel selector never hits an unpopulated field (`shouldUnregister: false`
- * on the form keeps the hidden three around; `serializePolicyPreview` is what
- * later drops them from the *output*, never this object).
+ * The blank starting state for a brand-new policy in the seven-step builder.
  *
- * Catalog ids (`appliesTo`, `content.findingIds`, the four channel fields)
- * are real values from `data.ts`'s `POLICY_CATALOGS` — not the sample ids
- * sketched in the task plan, two of which do not exist in the real catalogs:
- *   - `appliesTo`: the plan's "finance-all-staff" isn't a real audience id;
- *     the real catalog entry is "finance-all-stuff" (drawn "Finance-All
- *     Stuff" in Figma — an apparent typo reproduced verbatim, per data.ts).
- *   - `removableMedia.target`: the plan's "all-removable-media" isn't a real
- *     `removableTargets` id (that catalog has no "any" sentinel); the
- *     closest real option is "it-issued-encrypted-usb".
- * `print.target: "unknown"` and `desktopApps.applicationIds: ["whatsapp",
- * "signal"]` both match the Figma default state directly (563:6608's
- * "Printer is: Unknown"; 563:8724's "Reads as — … through WhatsApp or
- * Signal").
+ * Nothing is pre-selected. Every free-text box starts `""` (the "Policy name"
+ * box shows `policyBuilderContent.start.namePlaceholder` as its hint), every
+ * single-choice dropdown and radio starts unanswered (`""`, drawn as the
+ * "Choose one…" / "Select …" placeholder), and every multi-select starts empty
+ * (`[]`). The step rail greys each stage until its choices are made, and Create
+ * stays disabled until the whole form validates (`policyAuthoringSchema`).
+ *
+ * `channel: ""` is the unselected "Select channel" state: no channel editor
+ * renders in the Data step until the admin picks one (`PolicyDataStep` and the
+ * serializer both handle `""`), and only the selected channel's own dropdowns
+ * are required on submit (`policyAuthoringSchema`'s `superRefine`).
+ *
+ * The two exceptions, which are modes rather than choices:
+ *   - `content.mode: "specific"` — the "Matches conditions" tab is active (one
+ *     side of the toggle is always on); the single finding row inside it is
+ *     still empty (no finding, no confidence).
+ *   - The multi-selects (`clipboard.targetIds`, `removableMedia.registrationIds`)
+ *     — an empty list means "any", a valid policy, so they are never required.
+ *     `desktopApps.applicationIds` is the exception and must name at least one
+ *     app.
+ *
+ * Validation fires on submit for every unanswered required field (see the
+ * `superRefine` on `policyAuthoringSchema`).
  */
 export const defaultPolicyAuthoringValues: PolicyAuthoringValues = {
-  name: policyBuilderContent.defaults.name,
+  name: "",
   description: "",
-  appliesTo: "finance-all-stuff",
-  channel: "clipboard",
-  content: { mode: "specific", findingIds: ["aadhaar-number"] },
-  clipboard: { destinationClass: "personal-or-foreign", collectionIds: [] },
-  removableMedia: { target: "it-issued-encrypted-usb", exceptionIds: [] },
-  print: { target: "unknown", exceptionIds: [] },
-  desktopApps: { applicationIds: ["whatsapp", "signal"], exceptionIds: [] },
+  appliesTo: "",
+  channel: "",
+  content: {
+    mode: "specific",
+    // One empty finding row so the CONTENT block always shows a ready-to-fill
+    // pill (the group is never empty).
+    allOf: [{ findingType: "", minimumConfidence: "" }],
+  },
+  clipboard: { targetOp: "", targetIds: [], firesWhen: "" },
+  removableMedia: {
+    deviceClass: "",
+    registrationOp: "",
+    registrationIds: [],
+    transfer: "",
+    exceptionIds: [],
+  },
+  print: { target: "", exceptionIds: [] },
+  desktopApps: { appOp: "", applicationIds: [], firesWhen: "", exceptionIds: [] },
   enforcement: {
-    action: "Block",
-    onUnknown: "WarnJustify",
-    reasonCode: policyBuilderContent.defaults.reasonCode,
-    message: policyBuilderContent.defaults.message,
+    action: "",
+    onUnknown: "",
+    exception: "",
+    reasonCode: "",
+    message: "",
   },
   notification: {
-    enabled: true,
-    title: policyBuilderContent.defaults.notificationTitle,
-    message: policyBuilderContent.defaults.notificationMessage,
+    channel: "",
+    remediation: "",
   },
-  deployAs: "Draft",
+  deployAs: "",
 };

@@ -11,21 +11,33 @@ import { PolicyConditionFields } from "@/features/policies/components/PolicyCond
 import { policyAuthoringSchema, type PolicyAuthoringValues } from "@/features/policies/schemas";
 import type { PolicyCatalogOption } from "@/features/policies/types";
 
-const FINDINGS: readonly PolicyCatalogOption[] = [{ value: "aadhaar-number", label: "Aadhaar number" }];
+const FINDINGS: readonly PolicyCatalogOption[] = [
+  { value: "aadhaar-number", label: "Aadhaar number" },
+  { value: "customer-record", label: "Customer record" },
+];
+const CONFIDENCES: readonly PolicyCatalogOption[] = [
+  { value: "High", label: "High confidence" },
+  { value: "Medium", label: "Medium or better" },
+  { value: "Low", label: "Any confidence" },
+];
 
 /**
- * `PolicyConditionFields` is shared by all four channel editors and is only
- * ever mounted inside the full builder form in production, but exercising
- * its findings-required validation through `PolicyBuilder` would need a
- * submit affordance that doesn't exist yet (the Finish step is task 10).
- * This harness reproduces exactly the same `react-hook-form` + `zodResolver`
- * wiring `PolicyBuilder` uses, valid in every field except `content`, so
- * submitting surfaces only the findings-required error under test.
+ * `PolicyConditionFields` is shared by all four channel editors. This harness
+ * reproduces the same `react-hook-form` + `zodResolver` wiring `PolicyBuilder`
+ * uses and renders only the CONTENT block, so the findings-required error is
+ * the only one with a control on screen to attach to (a blank `channel` would
+ * suppress that rule entirely — it only applies once a channel is selected —
+ * so the baseline pins `channel: "clipboard"`).
  */
 function Harness() {
   const form = useForm<PolicyAuthoringValues>({
     resolver: zodResolver(policyAuthoringSchema),
-    defaultValues: { ...defaultPolicyAuthoringValues, content: { mode: "specific", findingIds: [] } },
+    defaultValues: {
+      ...defaultPolicyAuthoringValues,
+      // The real default already carries one empty finding row in `allOf`;
+      // pinning a channel makes the conditions-required rule apply here.
+      channel: "clipboard",
+    },
     mode: "onBlur",
     shouldUnregister: false,
   });
@@ -33,7 +45,7 @@ function Harness() {
   return (
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(() => {})} noValidate>
-        <PolicyConditionFields findings={FINDINGS} />
+        <PolicyConditionFields findings={FINDINGS} confidences={CONFIDENCES} />
         <button type="submit">Submit</button>
       </form>
     </FormProvider>
@@ -41,23 +53,36 @@ function Harness() {
 }
 
 describe("PolicyConditionFields", () => {
-  it("wires the findings-required error to the findings control via aria-describedby", async () => {
+  it("wires the conditions-required error to the conditions control via aria-describedby", async () => {
     const user = userEvent.setup();
     render(<Harness />);
 
     await user.click(screen.getByRole("button", { name: "Submit" }));
 
-    const errorText = await screen.findByText("Add at least one finding, or switch to Any content.");
-    const findingsGroup = screen.getByRole("group", { name: "Finding" });
-    expect(findingsGroup).toHaveAttribute("aria-describedby", errorText.id);
+    const errorText = await screen.findByText("Add at least one condition, or switch to Any content.");
+    const conditionsGroup = screen.getByRole("group", { name: "Content conditions" });
+    expect(conditionsGroup).toHaveAttribute("aria-describedby", errorText.id);
   });
 
-  it("is axe-clean with the findings-required error showing", async () => {
+  it("picks a finding from the row's detector dropdown", async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+
+    // A fresh group shows one empty finding row: the detector is picked from a
+    // dropdown (its accessible name is the "Select finding" placeholder, since
+    // the "Finding" label sits separately as the pill's leading segment).
+    const finding = screen.getByRole("combobox", { name: "Select finding" });
+    await user.click(finding);
+    await user.click(screen.getByRole("option", { name: "Aadhaar number" }));
+    expect(finding).toHaveTextContent("Aadhaar number");
+  });
+
+  it("is axe-clean with the conditions-required error showing", async () => {
     const user = userEvent.setup();
     const { container } = render(<Harness />);
 
     await user.click(screen.getByRole("button", { name: "Submit" }));
-    await screen.findByText("Add at least one finding, or switch to Any content.");
+    await screen.findByText("Add at least one condition, or switch to Any content.");
 
     expect((await axe(container)).violations).toEqual([]);
   });

@@ -24,7 +24,7 @@ export function PolicyDataStep({ catalogs }: { catalogs: PolicyCatalogs }) {
   const channel = useWatch<PolicyAuthoringValues, "channel">({ name: "channel" });
 
   return (
-    <section id="policy-data" aria-label={policyBuilderSteps[3].title} className="mt-6">
+    <section id="policy-data" aria-label={policyBuilderSteps[3].title} className="mt-8 border-t border-hair-strong pt-8">
       <PolicyDataChannelEditor channel={channel} catalogs={catalogs} />
     </section>
   );
@@ -46,6 +46,13 @@ function PolicyDataChannelEditor({
       return <PrintConditions catalogs={catalogs} />;
     case "desktop-apps":
       return <DesktopAppConditions catalogs={catalogs} />;
+    case "":
+      // No channel selected yet. Figma draws the same PASTE TARGET block —
+      // "Paste into" + "Fires when" — for every "Create a policy" frame, so the
+      // Data step shows the clipboard paste target as the default. Picking a
+      // specific channel in "Where" swaps in that channel's target (device /
+      // printer / app); leaving it, or choosing clipboard, keeps this one.
+      return <ClipboardConditions catalogs={catalogs} />;
     default:
       return unreachableChannel(channel);
   }
